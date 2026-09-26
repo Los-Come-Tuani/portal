@@ -1,33 +1,36 @@
 import { ArrowRight, FileText, IdCard } from 'lucide-react'
 import { Button, Panel, Tag } from '@/components/ui'
-import {
-  DOCUMENT_STATUS_LABELS,
-  DOCUMENT_TYPE_INFO,
-  documentProgress,
-  requiredDocuments,
-  type GuideApplication,
-} from '@/data/models'
+import { DOCUMENT_STATUS_LABELS, type DocumentTypeInfo, type ReviewDocument } from '@/data/models'
 import { useNow } from '@/hooks/use-now'
 import { cn } from '@/lib/cn'
 import { formatDate } from '@/lib/format'
 import { DOCUMENT_STATUS_TONES } from '../status'
 
+export interface DocumentRequirement {
+  type: string
+  info: DocumentTypeInfo
+  /** Los opcionales sólo aparecen si los subieron. */
+  required: boolean
+}
+
 interface DocumentsPanelProps {
-  application: GuideApplication
+  requirements: DocumentRequirement[]
+  documents: readonly ReviewDocument[]
   canReview: boolean
   onOpen: (documentId: string) => void
 }
 
-export function DocumentsPanel({ application, canReview, onOpen }: DocumentsPanelProps) {
+export function DocumentsPanel({ requirements, documents, canReview, onOpen }: DocumentsPanelProps) {
   const { today } = useNow()
-  const progress = documentProgress(application)
-  const byType = new Map(application.documents.map((document) => [document.type, document]))
-  const firstPending = application.documents.find((document) => document.status === 'pending')
+  const byType = new Map(documents.map((document) => [document.type, document]))
+  const shown = requirements.filter((requirement) => requirement.required || byType.has(requirement.type))
+  const accepted = documents.filter((document) => document.status === 'accepted').length
+  const firstPending = documents.find((document) => document.status === 'pending')
 
   return (
     <Panel
       title="Documentos"
-      description={`${progress.accepted} de ${progress.required} aceptados. Cada uno se acepta sólo con todo lo de su lista revisado.`}
+      description={`${accepted} de ${shown.length} aceptados. Cada uno se acepta sólo con todo lo de su lista revisado.`}
       actions={
         canReview &&
         firstPending && (
@@ -39,8 +42,7 @@ export function DocumentsPanel({ application, canReview, onOpen }: DocumentsPane
       bodyClassName="p-0"
     >
       <ul className="divide-y divide-divider">
-        {requiredDocuments(application).map((type) => {
-          const info = DOCUMENT_TYPE_INFO[type]
+        {shown.map(({ type, info, required }) => {
           const document = byType.get(type)
           const Icon = info.format === 'card' ? IdCard : FileText
           if (!document) {
@@ -69,13 +71,20 @@ export function DocumentsPanel({ application, canReview, onOpen }: DocumentsPane
                   <Icon size={18} strokeWidth={1.75} aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-body font-semibold text-ink">{info.label}</span>
+                  <span className="flex flex-wrap items-center gap-x-2 text-body font-semibold text-ink">
+                    {info.label}
+                    {!required && <span className="text-caption font-normal text-hint">Opcional</span>}
+                  </span>
                   <span className="block truncate text-small text-muted">
                     {document.fileName}
-                    {' · '}
-                    <span className={cn(expired && 'font-semibold text-danger')}>
-                      {document.expiresOn ? `${expired ? 'venció' : 'vence'} el ${formatDate(document.expiresOn)}` : 'sin vencimiento'}
-                    </span>
+                    {document.expiresOn && (
+                      <>
+                        {' · '}
+                        <span className={cn(expired && 'font-semibold text-danger')}>
+                          {expired ? 'venció' : 'vence'} el {formatDate(document.expiresOn)}
+                        </span>
+                      </>
+                    )}
                   </span>
                   {document.status === 'rejected' && document.note && (
                     <span className="mt-1 block text-small text-danger">{document.note}</span>

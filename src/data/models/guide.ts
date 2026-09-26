@@ -1,4 +1,15 @@
-import type { ISODate, LocalDateTime } from './common'
+import type { LocalDateTime } from './common'
+import {
+  LEGIBLE,
+  UNALTERED,
+  VALID,
+  type ApplicationStatus,
+  type DocumentStatus,
+  type DocumentTypeInfo,
+  type ReviewCheck,
+  type ReviewDocument,
+  type ReviewEvent,
+} from './review'
 
 /** Igual que `role` en mobile/assets/mock/guides.json. */
 export type GuideServiceRole = 'guide' | 'translator' | 'both'
@@ -23,25 +34,7 @@ export const DOCUMENT_TYPES = [
 
 export type DocumentType = (typeof DOCUMENT_TYPES)[number]
 
-export interface ReviewCheck {
-  id: string
-  label: string
-}
-
-export interface DocumentTypeInfo {
-  label: string
-  issuer: string
-  /** `card`: carné o cédula; `sheet`: constancia o certificado. */
-  format: 'card' | 'sheet'
-  /** Para quién es obligatorio. */
-  requiredFor: string
-  checks: ReviewCheck[]
-}
-
-const LEGIBLE: ReviewCheck = { id: 'legible', label: 'Se lee completo, sin partes cortadas ni borrosas' }
 const SAME_NAME: ReviewCheck = { id: 'nombre', label: 'El nombre coincide con el de la cédula' }
-const VALID: ReviewCheck = { id: 'vigente', label: 'Está vigente' }
-const UNALTERED: ReviewCheck = { id: 'integro', label: 'No tiene señales de edición o alteración' }
 
 /** Qué se revisa en cada documento. Aceptarlo exige marcar todo. */
 export const DOCUMENT_TYPE_INFO: Record<DocumentType, DocumentTypeInfo> = {
@@ -50,6 +43,7 @@ export const DOCUMENT_TYPE_INFO: Record<DocumentType, DocumentTypeInfo> = {
     issuer: 'Consejo Supremo Electoral',
     format: 'card',
     requiredFor: 'Todos',
+    pages: ['Frente', 'Reverso'],
     checks: [
       LEGIBLE,
       { id: 'ambos-lados', label: 'Trae el frente y el reverso' },
@@ -122,40 +116,7 @@ export const DOCUMENT_TYPE_INFO: Record<DocumentType, DocumentTypeInfo> = {
   },
 }
 
-export type DocumentStatus = 'pending' | 'accepted' | 'rejected'
-
-export const DOCUMENT_STATUS_LABELS: Record<DocumentStatus, string> = {
-  pending: 'Por revisar',
-  accepted: 'Aceptado',
-  rejected: 'Rechazado',
-}
-
-/** Una página o cara del archivo que subió: la cédula trae frente y reverso. */
-export interface DocumentPage {
-  label: string
-  url: string
-}
-
-export interface GuideDocument {
-  id: string
-  type: DocumentType
-  fileName: string
-  pages: DocumentPage[]
-  /** El número que trae el documento. */
-  number: string
-  /** Idiomas y nivel en un certificado de idiomas: "Inglés C1". */
-  detail: string | null
-  issuedOn: ISODate
-  expiresOn: ISODate | null
-  uploadedAt: LocalDateTime
-  status: DocumentStatus
-  /** Los `ReviewCheck.id` que marcó quien lo revisó. */
-  checks: string[]
-  /** Por qué se rechazó; el guía lo ve en la app. */
-  note: string
-  reviewedBy: string | null
-  reviewedAt: LocalDateTime | null
-}
+export type GuideDocument = ReviewDocument<DocumentType>
 
 // ── Antecedentes ──────────────────────────────────────────────────────────
 
@@ -210,39 +171,6 @@ export const STAGE_LABELS: Record<VerificationStage, string> = {
   decision: 'Decisión',
 }
 
-export type ApplicationStatus = 'in_review' | 'changes_requested' | 'approved' | 'rejected'
-
-export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
-  in_review: 'En revisión',
-  changes_requested: 'Corrección pedida',
-  approved: 'Aprobado',
-  rejected: 'Rechazado',
-}
-
-export type ReviewEventKind =
-  | 'submitted'
-  | 'resubmitted'
-  | 'assigned'
-  | 'document_accepted'
-  | 'document_rejected'
-  | 'check_clear'
-  | 'check_flagged'
-  | 'stage'
-  | 'changes_requested'
-  | 'approved'
-  | 'rejected'
-
-/** Una línea del historial: quién hizo qué y cuándo. */
-export interface ReviewEvent {
-  id: string
-  at: LocalDateTime
-  kind: ReviewEventKind
-  /** `null`: lo hizo el guía desde la app. */
-  actorId: string | null
-  actorName: string
-  text: string
-}
-
 /** Lo que un guía o traductor envía desde la app para que K'Plan lo verifique. */
 export interface GuideApplication {
   id: string
@@ -272,26 +200,8 @@ export interface GuideApplication {
   history: ReviewEvent[]
 }
 
-/** Alguien del equipo que revisa solicitudes. */
-export interface Reviewer {
-  id: string
-  name: string
-  canDecide: boolean
-}
-
-export interface DocumentReviewInput {
-  status: 'accepted' | 'rejected'
-  checks: string[]
-  note: string
-}
-
 export interface BackgroundCheckInput {
   status: 'clear' | 'flagged'
-  note: string
-}
-
-export interface DecisionInput {
-  decision: 'approved' | 'rejected'
   note: string
 }
 

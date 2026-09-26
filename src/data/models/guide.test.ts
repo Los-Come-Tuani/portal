@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import {
-  advanceBlocker,
-  requiredChecks,
-  requiredDocuments,
-  type DocumentStatus,
-  type DocumentType,
-  type GuideApplication,
-} from './guide'
+import { advanceBlocker, requiredChecks, requiredDocuments, type DocumentType, type GuideApplication } from './guide'
+import type { DocumentStatus } from './review'
 
 function application(overrides: Partial<GuideApplication>, documents: Partial<Record<DocumentType, DocumentStatus>> = {}): GuideApplication {
   return {

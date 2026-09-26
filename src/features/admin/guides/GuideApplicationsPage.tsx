@@ -25,8 +25,9 @@ import { useNow } from '@/hooks/use-now'
 import { cn } from '@/lib/cn'
 import { toLocalDateTime } from '@/lib/dates'
 import { formatDate, formatDateTime, formatWaiting, plural } from '@/lib/format'
-import { ReviewSegments } from './components/ReviewSegments'
-import { QUEUE_TABS, queueTab, reviewSegments, STAGE_LIMIT_MINUTES, waitingMinutes, type QueueTab } from './lib/queue'
+import { ReviewSegments } from '@/features/verification/components/ReviewSegments'
+import { STAGE_LIMIT_MINUTES, waitingMinutes } from '@/features/verification/status'
+import { QUEUE_TABS, queueTab, reviewSegments, type QueueTab } from './lib/queue'
 
 type Scope = 'todas' | 'mias'
 
@@ -74,7 +75,7 @@ export function GuideApplicationsPage() {
     .sort((a, b) => (decided ? b.stageSince.localeCompare(a.stageSince) : a.stageSince.localeCompare(b.stageSince)))
 
   const inReview = all.filter((item) => item.status === 'in_review')
-  const oldest = inReview.reduce((max, item) => Math.max(max, waitingMinutes(item, now)), 0)
+  const oldest = inReview.reduce((max, item) => Math.max(max, waitingMinutes(item.stageSince, now)), 0)
   const reviewerName = (id: string | null) => reviewers.data?.find((reviewer) => reviewer.id === id)?.name ?? null
 
   return (
@@ -191,7 +192,7 @@ function ApplicationRow({
   onOpen: () => void
 }) {
   const decided = tab === 'approved' || tab === 'rejected'
-  const waiting = waitingMinutes(application, now)
+  const waiting = waitingMinutes(application.stageSince, now)
   const late = !decided && tab !== 'changes_requested' && waiting > STAGE_LIMIT_MINUTES
   const segments = reviewSegments(application)
   const done = segments.filter((segment) => segment.state === 'done').length

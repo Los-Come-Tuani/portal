@@ -1,5 +1,6 @@
 import { cn } from '@/lib/cn'
-import type { Segment } from '../lib/queue'
+
+export type Segment = { key: string; label: string; state: 'done' | 'pending' | 'problem' | 'missing' }
 
 const STATE_CLASSES: Record<Segment['state'], string> = {
   done: 'bg-confirmed',

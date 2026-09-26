@@ -6,6 +6,7 @@ import { formatDateTime } from '@/lib/format'
 const DOT: Record<ReviewEventKind, string> = {
   submitted: 'bg-ink',
   resubmitted: 'bg-ink',
+  document_replaced: 'bg-ink',
   assigned: 'border border-ink/40 bg-surface',
   document_accepted: 'bg-confirmed',
   check_clear: 'bg-confirmed',
@@ -18,7 +19,7 @@ const DOT: Record<ReviewEventKind, string> = {
 }
 
 /** Quién hizo qué y cuándo, lo más reciente arriba. */
-export function ApplicationHistory({ history }: { history: readonly ReviewEvent[] }) {
+export function ReviewHistory({ history, applicantChannel }: { history: readonly ReviewEvent[]; applicantChannel: string }) {
   const events = [...history].reverse()
   return (
     <Panel title="Historial" description="Cada paso queda registrado con quién lo hizo.">
@@ -28,7 +29,7 @@ export function ApplicationHistory({ history }: { history: readonly ReviewEvent[
             <span aria-hidden="true" className={cn('absolute top-1.5 left-0 size-2 rounded-full', DOT[event.kind])} />
             <p className="text-small text-ink">{event.text}</p>
             <p className="text-caption text-muted">
-              {event.actorId === null ? `${event.actorName}, desde la app` : event.actorName} · {formatDateTime(event.at)}
+              {event.actorId === null ? `${event.actorName}, ${applicantChannel}` : event.actorName} · {formatDateTime(event.at)}
             </p>
           </li>
         ))}

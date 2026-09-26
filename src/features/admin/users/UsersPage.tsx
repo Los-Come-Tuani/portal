@@ -30,7 +30,7 @@ import {
 import { useSession } from '@/features/auth/use-auth'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { formatDate, formatDateTime, plural } from '@/lib/format'
-import { APPLICATION_STATUS_TONES } from '../guides/status'
+import { APPLICATION_STATUS_TONES } from '@/features/verification/status'
 import { UserSheet } from './UserSheet'
 import { USER_STATUS_TONES, userKind, usesApp } from './status'
 

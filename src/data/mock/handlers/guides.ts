@@ -23,6 +23,7 @@ import {
 import type { MockDatabase } from '../db'
 import { fail, parseBody, requireUser, route, type MockContext } from '../http'
 import { hasPermission } from '../services/access'
+import { claimReview, logReview } from '../services/review'
 
 function findApplication(db: MockDatabase, applicationId: string): GuideApplication {
   const application = db.guideApplications.find((item) => item.id === applicationId)
@@ -30,23 +31,9 @@ function findApplication(db: MockDatabase, applicationId: string): GuideApplicat
   return application
 }
 
-function log(application: GuideApplication, actor: User, kind: ReviewEvent['kind'], text: string) {
-  application.history.push({
-    id: `${application.id}-event-${application.history.length + 1}`,
-    at: nowLocalDateTime(),
-    kind,
-    actorId: actor.id,
-    actorName: actor.name,
-    text,
-  })
-}
-
-/** Quien trabaja una solicitud sin responsable la toma. */
-function claim(application: GuideApplication, actor: User) {
-  if (application.assigneeId) return
-  application.assigneeId = actor.id
-  log(application, actor, 'assigned', `${actor.name} tomó la solicitud`)
-}
+const log = (application: GuideApplication, actor: User, kind: ReviewEvent['kind'], text: string) =>
+  logReview(application, actor, kind, text)
+const claim = claimReview
 
 function assertInReview(application: GuideApplication, stage?: GuideApplication['stage']) {
   if (application.status !== 'in_review') throw fail.conflict('Esta solicitud no está en revisión')

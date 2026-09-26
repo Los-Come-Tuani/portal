@@ -113,6 +113,17 @@ function validity(random: Random, type: DocumentType, today: ISODate): { issuedO
 
 const LEVELS = ['B2', 'C1', 'C2']
 
+/** El texto de cada constancia en el escaneo de muestra. */
+const GUIDE_SCAN_TEXT: Record<DocumentType, (name: string, city: string, detail: string | null) => string> = {
+  cedula: () => '',
+  'carne-intur': () => '',
+  'licencia-conducir': () => '',
+  'record-policia': (name) => `Se hace constar que ${name} no registra antecedentes policiales a la fecha de emisión de esta constancia.`,
+  'primeros-auxilios': (name) => `Se certifica que ${name} aprobó el curso de primeros auxilios básicos, con prácticas de reanimación y atención de heridas.`,
+  'certificado-idioma': (name, _city, detail) => `Se certifica que ${name} acreditó los siguientes niveles, según el Marco Común Europeo: ${detail ?? ''}.`,
+  'seguro-vehiculo': (name, city) => `Póliza vigente de responsabilidad civil y cobertura de pasajeros a nombre de ${name}, para el vehículo registrado en ${city}.`,
+}
+
 interface ApplicationDraft {
   id: string
   userId: string
@@ -164,7 +175,7 @@ function buildApplication(draft: ApplicationDraft, today: ISODate, staff: Map<st
       id: `${draft.id}-${type}`,
       type,
       fileName: `${type}-${slugify(draft.name)}.${info.format === 'card' ? 'jpg' : 'pdf'}`,
-      pages: documentScans({ type, name: draft.name, city: draft.city, number, detail, issuedOn, expiresOn }),
+      pages: documentScans({ info, name: draft.name, city: draft.city, number, issuedOn, expiresOn, body: GUIDE_SCAN_TEXT[type](draft.name, draft.city, detail) }),
       number,
       detail,
       issuedOn,
