@@ -4,7 +4,7 @@ import { Link, matchPath, NavLink, useLocation } from 'react-router'
 import { Logo } from '@/components/brand/Logo'
 import { Avatar, Menu, MenuItem } from '@/components/ui'
 import { useGuideApplications } from '@/data/hooks/use-guides'
-import { useOrganizations } from '@/data/hooks/use-organizations'
+import { useAdmissions } from '@/data/hooks/use-admissions'
 import { ROLE_LABELS } from '@/data/models'
 import { useAuth, useSession } from '@/features/auth/use-auth'
 import { cn } from '@/lib/cn'
@@ -43,8 +43,8 @@ function isActive(pathname: string, item: { to: string; end?: boolean }): boolea
 function usePendingCounts(): Record<NavCount, number> {
   const { can } = useSession()
   const guides = useGuideApplications({ status: 'in_review' }, can('guides.review', 'guides.decide'))
-  const organizations = useOrganizations({ status: 'pending' }, can('organizations.review', 'organizations.manage'))
-  return { pendingGuides: guides.data?.length ?? 0, pendingOrganizations: organizations.data?.length ?? 0 }
+  const admissions = useAdmissions({ status: 'in_review' }, can('organizations.review', 'organizations.manage'))
+  return { pendingGuides: guides.data?.length ?? 0, pendingAdmissions: admissions.data?.length ?? 0 }
 }
 
 export function SidebarContent({ preferences, collapsible = false, onNavigate }: SidebarContentProps) {
@@ -155,6 +155,7 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
               <li key={entry.id}>
                 <SidebarGroup
                   group={entry}
+                  counts={counts}
                   pathname={pathname}
                   collapsed={collapsed}
                   open={preferences.groups[entry.id] ?? entry.children.some((child) => isActive(pathname, child))}
@@ -260,12 +261,17 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
                   }}
                   className={({ isActive: active }) =>
                     cn(
-                      'flex h-9 items-center rounded-sm px-2.5 text-body transition-colors duration-150 focus-visible:outline-offset-0',
+                      'flex h-9 items-center justify-between gap-3 rounded-sm px-2.5 text-body transition-colors duration-150 focus-visible:outline-offset-0',
                       active ? ACTIVE : 'text-ink hover:bg-canvas',
                     )
                   }
                 >
-                  {child.label}
+                  {({ isActive: active }) => (
+                    <>
+                      {child.label}
+                      {child.count && counts[child.count] > 0 && <Count value={counts[child.count]} active={active} />}
+                    </>
+                  )}
                 </NavLink>
               </li>
             ))}
@@ -330,6 +336,7 @@ function SidebarLink({
 
 function SidebarGroup({
   group,
+  counts,
   pathname,
   collapsed,
   open,
@@ -340,6 +347,7 @@ function SidebarGroup({
   hint,
 }: {
   group: NavGroupEntry
+  counts: Record<NavCount, number>
   pathname: string
   collapsed: boolean
   open: boolean
@@ -354,6 +362,7 @@ function SidebarGroup({
   const activeInside = children.some((child) => isActive(pathname, child))
   const expanded = open && !collapsed
   const highlight = activeInside && (collapsed || !open)
+  const pending = children.reduce((sum, child) => sum + (child.count ? counts[child.count] : 0), 0)
 
   return (
     <>
@@ -362,12 +371,18 @@ function SidebarGroup({
         onClick={(event) => (collapsed ? onFlyout(event.currentTarget) : onToggle(!open))}
         aria-expanded={collapsed ? flyoutOpen : open}
         aria-controls={collapsed ? (flyoutOpen ? `submenu-${group.id}` : undefined) : listId}
-        aria-label={collapsed ? label : undefined}
+        aria-label={collapsed ? (pending > 0 ? `${label}, ${pending} pendientes` : label) : undefined}
         {...(flyoutOpen ? {} : hint)}
         className={cn(ITEM, highlight ? ACTIVE : activeInside ? 'text-ink hover:bg-paper-deep' : IDLE, flyoutOpen && !highlight && 'bg-paper-deep')}
       >
         <Icon size={18} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
         <span className={cn('min-w-0 flex-1 truncate transition-opacity duration-150', collapsed && 'opacity-0')}>{label}</span>
+        {pending > 0 &&
+          (collapsed ? (
+            <span aria-hidden="true" className="absolute top-2 left-7.5 size-2 rounded-full bg-planned ring-2 ring-paper" />
+          ) : (
+            !open && <Count value={pending} active={highlight} />
+          ))}
         <ChevronDown
           size={16}
           aria-hidden="true"
@@ -388,7 +403,7 @@ function SidebarGroup({
         <ul id={listId} inert={!expanded} className="ml-6 min-h-0 overflow-hidden border-l border-outline/70">
           {children.map((child) => (
             <li key={child.to} className="py-px first:pt-1 last:pb-1">
-              <SubLink child={child} onNavigate={onNavigate} />
+              <SubLink child={child} count={child.count ? counts[child.count] : 0} onNavigate={onNavigate} />
             </li>
           ))}
         </ul>
@@ -397,7 +412,7 @@ function SidebarGroup({
   )
 }
 
-function SubLink({ child, onNavigate }: { child: NavChild; onNavigate?: () => void }) {
+function SubLink({ child, count, onNavigate }: { child: NavChild; count: number; onNavigate?: () => void }) {
   return (
     <NavLink
       to={child.to}
@@ -405,12 +420,17 @@ function SubLink({ child, onNavigate }: { child: NavChild; onNavigate?: () => vo
       onClick={onNavigate}
       className={({ isActive: active }) =>
         cn(
-          'ml-2 flex h-9 items-center truncate rounded-kp px-3 text-body transition-colors duration-150',
+          'ml-2 flex h-9 items-center justify-between gap-2 rounded-kp px-3 text-body transition-colors duration-150',
           active ? cn(ACTIVE, 'font-medium') : 'text-ink/75 hover:bg-paper-deep hover:text-ink',
         )
       }
     >
-      {child.label}
+      {({ isActive: active }) => (
+        <>
+          <span className="truncate">{child.label}</span>
+          {count > 0 && <Count value={count} active={active} />}
+        </>
+      )}
     </NavLink>
   )
 }

@@ -3,6 +3,7 @@ import {
   Building2,
   CalendarDays,
   CalendarHeart,
+  FileCheck2,
   Layers,
   MapPin,
   Medal,
@@ -16,7 +17,7 @@ import type { Session } from '@/features/auth/use-auth'
 import { paths } from '../router/paths'
 
 /** Un número que la barra lateral busca y muestra junto al módulo. */
-export type NavCount = 'pendingGuides' | 'pendingOrganizations'
+export type NavCount = 'pendingGuides' | 'pendingAdmissions'
 
 export interface NavLinkEntry {
   kind: 'link'
@@ -31,6 +32,7 @@ export interface NavChild {
   to: string
   label: string
   end?: boolean
+  count?: NavCount
 }
 
 export interface NavGroupEntry {
@@ -55,7 +57,7 @@ const link = (to: string, label: string, icon: LucideIcon, extra: Partial<NavLin
 function group(id: string, label: string, icon: LucideIcon, children: (NavChild | false)[]): NavEntry | null {
   const visible = children.filter((child): child is NavChild => child !== false)
   if (visible.length === 0) return null
-  if (visible.length === 1) return link(visible[0].to, visible[0].label, icon, { end: visible[0].end })
+  if (visible.length === 1) return link(visible[0].to, visible[0].label, icon, { end: visible[0].end, count: visible[0].count })
   return { kind: 'group', id, label, icon, children: visible }
 }
 
@@ -68,8 +70,10 @@ export function navigationFor({ role, organization, can }: Session): NavEntry[] 
   if (role === 'admin') {
     return [
       can('agenda.view') && agenda,
-      can('organizations.review', 'organizations.manage') &&
-        link(paths.organizations, 'Organizaciones', Building2, { count: 'pendingOrganizations' }),
+      group('organizaciones', 'Organizaciones', Building2, [
+        can('organizations.review', 'organizations.manage') && { to: paths.admissions, label: 'Solicitudes', count: 'pendingAdmissions' },
+        can('organizations.review', 'organizations.manage') && { to: paths.organizations, label: 'Todas' },
+      ]),
       can('guides.review', 'guides.decide') && link(paths.guides, 'Guías y traductores', BadgeCheck, { count: 'pendingGuides' }),
       group('contenido', 'Contenido', Layers, [
         can('places.manage') && { to: paths.places, label: 'Lugares' },
@@ -92,6 +96,10 @@ export function navigationFor({ role, organization, can }: Session): NavEntry[] 
   const placeCount = organization?.stopIds.length ?? 0
   const places = link(paths.places, role === 'alcaldia' ? 'Lugares' : placeCount === 1 ? 'Mi lugar' : 'Mis lugares', MapPin)
   const billing = link(paths.billing, 'Pagos', Receipt)
+
+  if (organization?.status === 'pending') {
+    return [link(paths.application, 'Mi solicitud', FileCheck2), ...(placeCount > 0 ? [places] : [])]
+  }
 
   if (role === 'alcaldia') return [agenda, places, events, badges, billing]
   return [agenda, places, link(paths.coupons, 'Cupones', TicketPercent), events, badges, billing]

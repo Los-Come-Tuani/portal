@@ -8,6 +8,7 @@ import { usePlaces } from '@/data/hooks/use-places'
 import { CITIES } from '@/data/models'
 import { useSession } from '@/features/auth/use-auth'
 import { useDocumentTitle } from '@/hooks/use-document-title'
+import { cn } from '@/lib/cn'
 import { formatPercent } from '@/lib/format'
 import { completeness, placeIssues } from './lib/completeness'
 
@@ -89,6 +90,7 @@ export function PlacesPage() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-body font-semibold text-ink">{stop.name}</p>
+                      {stop.draft && <Tag tone="outline">Borrador</Tag>}
                       {stop.hasBadge && (
                         <Tag tone="badge" icon={<Medal size={12} aria-hidden="true" />}>
                           Insignia
@@ -107,7 +109,7 @@ export function PlacesPage() {
                       <span className="font-semibold text-ink tabular-nums">{formatPercent(score)}</span>
                     </div>
                     <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-paper">
-                      <div className="h-full rounded-full bg-confirmed" style={{ width: `${score * 100}%` }} />
+                      <div className={cn('h-full rounded-full', stop.draft ? 'bg-planned' : 'bg-confirmed')} style={{ width: `${score * 100}%` }} />
                     </div>
                   </div>
                   <ArrowRight
