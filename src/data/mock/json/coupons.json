@@ -1,0 +1,42 @@
+[
+  {
+    "id": "cupon-kit-bienvenida",
+    "title": "Kit de bienvenida K'Plan",
+    "description": "Una libreta y un mapa ilustrado de los circuitos, para llevar contigo en el recorrido.",
+    "discountLabel": "Regalo",
+    "cost": 3,
+    "image": "https://picsum.photos/seed/kit-bienvenida/800/600"
+  },
+  {
+    "id": "cupon-5-reserva",
+    "title": "5% en tu próxima reserva",
+    "description": "Válido en cualquier circuito agendado desde la app.",
+    "discountLabel": "5% de descuento",
+    "cost": 4,
+    "image": "https://picsum.photos/seed/cupon5/800/600"
+  },
+  {
+    "id": "cupon-10-reserva",
+    "title": "10% en tu próxima reserva",
+    "description": "Válido en cualquier circuito agendado desde la app.",
+    "discountLabel": "10% de descuento",
+    "cost": 6,
+    "image": "https://picsum.photos/seed/cupon10/800/600"
+  },
+  {
+    "id": "cupon-isletas-gratis",
+    "title": "Paseo en lancha por Las Isletas",
+    "description": "Una hora de paseo en lancha por el archipiélago de Las Isletas, cortesía de K'Plan.",
+    "discountLabel": "Gratis",
+    "cost": 8,
+    "image": "https://picsum.photos/seed/isletas-gratis/800/600"
+  },
+  {
+    "id": "cupon-20-circuito",
+    "title": "20% en un circuito completo",
+    "description": "El descuento más alto del catálogo, para tu próxima aventura completa.",
+    "discountLabel": "20% de descuento",
+    "cost": 10,
+    "image": "https://picsum.photos/seed/cupon20/800/600"
+  }
+]

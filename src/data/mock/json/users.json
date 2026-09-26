@@ -1,0 +1,12 @@
+[
+  { "id": "user-admin", "name": "Equipo K'Plan", "email": "admin@kplan.demo", "role": "admin", "organizationId": null },
+  { "id": "user-cocina", "name": "Teresa Obando", "email": "cocina@kplan.demo", "role": "negocio", "organizationId": "org-cocina-dona-tere" },
+  { "id": "user-tabacalera", "name": "Rodolfo Pineda", "email": "tabacalera@kplan.demo", "role": "negocio", "organizationId": "org-tabacalera-esteli" },
+  { "id": "user-finca", "name": "Ana Lucía Rivera", "email": "finca@kplan.demo", "role": "negocio", "organizationId": "org-finca-el-mirador" },
+  { "id": "user-selva-negra", "name": "Mauricio Kühl", "email": "selvanegra@kplan.demo", "role": "negocio", "organizationId": "org-selva-negra" },
+  { "id": "user-lanchas", "name": "Érick Sandoval", "email": "lanchas@kplan.demo", "role": "negocio", "organizationId": "org-lanchas-isletas" },
+  { "id": "user-leon", "name": "Karla Montenegro", "email": "leon@kplan.demo", "role": "alcaldia", "organizationId": "org-alcaldia-leon" },
+  { "id": "user-masaya", "name": "Julio Aburto", "email": "masaya@kplan.demo", "role": "alcaldia", "organizationId": "org-alcaldia-masaya" },
+  { "id": "user-esteli", "name": "Martha Zeledón", "email": "esteli@kplan.demo", "role": "alcaldia", "organizationId": "org-alcaldia-esteli" },
+  { "id": "user-granada", "name": "Silvio Chamorro", "email": "granada@kplan.demo", "role": "alcaldia", "organizationId": "org-alcaldia-granada" }
+]
