@@ -16,6 +16,7 @@ import {
   type Organization,
   type OrganizationStatus,
 } from '@/data/models'
+import { useSession } from '@/features/auth/use-auth'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { formatDate, formatMoney, formatMonth, plural } from '@/lib/format'
 import { OrganizationDrawer } from './OrganizationDrawer'
@@ -47,6 +48,7 @@ export function OrganizationDetailPage() {
   const statements = useStatements(organizationId)
   const save = useSaveOrganization()
   const toast = useToast()
+  const canManage = useSession().can('organizations.manage')
   const [editing, setEditing] = useState(false)
   const [changing, setChanging] = useState<{ to: OrganizationStatus; label: string } | null>(null)
   useDocumentTitle(organization.data?.name ?? 'Organización')
@@ -95,10 +97,12 @@ export function OrganizationDetailPage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" icon={<Pencil size={16} />} onClick={() => setEditing(true)}>
-            Editar
-          </Button>
-          {STATUS_ACTIONS[org.status].map((action) => (
+          {canManage && (
+            <Button variant="secondary" icon={<Pencil size={16} />} onClick={() => setEditing(true)}>
+              Editar
+            </Button>
+          )}
+          {(canManage || org.status === 'pending' ? STATUS_ACTIONS[org.status] : []).map((action) => (
             <Button key={action.to} variant={action.tone} onClick={() => setChanging(action)}>
               {action.label}
             </Button>

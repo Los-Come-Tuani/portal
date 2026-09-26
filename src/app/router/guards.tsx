@@ -1,7 +1,10 @@
+import { ShieldQuestion } from 'lucide-react'
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { Isologo } from '@/components/brand/Logo'
-import type { UserRole } from '@/data/models'
+import { EmptyState } from '@/components/ui'
+import type { Permission, PortalRole } from '@/data/models'
 import { useAuth, useSession } from '@/features/auth/use-auth'
+import { landingPath } from '../layout/navigation'
 import { paths } from './paths'
 
 export function SessionLoader() {
@@ -20,9 +23,32 @@ export function RequireAuth() {
   return <Outlet />
 }
 
-export function RequireRole({ roles }: { roles: UserRole[] }) {
+export function RequireRole({ roles }: { roles: PortalRole[] }) {
   const { role } = useSession()
   if (!roles.includes(role)) return <Navigate to={paths.home} replace />
+  return <Outlet />
+}
+
+/** La agenda es el inicio; quien del equipo no la ve entra a su primer módulo. */
+export function RequireAgenda() {
+  const session = useSession()
+  if (!session.isAdmin || session.can('agenda.view')) return <Outlet />
+  const landing = landingPath(session)
+  if (landing) return <Navigate to={landing} replace />
+  return (
+    <EmptyState icon={<ShieldQuestion size={20} />} title="Tu rol todavía no tiene módulos" className="py-24">
+      Pídele a alguien con el permiso "Administrar el equipo" que te asigne un rol con permisos.
+    </EmptyState>
+  )
+}
+
+/**
+ * Para el equipo de K'Plan, exige al menos uno de los permisos. Negocios y
+ * alcaldías pasan: a ellos los filtra su rol.
+ */
+export function RequirePermission({ anyOf }: { anyOf: Permission[] }) {
+  const { isAdmin, can } = useSession()
+  if (isAdmin && !can(...anyOf)) return <Navigate to={paths.home} replace />
   return <Outlet />
 }
 

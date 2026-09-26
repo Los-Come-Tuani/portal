@@ -12,4 +12,9 @@ export const paths = {
   organization: (organizationId: string) => `/organizaciones/${encodeURIComponent(organizationId)}`,
   collections: '/cobros',
   pricing: '/tarifas',
+  guides: '/guias',
+  guideApplication: (applicationId: string) => `/guias/${encodeURIComponent(applicationId)}`,
+  users: '/usuarios',
+  staff: '/usuarios/equipo',
+  staffRoles: '/usuarios/roles',
 } as const
