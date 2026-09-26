@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { sessionToken } from '@/data/api/session-token'
-import type { LoginInput, Organization, SessionUser, User } from '@/data/models'
+import type { AuthResponse, LoginInput, Organization, SessionUser, User } from '@/data/models'
 import { authRepository } from '@/data/repositories/auth.repository'
 import { organizationsRepository } from '@/data/repositories/organizations.repository'
 import { AuthContext, type AuthStatus } from './auth-context'
@@ -47,8 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => sessionToken.onExpired(clear), [clear])
 
-  const login = useCallback(async (input: LoginInput) => {
-    const response = await authRepository.login(input)
+  const acceptSession = useCallback(async (response: AuthResponse) => {
     sessionToken.set(response.token)
     const org = await loadOrganization(response.user)
     setUser(response.user)
@@ -56,14 +55,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('authenticated')
   }, [])
 
+  const login = useCallback(
+    async (input: LoginInput) => acceptSession(await authRepository.login(input)),
+    [acceptSession],
+  )
+
   const logout = useCallback(() => {
     sessionToken.clear()
     clear()
   }, [clear])
 
   const value = useMemo(
-    () => ({ status, user, organization, login, logout }),
-    [status, user, organization, login, logout],
+    () => ({ status, user, organization, login, acceptSession, logout }),
+    [status, user, organization, login, acceptSession, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
