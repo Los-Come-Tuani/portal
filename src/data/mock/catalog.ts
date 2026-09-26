@@ -4,14 +4,20 @@
  * propios del portal. `daysFromNow` / `daysAgo` sólo existen en el mock.
  */
 import type {
+  BackgroundCheckType,
   Circuit,
   CircuitGroupSession,
   Coupon,
+  DocumentStatus,
+  DocumentType,
   EventItem,
+  GuideApplication,
+  GuideServiceRole,
   LatLng,
   Organization,
   PlaceProfile,
   Post,
+  StaffRole,
   Stop,
   User,
 } from '../models'
@@ -19,12 +25,15 @@ import circuitsJson from './json/circuits.json'
 import groupSessionsJson from './json/circuit_groups.json'
 import appCouponsJson from './json/coupons.json'
 import appEventsJson from './json/events.json'
+import guideApplicationsJson from './json/guide_applications.json'
+import appGuidesJson from './json/guides.json'
 import organizationsJson from './json/organizations.json'
 import profilesJson from './json/place_profiles.json'
 import portalCouponsJson from './json/portal_coupons.json'
 import portalEventsJson from './json/portal_events.json'
 import portalStopsJson from './json/portal_stops.json'
 import postsJson from './json/posts.json'
+import staffRolesJson from './json/staff_roles.json'
 import stopsJson from './json/stops.json'
 import usersJson from './json/users.json'
 
@@ -52,6 +61,53 @@ export type PortalCouponSeed = Omit<Coupon, 'validUntil' | 'createdAt'> & { vali
 export type PostSeed = Omit<Post, 'publishedAt'> & { daysAgo: number }
 export type ProfileSeed = Omit<PlaceProfile, 'updatedAt'>
 
+export type UserSeed = Omit<User, 'createdAt' | 'lastSeenAt' | 'serviceRole'> & {
+  createdDaysAgo: number
+  seenDaysAgo: number | null
+}
+
+/** Un perfil de mobile/assets/mock/guides.json. */
+export interface AppGuide {
+  id: string
+  name: string
+  photoUrl: string
+  rating: number
+  reviewsCount: number
+  languages: string[]
+  bio: string
+  yearsExperience: number
+  specialties: string[]
+  role: GuideServiceRole
+  hasTransport: boolean
+}
+
+export type ApplicationSeed = Pick<
+  GuideApplication,
+  | 'id'
+  | 'name'
+  | 'city'
+  | 'phone'
+  | 'serviceRole'
+  | 'languages'
+  | 'specialties'
+  | 'yearsExperience'
+  | 'hasTransport'
+  | 'bio'
+  | 'references'
+  | 'stage'
+  | 'status'
+  | 'assigneeId'
+> & {
+  submittedDaysAgo: number
+  stageDaysAgo: number
+  documents: Partial<Record<DocumentType, DocumentStatus>>
+  checks: Partial<Record<BackgroundCheckType, 'clear' | 'flagged'>>
+  notes: Partial<Record<DocumentType | BackgroundCheckType, string>>
+  /** Se le pidió corregir un documento y ya subió uno nuevo. */
+  correction?: { requestedDaysAgo: number; document: DocumentType; note: string }
+  decisionNote?: string
+}
+
 export const catalog = {
   stops: [...stopsJson, ...portalStopsJson] as Stop[],
   circuits: circuitsJson as Circuit[],
@@ -59,7 +115,10 @@ export const catalog = {
   appEvents: appEventsJson as AppEvent[],
   appCoupons: appCouponsJson as AppCoupon[],
   organizations: organizationsJson as Organization[],
-  users: usersJson as User[],
+  users: usersJson as UserSeed[],
+  staffRoles: staffRolesJson as StaffRole[],
+  appGuides: appGuidesJson as AppGuide[],
+  guideApplications: guideApplicationsJson as ApplicationSeed[],
   profiles: profilesJson as ProfileSeed[],
   posts: postsJson as PostSeed[],
   portalEvents: portalEventsJson as PortalEventSeed[],

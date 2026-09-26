@@ -78,6 +78,6 @@ export const eventRoutes = [
       Object.assign(event, parseBody(eventModerationSchema, context.body))
       return event
     },
-    { roles: ['admin'] },
+    { permissions: ['content.moderate'] },
   ),
 ]

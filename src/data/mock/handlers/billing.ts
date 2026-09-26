@@ -43,6 +43,6 @@ export const billingRoutes = [
       context.db.pricing = { ...input, updatedAt: nowLocalDateTime() }
       return context.db.pricing
     },
-    { roles: ['admin'] },
+    { permissions: ['billing.manage'] },
   ),
 ]
