@@ -1,3 +1,4 @@
+import type { AdmissionFilters } from '../repositories/admissions.repository'
 import type { EventFilters } from '../repositories/events.repository'
 import type { GuideApplicationFilters } from '../repositories/guides.repository'
 import type { OrganizationFilters } from '../repositories/organizations.repository'
@@ -50,6 +51,13 @@ export const queryKeys = {
     detail: (userId: string) => ['users', 'detail', userId] as const,
   },
   staffRoles: ['staff-roles'] as const,
+  admissions: {
+    all: ['admissions'] as const,
+    list: (filters: AdmissionFilters) => ['admissions', 'list', filters] as const,
+    detail: (applicationId: string) => ['admissions', 'detail', applicationId] as const,
+    mine: ['admissions', 'mine'] as const,
+    reviewers: ['admissions', 'reviewers'] as const,
+  },
   guides: {
     all: ['guides'] as const,
     list: (filters: GuideApplicationFilters) => ['guides', 'list', filters] as const,

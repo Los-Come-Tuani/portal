@@ -11,6 +11,16 @@ export function usePlaces(filters: StopFilters = {}, enabled = true) {
   })
 }
 
+/** Sin sesión: para quien se postula y dice cuál es su lugar. */
+export function useAvailablePlaces(city: string) {
+  return useQuery({
+    queryKey: ['places', 'available', city],
+    queryFn: () => placesRepository.available(city),
+    enabled: !!city,
+    staleTime: 5 * 60_000,
+  })
+}
+
 export function usePlace(stopId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.places.detail(stopId ?? ''),

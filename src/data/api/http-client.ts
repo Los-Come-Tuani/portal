@@ -32,8 +32,9 @@ type Transport = (request: TransportRequest) => Promise<TransportResponse>
 
 const fetchTransport: Transport = async ({ method, path, query, body, token, signal }) => {
   const search = query.toString()
+  const multipart = body instanceof FormData
   const headers: Record<string, string> = { Accept: 'application/json' }
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  if (body !== undefined && !multipart) headers['Content-Type'] = 'application/json'
   if (token) headers.Authorization = `Bearer ${token}`
 
   let response: Response
@@ -41,7 +42,7 @@ const fetchTransport: Transport = async ({ method, path, query, body, token, sig
     response = await fetch(`${env.apiUrl}${path}${search ? `?${search}` : ''}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : multipart ? body : JSON.stringify(body),
       signal,
     })
   } catch (error) {
@@ -119,7 +120,19 @@ async function request<T>(method: HttpMethod, path: string, options: RequestOpti
   return unwrap(response.data) as T
 }
 
+/** A la API va como `multipart/form-data` (campo `file`); al backend de demo, como `data:`. */
+async function upload<T>(path: string, file: File): Promise<T> {
+  if (env.useMocks) {
+    const { toFilePayload } = await import('./file-payload')
+    return request<T>('POST', path, { body: await toFilePayload(file) })
+  }
+  const form = new FormData()
+  form.append('file', file)
+  return request<T>('POST', path, { body: form })
+}
+
 export const http = {
+  upload,
   get: <T>(path: string, options?: RequestOptions) => request<T>('GET', path, options),
   post: <T>(path: string, options?: RequestOptions) => request<T>('POST', path, options),
   put: <T>(path: string, options?: RequestOptions) => request<T>('PUT', path, options),

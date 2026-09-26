@@ -11,6 +11,7 @@ export interface StopFilters {
 /** Un "lugar" del portal es una parada de la app, más su perfil y novedades. */
 export const placesRepository = {
   list: (filters: StopFilters = {}) => http.get<Stop[]>(endpoints.stops.list, { query: { ...filters } }),
+  available: (city: string) => http.get<Stop[]>(endpoints.stops.available, { query: { city } }),
   get: (stopId: string) => http.get<Stop>(endpoints.stops.detail(stopId)),
   update: (stopId: string, input: StopInput) => http.put<Stop>(endpoints.stops.detail(stopId), { body: input }),
 
