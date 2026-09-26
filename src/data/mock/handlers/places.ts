@@ -25,6 +25,18 @@ function organizationOfStop(db: MockDatabase, stopId: string): string {
 }
 
 export const placeRoutes = [
+  route(
+    'GET',
+    endpoints.stops.available,
+    ({ db, query }) => {
+      const city = query.get('city')
+      const owned = new Set(db.organizations.flatMap((item) => item.stopIds))
+      return db.stops
+        .filter((stop) => !stop.draft && !owned.has(stop.id) && (!city || stop.city === city))
+        .sort((a, b) => a.name.localeCompare(b.name, 'es'))
+    },
+    { isPublic: true },
+  ),
   route('GET', endpoints.stops.list, (context) => {
     const user = requireUser(context)
     const { db, query } = context

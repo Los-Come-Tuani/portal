@@ -109,14 +109,7 @@
     "name": "Alcaldía de Granada",
     "kind": "Alcaldía municipal",
     "city": "Granada",
-    "stopIds": [
-      "granada-catedral",
-      "granada-parque-central",
-      "granada-calle-calzada",
-      "granada-convento-san-francisco",
-      "granada-mercado",
-      "granada-muelle"
-    ],
+    "stopIds": [],
     "status": "pending",
     "contactName": "Silvio Chamorro",
     "contactEmail": "granada@kplan.demo",

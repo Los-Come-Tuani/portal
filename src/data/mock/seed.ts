@@ -4,10 +4,11 @@ import { cityLocation, type Coupon, type EventItem } from '../models'
 import { catalog } from './catalog'
 import type { MockDatabase } from './db'
 import { generateRedemptions, seedActivations, seedCampaigns, seedPayments } from './generators/activity'
+import { seedAdmissions } from './generators/admissions'
 import { seedPeople } from './generators/people'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 3
+export const SCHEMA_VERSION = 4
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -73,16 +74,18 @@ export function seedDatabase(today: ISODate): MockDatabase {
     }),
   ]
 
-  const { users, guideApplications } = seedPeople(today)
+  const people = seedPeople(today)
+  const admissions = seedAdmissions(today, people.users, structuredClone(catalog.organizations), structuredClone(catalog.stops))
 
   return {
     version: SCHEMA_VERSION,
     seededOn: today,
-    users,
+    users: admissions.users,
     staffRoles: structuredClone(catalog.staffRoles),
-    guideApplications,
-    organizations: structuredClone(catalog.organizations),
-    stops: structuredClone(catalog.stops),
+    guideApplications: people.guideApplications,
+    organizationApplications: admissions.applications,
+    organizations: admissions.organizations,
+    stops: admissions.stops,
     circuits: structuredClone(catalog.circuits),
     groupSessions: structuredClone(catalog.groupSessions),
     profiles: catalog.profiles.map((profile) => ({ ...structuredClone(profile), updatedAt: now })),
