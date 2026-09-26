@@ -1,0 +1,71 @@
+[
+  {
+    "stopId": "granada-cocina-dona-tere",
+    "offerings": [
+      { "id": "of-indio-viejo", "name": "Indio viejo", "description": "Con tortilla de maíz y cuajada", "price": 180 },
+      { "id": "of-vigoron", "name": "Vigorón", "description": "Yuca, chicharrón y ensalada de repollo en hoja de chagüite", "price": 150 },
+      { "id": "of-sopa-queso", "name": "Sopa de queso", "description": "Sólo los viernes", "price": 200 },
+      { "id": "of-cacao", "name": "Fresco de cacao", "description": "Molido en casa", "price": 60 }
+    ],
+    "amenities": ["card", "restrooms", "kids", "reservations"],
+    "languages": ["Español", "Inglés"],
+    "contact": {
+      "phone": "+505 8000 0101",
+      "whatsapp": "+505 8000 0101",
+      "email": "",
+      "website": "",
+      "instagram": "@cocinadonatere",
+      "facebook": ""
+    }
+  },
+  {
+    "stopId": "esteli-tabacalera",
+    "offerings": [
+      { "id": "of-recorrido", "name": "Recorrido guiado", "description": "50 minutos, de la hoja al torcido", "price": 350 },
+      { "id": "of-taller-torcido", "name": "Taller de torcido", "description": "Tuerces tu propio puro con un maestro torcedor", "price": 900 },
+      { "id": "of-caja", "name": "Caja de 10 puros", "description": "Selección de la casa", "price": null }
+    ],
+    "amenities": ["card", "parking", "restrooms", "air-conditioning"],
+    "languages": ["Español", "Inglés"],
+    "contact": {
+      "phone": "+505 8000 0102",
+      "whatsapp": "+505 8000 0102",
+      "email": "tabacalera@kplan.demo",
+      "website": "",
+      "instagram": "",
+      "facebook": "Tabacalera artesanal de Estelí"
+    }
+  },
+  {
+    "stopId": "cafe-cata",
+    "offerings": [
+      { "id": "of-cata", "name": "Cata de cinco tazas", "description": "Protocolo de cupping con el catador de la finca", "price": 450 }
+    ],
+    "amenities": ["parking", "restrooms"],
+    "languages": ["Español", "Inglés", "Alemán"],
+    "contact": {
+      "phone": "+505 8000 0103",
+      "whatsapp": "+505 8000 0103",
+      "email": "finca@kplan.demo",
+      "website": "",
+      "instagram": "@fincaelmirador",
+      "facebook": ""
+    }
+  },
+  {
+    "stopId": "cafe-tueste",
+    "offerings": [
+      { "id": "of-tueste", "name": "Taller de tueste", "description": "Te llevas 250 g del café que tuestes", "price": 400 }
+    ],
+    "amenities": ["parking", "restrooms"],
+    "languages": ["Español", "Inglés"],
+    "contact": {
+      "phone": "+505 8000 0103",
+      "whatsapp": "",
+      "email": "",
+      "website": "",
+      "instagram": "@fincaelmirador",
+      "facebook": ""
+    }
+  }
+]

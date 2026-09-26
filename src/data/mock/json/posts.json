@@ -1,0 +1,42 @@
+[
+  {
+    "id": "post-dona-tere-sopa",
+    "stopId": "granada-cocina-dona-tere",
+    "organizationId": "org-cocina-dona-tere",
+    "title": "Sopa de queso todos los viernes",
+    "body": "Desde este viernes volvemos con la sopa de queso de la casa, con rosquillas de Somoto. Hay para 40 platos: llega antes de la 1:00 p.m.",
+    "image": "https://picsum.photos/seed/sopa-queso/900/600",
+    "daysAgo": 4,
+    "status": "published"
+  },
+  {
+    "id": "post-dona-tere-marimba",
+    "stopId": "granada-cocina-dona-tere",
+    "organizationId": "org-cocina-dona-tere",
+    "title": "Marimba en el patio los sábados",
+    "body": "Los sábados a mediodía toca don Chepe con su marimba. Si vienes en grupo, avísanos por WhatsApp y te guardamos mesa en el patio.",
+    "image": "https://picsum.photos/seed/marimba-patio/900/600",
+    "daysAgo": 13,
+    "status": "published"
+  },
+  {
+    "id": "post-tabacalera-cosecha",
+    "stopId": "esteli-tabacalera",
+    "organizationId": "org-tabacalera-esteli",
+    "title": "Empezó la selección de hoja de la cosecha",
+    "body": "Estas semanas se ve en el recorrido la selección de la hoja nueva. Es la mejor época para entender por qué el tabaco de Estelí es distinto.",
+    "image": "https://picsum.photos/seed/hoja-tabaco/900/600",
+    "daysAgo": 19,
+    "status": "published"
+  },
+  {
+    "id": "post-finca-corte",
+    "stopId": "cafe-beneficio",
+    "organizationId": "org-finca-el-mirador",
+    "title": "Ya empezó el corte de café",
+    "body": "El beneficio trabaja a todo ritmo con el grano recién cortado. En la cata de esta semana probamos el primer lote del año.",
+    "image": "https://picsum.photos/seed/corte-cafe/900/600",
+    "daysAgo": 3,
+    "status": "published"
+  }
+]

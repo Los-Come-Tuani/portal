@@ -1,0 +1,90 @@
+[
+  {
+    "id": "group-leon-1",
+    "circuitId": "leon-colonial",
+    "daysFromNow": 2,
+    "startTime": "9:00 a.m.",
+    "capacity": 12,
+    "joinedCount": 6,
+    "guideId": "guide-fatima",
+    "transportIncluded": true,
+    "note": "Nací en León: te muestro la ciudad que no sale en las postales. Salimos en microbús desde el Parque Central."
+  },
+  {
+    "id": "group-leon-2",
+    "circuitId": "leon-colonial",
+    "daysFromNow": 2,
+    "startTime": "3:00 p.m.",
+    "capacity": 12,
+    "joinedCount": 9,
+    "guideId": "guide-esteban",
+    "transportIncluded": false,
+    "note": "Recorrido a pie con explicaciones en español, inglés o francés, según el grupo."
+  },
+  {
+    "id": "group-leon-3",
+    "circuitId": "leon-colonial",
+    "daysFromNow": 5,
+    "startTime": "9:00 a.m.",
+    "capacity": 15,
+    "joinedCount": 3,
+    "guideId": "guide-marlene",
+    "transportIncluded": false,
+    "note": "Lleva agua y sombrero: la subida a los techos de la Catedral se hace descalzo."
+  },
+  {
+    "id": "group-leon-4",
+    "circuitId": "leon-colonial",
+    "daysFromNow": 6,
+    "startTime": "3:00 p.m.",
+    "capacity": 10,
+    "joinedCount": 10,
+    "guideId": "guide-ramon",
+    "transportIncluded": false,
+    "note": "Grupo de tarde: subimos a los techos con la luz dorada y cerramos con un quesillo en La Terminal."
+  },
+  {
+    "id": "group-masaya-1",
+    "circuitId": "masaya-artesanias-volcan",
+    "daysFromNow": 3,
+    "startTime": "9:00 a.m.",
+    "capacity": 15,
+    "joinedCount": 5,
+    "guideId": "guide-valeria",
+    "transportIncluded": true,
+    "note": "Probamos vigorón en el mercado antes de subir al volcán. El transporte al mirador va incluido."
+  },
+  {
+    "id": "group-masaya-2",
+    "circuitId": "masaya-artesanias-volcan",
+    "daysFromNow": 7,
+    "startTime": "2:00 p.m.",
+    "capacity": 15,
+    "joinedCount": 12,
+    "guideId": "guide-oscar",
+    "transportIncluded": false,
+    "note": "Ideal si te gusta caminar por Monimbó. Al mirador del volcán subimos en bus y el pasaje va aparte."
+  },
+  {
+    "id": "group-esteli-1",
+    "circuitId": "esteli-murales-tabaco",
+    "daysFromNow": 4,
+    "startTime": "9:00 a.m.",
+    "capacity": 12,
+    "joinedCount": 4,
+    "guideId": "guide-fatima",
+    "transportIncluded": true,
+    "note": "Murales, tabacalera y mirador Tisey en un solo día. El transporte va incluido."
+  },
+  {
+    "id": "group-esteli-2",
+    "circuitId": "esteli-murales-tabaco",
+    "daysFromNow": 8,
+    "startTime": "1:00 p.m.",
+    "capacity": 12,
+    "joinedCount": 9,
+    "guideId": "guide-marlene",
+    "transportIncluded": true,
+    "note": "Salida después del almuerzo, con transporte incluido hasta el mirador Tisey."
+  }
+]

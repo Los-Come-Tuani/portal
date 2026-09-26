@@ -1,0 +1,22 @@
+[
+  {
+    "id": "granada-cocina-dona-tere",
+    "name": "Cocina de Doña Tere",
+    "category": "Gastronomía",
+    "city": "Granada",
+    "address": "Calle La Calzada, media cuadra al lago, Granada",
+    "opensAt": "11:00 a.m.",
+    "closesAt": "9:00 p.m.",
+    "duration": "1 h",
+    "rating": 4.7,
+    "reviewsCount": 38,
+    "hasBadge": false,
+    "description": "Cocina granadina de patio: vigorón, indio viejo, sopa de queso los viernes y fresco de cacao molido en casa. La receta del nacatamal es de la abuela de Doña Tere.",
+    "tip": "Pide el indio viejo y deja espacio para los buñuelos con miel",
+    "images": [
+      "https://picsum.photos/seed/dona-tere/900/600",
+      "https://picsum.photos/seed/dona-tere-2/900/600"
+    ],
+    "coordinates": { "latitude": 11.9308, "longitude": -85.9533 }
+  }
+]

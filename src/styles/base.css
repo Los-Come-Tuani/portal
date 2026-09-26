@@ -1,0 +1,86 @@
+@layer base {
+  html {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-outline) transparent;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-brand) 26%, transparent);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+
+  input,
+  textarea {
+    caret-color: var(--color-brand);
+  }
+
+  ::placeholder {
+    color: var(--color-hint);
+    opacity: 1;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary {
+    cursor: pointer;
+  }
+
+  a {
+    text-underline-offset: 3px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  /* Al imprimir, sólo sale lo marcado con .print-area (el cartel QR). */
+  @media print {
+    @page {
+      margin: 12mm;
+    }
+    body * {
+      visibility: hidden;
+    }
+    .print-area,
+    .print-area * {
+      visibility: visible;
+    }
+    .print-area {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      box-shadow: none !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

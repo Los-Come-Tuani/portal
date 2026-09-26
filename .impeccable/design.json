@@ -1,0 +1,193 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-26T11:40:00-06:00",
+  "title": "Design System: Portal K'Plan",
+  "extensions": {
+    "colorMeta": {
+      "canvas": { "role": "neutral", "displayName": "Crema", "canonical": "var(--kp-primary-10)", "tonalRamp": ["#0e0b03", "#28251b", "#454237", "#656155", "#868276", "#a9a598", "#cdc9bc", "#f3efe1"] },
+      "paper": { "role": "neutral", "displayName": "Papel de Mapa", "canonical": "var(--kp-map-land)", "tonalRamp": ["#100a00", "#2b2413", "#49412f", "#68614d", "#8a826e", "#ada490", "#d1c9b3", "#f7eed8"] },
+      "paper-deep": { "role": "neutral", "displayName": "Papel Hondo", "canonical": "var(--kp-map-block)", "tonalRamp": ["#110a00", "#2d240e", "#4b412a", "#6b6048", "#8c8169", "#afa48a", "#d4c8ae", "#faedd2"] },
+      "surface": { "role": "neutral", "displayName": "Blanco Tarjeta", "canonical": "var(--kp-white)", "tonalRamp": ["#0b0b0b", "#252525", "#424242", "#616161", "#828282", "#a5a5a5", "#c9c9c9", "#eeeeee"] },
+      "field": { "role": "neutral", "displayName": "Relleno de Campo", "canonical": "var(--kp-field-fill)", "tonalRamp": ["#0c0b06", "#27251f", "#44423c", "#63615a", "#84827b", "#a7a59e", "#cbc9c1", "#f0efe7"] },
+      "placeholder": { "role": "neutral", "displayName": "Marcador", "canonical": "var(--kp-placeholder)", "tonalRamp": ["#0f0b02", "#292518", "#474234", "#666152", "#888273", "#aaa595", "#cfc9b8", "#f4eedd"] },
+      "ink": { "role": "neutral", "displayName": "Tinta", "canonical": "var(--kp-primary-60)", "tonalRamp": ["#0a0b0d", "#232527", "#404244", "#5f6164", "#808385", "#a3a5a8", "#c7c9cc", "#eceff2"] },
+      "muted": { "role": "neutral", "displayName": "Gris Texto", "canonical": "var(--kp-secondary-text)", "tonalRamp": ["#0b0b0b", "#252525", "#424242", "#616161", "#828282", "#a5a5a5", "#c9c9c9", "#eeeeee"] },
+      "hint": { "role": "neutral", "displayName": "Gris Ayuda", "canonical": "color-mix(in oklab, var(--kp-hint-text) 58%, var(--kp-primary-60))", "tonalRamp": ["#0d0b06", "#27251e", "#44423a", "#636159", "#84827a", "#a7a59c", "#cbc9c0", "#f1efe5"] },
+      "outline": { "role": "neutral", "displayName": "Arena", "canonical": "var(--kp-outline)", "tonalRamp": ["#100a01", "#2b2415", "#484131", "#686150", "#898270", "#aca492", "#d1c9b5", "#f6eeda"] },
+      "divider": { "role": "neutral", "displayName": "Arena Clara", "canonical": "var(--kp-divider)", "tonalRamp": ["#0f0b02", "#292518", "#474235", "#666153", "#878273", "#aaa596", "#cfc9b9", "#f4eede"] },
+      "brand": { "role": "primary", "displayName": "Terracota K'Plan", "canonical": "var(--kp-primary-30)", "tonalRamp": ["#1c0200", "#460f00", "#761f01", "#aa3102", "#d15632", "#fa7a56", "#ffb49f", "#fee9e3"] },
+      "brand-strong": { "role": "primary", "displayName": "Terracota Profundo", "canonical": "color-mix(in oklab, var(--kp-primary-30) 78%, var(--kp-primary-60))", "tonalRamp": ["#1c0300", "#470e00", "#771e01", "#9c4128", "#c26449", "#e9876b", "#feb5a0", "#ffe9e3"] },
+      "on-brand": { "role": "primary", "displayName": "Blanco sobre Terracota", "canonical": "var(--kp-white)", "tonalRamp": ["#0b0b0b", "#252525", "#424242", "#616161", "#828282", "#a5a5a5", "#c9c9c9", "#eeeeee"] },
+      "white": { "role": "neutral", "displayName": "Blanco", "canonical": "var(--kp-white)", "tonalRamp": ["#0b0b0b", "#252525", "#424242", "#616161", "#828282", "#a5a5a5", "#c9c9c9", "#eeeeee"] },
+      "planned": { "role": "secondary", "displayName": "Azul Itinerario", "canonical": "var(--kp-accent-blue)", "tonalRamp": ["#000c19", "#002742", "#07466d", "#2f6690", "#5188b4", "#74abd9", "#98d0fe", "#e1f1ff"] },
+      "confirmed": { "role": "secondary", "displayName": "Verde QR", "canonical": "var(--kp-accent-green)", "tonalRamp": ["#000f07", "#002d1c", "#0b4e35", "#326f54", "#559174", "#77b596", "#9bd9ba", "#c3ffe0"] },
+      "badge": { "role": "tertiary", "displayName": "Oro de Medalla", "canonical": "var(--kp-medal-gold)", "tonalRamp": ["#100a00", "#2f2301", "#533f01", "#795d01", "#a07d07", "#c7a02f", "#ecc459", "#ffedc2"] },
+      "badge-deep": { "role": "tertiary", "displayName": "Oro Viejo", "canonical": "color-mix(in oklab, var(--kp-medal-gold) 45%, var(--kp-primary-60))", "tonalRamp": ["#100a00", "#2f2300", "#4e401b", "#6e603a", "#90815a", "#b3a47c", "#d8c89f", "#fdeec3"] },
+      "medal-none": { "role": "tertiary", "displayName": "Medalla sin ganar", "canonical": "var(--kp-medal-none)", "tonalRamp": ["#0f0a02", "#2a2418", "#474134", "#676152", "#888273", "#aba495", "#d0c9b8", "#f5eedd"] },
+      "star": { "role": "content", "displayName": "Estrella", "canonical": "var(--kp-star)", "tonalRamp": ["#130900", "#352000", "#5b3a00", "#855601", "#b07402", "#de9305", "#ffba5a", "#ffebd3"] },
+      "danger": { "role": "error", "displayName": "Error", "canonical": "var(--kp-error)", "tonalRamp": ["#1f0000", "#4d0001", "#810103", "#b0221b", "#d84c3f", "#ff7464", "#ffb3a8", "#ffe9e5"] },
+      "chip-city": { "role": "content", "displayName": "Chip Ciudad", "canonical": "var(--kp-chip-city)", "tonalRamp": ["#000c19", "#002841", "#00466e", "#04679e", "#238acb", "#4faef2", "#97d0fe", "#e1f1ff"] },
+      "chip-nature": { "role": "content", "displayName": "Chip Naturaleza", "canonical": "var(--kp-chip-nature)", "tonalRamp": ["#000e10", "#002b30", "#044b52", "#056e78", "#0493a0", "#40b8c5", "#6bddea", "#c9f9ff"] },
+      "chip-culture": { "role": "content", "displayName": "Chip Cultura", "canonical": "var(--kp-chip-culture)", "tonalRamp": ["#120027", "#300f52", "#4d3074", "#6d5097", "#8e71bc", "#b194e1", "#d4bbff", "#f1ebfe"] },
+      "map-land": { "role": "map", "displayName": "Tierra del Mapa", "canonical": "var(--kp-map-land)", "tonalRamp": ["#100a00", "#2b2413", "#49412f", "#68614d", "#8a826e", "#ada490", "#d1c9b3", "#f7eed8"] },
+      "map-water": { "role": "map", "displayName": "Agua del Mapa", "canonical": "var(--kp-map-water)", "tonalRamp": ["#000d15", "#0f2833", "#2d4652", "#4b6672", "#6c8794", "#8eaab8", "#b1cedd", "#dbf3fe"] },
+      "map-park": { "role": "map", "displayName": "Parque del Mapa", "canonical": "var(--kp-map-park)", "tonalRamp": ["#080e00", "#20290c", "#3c4729", "#5b6647", "#7c8867", "#9eab89", "#c2cfac", "#e7f5d1"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Sólo la frase grande del panel ilustrado del login." },
+      "headline": { "displayName": "Headline", "purpose": "Título de cada página (PageHeader, rango de la semana, nombre del lugar en el editor)." },
+      "heading": { "displayName": "Heading", "purpose": "Nombre del lugar en el cartel QR y la vista previa; día del mes en la fecha de un evento." },
+      "title": { "displayName": "Title", "purpose": "Títulos de panel, diálogo y panel del día; totales de dinero en 700." },
+      "lead": { "displayName": "Lead", "purpose": "Oración de resumen de cada vista; títulos de estados vacíos; números del día en la semana." },
+      "body": { "displayName": "Body", "purpose": "Tamaño por defecto del documento: filas, navegación, pestañas, campos." },
+      "small": { "displayName": "Small", "purpose": "Líneas secundarias, etiquetas de campo, datos de grupo, texto de botones medianos." },
+      "caption": { "displayName": "Caption", "purpose": "Ayudas de campo, horas de la cuadrícula, subtítulos." },
+      "caption-strong": { "displayName": "Caption 600", "purpose": "Etiquetas (Tag), fichas de la cuadrícula, franjas de campaña." },
+      "label": { "displayName": "Label", "purpose": "Cabeceras de columna en mayúsculas con tracking: tablas, días, meses cortos, fases." },
+      "button": { "displayName": "Button", "purpose": "Botones primario, secundario y destructivo en mayúsculas con tracking." },
+      "figure": { "displayName": "Figure", "purpose": "Cifras de la cuadrícula y columnas numéricas con números tabulares." }
+    },
+    "shadows": [
+      { "name": "raise", "value": "0 1px 2px color-mix(in srgb, var(--kp-primary-60) 8%, transparent)", "purpose": "Levantamiento mínimo de piezas pequeñas: perilla del switch, número que cruza la línea de ahora, íconos de la vista previa, cartel QR en pantalla." },
+      { "name": "pop", "value": "0 18px 40px -12px color-mix(in srgb, var(--kp-primary-60) 30%, transparent), 0 2px 6px color-mix(in srgb, var(--kp-primary-60) 8%, transparent)", "purpose": "Todo lo que flota sobre la página: diálogos, menús, avisos, barra de guardado, pin del mapa, marco del teléfono." },
+      { "name": "ring-selected", "value": "inset 0 0 0 2px var(--color-ink)", "purpose": "Celda elegida o enfocada en la cuadrícula; estado, no elevación." },
+      { "name": "ring-hover", "value": "inset 0 0 0 1px var(--color-ink)", "purpose": "Hover de celda en la cuadrícula." },
+      { "name": "today-rule", "value": "inset 0 3px 0 var(--color-brand)", "purpose": "Raya superior de la columna de hoy." },
+      { "name": "campaign-active-rule", "value": "inset 0 4px 0 var(--color-badge)", "purpose": "Raya superior de una campaña activa." },
+      { "name": "field-focus", "value": "0 0 0 1px var(--color-ink)", "purpose": "Anillo de foco de campos, junto al borde en tinta; en error usa var(--color-danger)." },
+      { "name": "focus-visible", "value": "outline: 2px solid var(--color-ink); outline-offset: 2px", "purpose": "Anillo de foco global de teclado." }
+    ],
+    "motion": [
+      { "name": "ease-out-expo", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Curva de entrada de superficies, perilla del switch y barras de progreso." },
+      { "name": "rise", "value": "rise 220ms var(--ease-out-expo)", "purpose": "Entrada de diálogos centrados, menús, avisos y barra de guardado (sube 6 px desde opacidad 0)." },
+      { "name": "fade", "value": "fade 180ms ease-out", "purpose": "Entrada del cajón de navegación móvil." },
+      { "name": "slide-in", "value": "slide-in 260ms var(--ease-out-expo)", "purpose": "Entrada del diálogo lateral desde 24 px a la derecha." },
+      { "name": "state", "value": "150ms ease-out", "purpose": "Transiciones de color, borde y sombra en controles, filas y celdas." },
+      { "name": "route-loading", "value": "300ms ease-out", "purpose": "Barra terracota de 2 px bajo la barra superior mientras carga una ruta." },
+      { "name": "reduced-motion", "value": "0.01ms", "purpose": "prefers-reduced-motion reduce toda animación y transición a 0.01 ms." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "La acción principal de la vista, en terracota y mayúsculas con tracking; una por vista.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 7V5a2 2 0 0 1 2-2h2\"/><path d=\"M17 3h2a2 2 0 0 1 2 2v2\"/><path d=\"M21 17v2a2 2 0 0 1-2 2h-2\"/><path d=\"M7 21H5a2 2 0 0 1-2-2v-2\"/><path d=\"M7 12h10\"/></svg>Validar cupón</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border: none; border-radius: var(--radius-kp, 10px); background: var(--color-brand); color: var(--color-on-brand); font-family: var(--font-sans); font-size: var(--text-small, 0.8125rem); line-height: 1.25rem; font-weight: 600; letter-spacing: var(--tracking-label, 0.06em); text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: background-color 150ms ease-out, transform 150ms ease-out; } .ds-btn-primary:hover { background: var(--color-brand-strong); } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }"
+    },
+    {
+      "name": "Botón secundario",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acción de apoyo con borde de tinta de 1.5 px, también en mayúsculas.",
+      "html": "<button class=\"ds-btn-secondary\">Reintentar</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border: 1.5px solid var(--color-ink); border-radius: var(--radius-kp, 10px); background: transparent; color: var(--color-ink); font-family: var(--font-sans); font-size: var(--text-small, 0.8125rem); line-height: 1.25rem; font-weight: 600; letter-spacing: var(--tracking-label, 0.06em); text-transform: uppercase; cursor: pointer; transition: background-color 150ms ease-out, transform 150ms ease-out; } .ds-btn-secondary:hover { background: color-mix(in oklab, var(--color-ink) 6%, transparent); } .ds-btn-secondary:active { transform: translateY(1px); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }"
+    },
+    {
+      "name": "Campo de texto",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo con etiqueta, relleno claro, borde arena y foco en tinta.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Correo</span><input class=\"ds-input\" type=\"email\" placeholder=\"tu@negocio.com\" /><span class=\"ds-field-hint\">El mismo con el que entras a la app.</span></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 6px; font-family: var(--font-sans); } .ds-field-label { font-size: var(--text-small, 0.8125rem); line-height: 1.25rem; font-weight: 500; color: var(--color-ink); } .ds-field-hint { font-size: var(--text-caption, 0.75rem); line-height: 1.125rem; color: var(--color-muted); } .ds-input { width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--color-outline); border-radius: var(--radius-kp, 10px); background: var(--color-field); color: var(--color-ink); font: inherit; font-size: var(--text-body, 0.875rem); caret-color: var(--color-brand); transition: border-color 150ms, box-shadow 150ms; } .ds-input::placeholder { color: var(--color-hint); opacity: 1; } .ds-input:hover { border-color: color-mix(in oklab, var(--color-ink) 40%, transparent); } .ds-input:focus { outline: none; border-color: var(--color-ink); box-shadow: 0 0 0 1px var(--color-ink); } .ds-input[aria-invalid=true] { border-color: var(--color-danger); } .ds-input[aria-invalid=true]:focus { box-shadow: 0 0 0 1px var(--color-danger); }"
+    },
+    {
+      "name": "Navegación lateral",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Barra lateral en papel de mapa; el ítem activo en tinta con texto crema.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item is-active\" href=\"#\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/></svg>Agenda</a><a class=\"ds-nav-item\" href=\"#\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/></svg>Mi lugar</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 2px; width: 15.5rem; padding: 8px 12px; background: var(--color-paper); font-family: var(--font-sans); } .ds-nav-item { display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: var(--radius-kp, 10px); color: color-mix(in oklab, var(--color-ink) 80%, transparent); font-size: var(--text-body, 0.875rem); font-weight: 500; text-decoration: none; transition: background-color 150ms, color 150ms; } .ds-nav-item:hover { background: var(--color-paper-deep); color: var(--color-ink); } .ds-nav-item.is-active { background: var(--color-ink); color: var(--color-canvas); } .ds-nav-item:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }"
+    },
+    {
+      "name": "Etiquetas de estado",
+      "kind": "chip",
+      "refersTo": "tag-planned",
+      "description": "Tag de 24 px y 6 px de radio; un tono por significado.",
+      "html": "<div class=\"ds-tags\"><span class=\"ds-tag ds-tag-planned\">Por llegar</span><span class=\"ds-tag ds-tag-brand\">Llegando</span><span class=\"ds-tag ds-tag-confirmed\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"5\" height=\"5\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"5\" height=\"5\" x=\"16\" y=\"3\" rx=\"1\"/><rect width=\"5\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/><path d=\"M21 16h-3a2 2 0 0 0-2 2v3\"/><path d=\"M21 21v.01\"/><path d=\"M12 7v3a2 2 0 0 1-2 2H7\"/><path d=\"M3 12h.01\"/><path d=\"M12 3h.01\"/><path d=\"M12 16v.01\"/><path d=\"M16 12h1\"/><path d=\"M21 12v.01\"/><path d=\"M12 21v-1\"/></svg>12:14 p.m.</span><span class=\"ds-tag ds-tag-badge\">Da insignia</span><span class=\"ds-tag ds-tag-danger\">No llegó</span><span class=\"ds-tag ds-tag-neutral\">Sin confirmar</span><span class=\"ds-tag ds-tag-ink\">12 – 1 p.m.</span></div>",
+      "css": ".ds-tags { display: flex; flex-wrap: wrap; gap: 8px; font-family: var(--font-sans); } .ds-tag { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: var(--radius-sm, 6px); font-size: var(--text-caption, 0.75rem); font-weight: 600; white-space: nowrap; } .ds-tag-planned { background: color-mix(in oklab, var(--color-planned) 10%, transparent); color: var(--color-planned); } .ds-tag-confirmed { background: color-mix(in oklab, var(--color-confirmed) 10%, transparent); color: var(--color-confirmed); } .ds-tag-brand { background: color-mix(in oklab, var(--color-brand) 12%, transparent); color: var(--color-brand-strong); } .ds-tag-badge { background: var(--color-badge); color: var(--color-ink); } .ds-tag-danger { background: color-mix(in oklab, var(--color-danger) 10%, transparent); color: var(--color-danger); } .ds-tag-neutral { background: var(--color-paper); color: var(--color-muted); } .ds-tag-ink { background: var(--color-ink); color: var(--color-canvas); }"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Tarjeta blanca con borde arena, cabecera con regla y cuerpo de 20 px; plana en reposo.",
+      "html": "<section class=\"ds-panel\"><header class=\"ds-panel-head\"><h2 class=\"ds-panel-title\">Tu ficha en la app</h2><p class=\"ds-panel-desc\">Lo que el turista ve antes de decidir si te agrega a su día.</p></header><div class=\"ds-panel-body\">Tiene 2 fotos: con 3 o más la ficha se ve mucho mejor. <a class=\"ds-action-link\" href=\"#\">Agregar fotos →</a></div></section>",
+      "css": ".ds-panel { border: 1px solid var(--color-divider); border-radius: var(--radius-kp, 10px); background: var(--color-surface); color: var(--color-ink); font-family: var(--font-sans); max-width: 26rem; } .ds-panel-head { padding: 16px 20px; border-bottom: 1px solid var(--color-divider); } .ds-panel-title { margin: 0; font-size: var(--text-title, 1.125rem); line-height: 1.5rem; font-weight: 600; } .ds-panel-desc { margin: 2px 0 0; font-size: var(--text-small, 0.8125rem); line-height: 1.25rem; color: var(--color-muted); } .ds-panel-body { padding: 20px; font-size: var(--text-body, 0.875rem); line-height: 1.375rem; } .ds-action-link { display: inline-block; margin-top: 8px; font-size: var(--text-small, 0.8125rem); font-weight: 600; color: var(--color-brand-strong); text-decoration: none; } .ds-action-link:hover { text-decoration: underline; text-underline-offset: 3px; } .ds-action-link:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; border-radius: 6px; }"
+    },
+    {
+      "name": "Control segmentado",
+      "kind": "custom",
+      "refersTo": "segmented-option-selected",
+      "description": "Opciones excluyentes (Día · Semana · Mes); la elegida en tinta.",
+      "html": "<div class=\"ds-seg\" role=\"radiogroup\" aria-label=\"Vista\"><button class=\"ds-seg-opt\" role=\"radio\" aria-checked=\"false\">Día</button><button class=\"ds-seg-opt\" role=\"radio\" aria-checked=\"true\">Semana</button><button class=\"ds-seg-opt\" role=\"radio\" aria-checked=\"false\">Mes</button></div>",
+      "css": ".ds-seg { display: inline-flex; padding: 2px; border: 1px solid var(--color-outline); border-radius: var(--radius-kp, 10px); background: var(--color-field); font-family: var(--font-sans); } .ds-seg-opt { height: 32px; padding: 0 14px; border: none; border-radius: 8px; background: transparent; color: var(--color-muted); font: inherit; font-size: var(--text-small, 0.8125rem); font-weight: 500; cursor: pointer; transition: color 150ms, background-color 150ms; } .ds-seg-opt:hover { color: var(--color-ink); } .ds-seg-opt[aria-checked=true] { background: var(--color-ink); color: var(--color-canvas); } .ds-seg-opt:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }"
+    },
+    {
+      "name": "Celdas de la agenda",
+      "kind": "custom",
+      "refersTo": "week-cell",
+      "description": "Celdas de la semana teñidas de azul por gente esperada, ficha de confirmados verde (neutra en cero), línea terracota de ahora y anillo de tinta al elegir.",
+      "html": "<table class=\"ds-week\"><tbody><tr><td class=\"ds-cell ds-t2\"><span class=\"ds-num\">7</span><span class=\"ds-chip-zero\">0</span></td><td class=\"ds-cell ds-t4\"><span class=\"ds-num\">15</span><span class=\"ds-chip\"><svg width=\"10\" height=\"10\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg>13</span></td><td class=\"ds-cell ds-t3 is-selected\" tabindex=\"0\"><span class=\"ds-num ds-num-now\">9</span><span class=\"ds-now\" style=\"top:40%\"><span class=\"ds-now-dot\"></span></span></td><td class=\"ds-cell ds-t5\"><span class=\"ds-num ds-num-on\">13</span></td><td class=\"ds-cell\"></td></tr></tbody></table>",
+      "css": ".ds-week { border-collapse: separate; border-spacing: 0; border: 1px solid var(--color-divider); border-radius: var(--radius-kp, 10px); overflow: hidden; background: var(--color-surface); font-family: var(--font-sans); } .ds-cell { position: relative; width: 72px; height: 44px; padding: 0; text-align: center; vertical-align: middle; border-left: 1px solid var(--color-divider); cursor: pointer; transition: box-shadow 150ms; } .ds-cell:first-child { border-left: none; } .ds-cell:hover { box-shadow: inset 0 0 0 1px var(--color-ink); } .ds-cell.is-selected, .ds-cell:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--color-ink); } .ds-t2 { background: color-mix(in oklab, var(--color-planned) 18%, transparent); } .ds-t3 { background: color-mix(in oklab, var(--color-planned) 32%, transparent); } .ds-t4 { background: color-mix(in oklab, var(--color-planned) 52%, transparent); } .ds-t5 { background: var(--color-planned); } .ds-num { position: relative; z-index: 7; font-size: var(--text-small, 0.8125rem); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-ink); } .ds-num-on { color: var(--color-white); } .ds-num-now { padding: 1px 6px; border-radius: 6px; background: var(--color-surface); box-shadow: var(--shadow-raise); } .ds-chip, .ds-chip-zero { position: absolute; right: 4px; bottom: 4px; z-index: 7; display: flex; align-items: center; gap: 1px; height: 16px; padding: 0 4px; border-radius: var(--radius-sm, 6px); font-size: var(--text-caption, 0.75rem); line-height: 1; font-weight: 600; font-variant-numeric: tabular-nums; } .ds-chip { background: var(--color-confirmed); color: var(--color-white); } .ds-chip-zero { border: 1px solid color-mix(in oklab, var(--color-ink) 25%, transparent); background: var(--color-surface); color: var(--color-muted); } .ds-now { position: absolute; left: 0; right: 0; z-index: 6; height: 2px; background: var(--color-brand); pointer-events: none; } .ds-now-dot { position: absolute; top: -3px; left: -4px; width: 8px; height: 8px; border-radius: 9999px; background: var(--color-brand); }"
+    },
+    {
+      "name": "Aviso",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Aviso en tinta con texto crema, abajo a la derecha, como el snackbar de la app.",
+      "html": "<div class=\"ds-toast\" role=\"status\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/></svg><div><p class=\"ds-toast-title\">Cupón validado</p><p class=\"ds-toast-desc\">Se sumó a tu estado de cuenta de septiembre.</p></div></div>",
+      "css": ".ds-toast { display: flex; align-items: flex-start; gap: 12px; width: min(24rem, calc(100% - 2rem)); padding: 12px 16px; border-radius: var(--radius-kp, 10px); background: var(--color-ink); color: var(--color-canvas); box-shadow: var(--shadow-pop); font-family: var(--font-sans); animation: ds-rise 220ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-toast svg { flex-shrink: 0; margin-top: 2px; opacity: 0.9; } .ds-toast-title { margin: 0; font-size: var(--text-body, 0.875rem); font-weight: 600; } .ds-toast-desc { margin: 2px 0 0; font-size: var(--text-small, 0.8125rem); color: color-mix(in oklab, var(--color-canvas) 80%, transparent); } @keyframes ds-rise { from { opacity: 0; transform: translateY(6px); } } @media (prefers-reduced-motion: reduce) { .ds-toast { animation-duration: 0.01ms; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "La agenda de la app",
+    "overview": "El portal no es un producto aparte: es la app de K'Plan abierta en la computadora de la oficina. Fondo crema, texto y reglas en tinta, tarjetas blancas con borde arena, esquinas de 10 px, botones en mayúsculas con tracking y Poppins en todo. Sobre ese mundo, fijado desde la app móvil, el portal se ordena en el tiempo: la pantalla de inicio es la semana de llegadas que los itinerarios ya anuncian, y cada módulo (ficha del lugar, cupones, eventos, insignias, pagos) cuelga de esa misma agenda.\n\nLa densidad es de herramienta de trabajo diario: tipo de 14 px por defecto, filas de 44 px, paneles con 20 px de relleno, un solo tono de acento por significado. El color no decora: cada tono dice algo del dato. El azul son las visitas planeadas, el verde las confirmadas con QR, el dorado las insignias, el terracota la acción principal y el \"ahora\". Todo lo demás es tinta sobre crema.\n\nLo que resume una vista se dice en una oración con las cifras en negrita, no en una fila de tarjetas de métricas. Las superficies son planas y se separan con bordes; la sombra sólo aparece en lo que flota sobre la página.",
+    "keyCharacteristics": [
+      "Fondo crema (`canvas`) con barra lateral en papel de mapa (`paper`); tarjetas blancas con borde `divider`.",
+      "Poppins 400/500/600/700 en toda la interfaz; escala tipográfica con los mismos nombres que `app_text_styles.dart`.",
+      "Esquinas de 10 px (`rounded-kp`) en controles y contenedores.",
+      "Un significado por color: azul planeado, verde confirmado, dorado insignias, terracota acción y ahora, tinta selección.",
+      "Resúmenes en oraciones, cifras con números tabulares.",
+      "Plano por defecto; la sombra marca lo que flota."
+    ],
+    "rules": [
+      { "name": "The Una Línea Rule", "body": "Un color se cambia en una sola línea de `:root` (y en la app). Ningún componente escribe un hex ni un valor arbitrario; si falta un tono, se agrega un `--kp-*` y un rol en `@theme`.", "section": "colors" },
+      { "name": "The Un Significado Rule", "body": "Azul es planeado o pendiente, verde es confirmado, dorado es insignia o campaña, terracota es acción principal, enlace de acción, hoy y ahora. La selección y lo activo son tinta, nunca un acento.", "section": "colors" },
+      { "name": "The El Cero No Es Verde Rule", "body": "Una cuenta de confirmados en cero se dibuja como ficha neutra con borde de tinta al 25 % sobre blanco y número en `muted`. El verde aparece sólo cuando alguien escaneó el QR.", "section": "colors" },
+      { "name": "The Números Tabulares Rule", "body": "Toda cifra que se compara o se alinea (personas, horas, dinero, conteos de pestaña, columnas numéricas de tabla) lleva `tabular-nums`. Las columnas alineadas a la derecha lo aplican solas.", "section": "typography" },
+      { "name": "The Mayúsculas Para Actuar Rule", "body": "Las mayúsculas con tracking (`tracking-label`) son para los botones de acción y para las cabeceras de columna de los datos. No se usan como antetítulo sobre un encabezado ni como adorno de sección.", "section": "typography" },
+      { "name": "The Plano En Reposo Rule", "body": "Paneles, tarjetas, tablas y la cuadrícula no llevan sombra. Si algo necesita separarse de la página, se le da borde `divider` sobre `surface`.", "section": "elevation" },
+      { "name": "The Sólo Flota Lo Que Tapa Rule", "body": "`shadow-pop` es para lo que se superpone al contenido. Siempre va con su animación de entrada (`animate-rise`, `animate-slide-in` o `animate-fade`).", "section": "elevation" },
+      { "name": "The Diez Píxeles Rule", "body": "Toda superficie o control nuevo usa `rounded-kp`. Los otros radios existen sólo para lo anidado (6 px, 8 px), para lo que flota o se imprime (16 px) y para lo circular.", "section": "shapes" }
+    ],
+    "dos": [
+      "**Do** usar sólo los roles de `@theme` (`bg-canvas`, `text-ink`, `border-divider`, `bg-brand`…); un color nuevo entra como `--kp-*` en `:root` y un rol en `@theme`.",
+      "**Do** reservar el azul `planned` para lo planeado o pendiente, el verde `confirmed` para lo confirmado, el oro `badge` para insignias y campañas, y el terracota `brand` para la acción principal, los enlaces de acción, hoy y ahora.",
+      "**Do** marcar la selección y lo activo con tinta: fondo `ink` con texto `canvas`, o anillo interior de 2 px en tinta.",
+      "**Do** resumir cada vista con una oración en `text-lead` `muted` con las cifras en `ink` 600.",
+      "**Do** usar `rounded-kp` (10 px) en todo control y contenedor nuevo, y `rounded-sm` (6 px) para lo que va adentro.",
+      "**Do** poner `tabular-nums` en toda cifra que se compara o se alinea.",
+      "**Do** separar superficies con borde `divider` sobre `surface`, y reservar `shadow-pop` para lo que flota.",
+      "**Do** usar `text-brand-strong`, no `text-brand`, para texto terracota sobre fondos claros, y `text-badge-deep` para íconos dorados.",
+      "**Do** animar sólo con los tokens (`animate-rise` 220 ms, `animate-fade` 180 ms, `animate-slide-in` 260 ms, `ease-out-expo`) y transiciones de estado de 150 ms; `prefers-reduced-motion` las apaga todas."
+    ],
+    "donts": [
+      "**Don't** escribir un hex, un `rgb()` ni un color arbitrario en un componente.",
+      "**Don't** pintar de verde una cuenta en cero ni nada que no esté confirmado.",
+      "**Don't** usar el oro fuera de insignias y campañas, ni el terracota como relleno decorativo, color de categoría o fondo de estado.",
+      "**Don't** resumir una vista con una fila de tarjetas de métricas, un gráfico de línea y una tabla.",
+      "**Don't** agregar sombra a paneles, tarjetas o tablas en reposo.",
+      "**Don't** usar otra familia tipográfica que Poppins, ni tamaños fuera de la escala con nombre fuera de la vista previa del teléfono.",
+      "**Don't** usar mayúsculas con tracking como antetítulo sobre un encabezado.",
+      "**Don't** usar radios fuera de 6, 10 y 16 px y el círculo, salvo el marco del teléfono."
+    ]
+  }
+}
