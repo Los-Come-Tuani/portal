@@ -9,13 +9,13 @@ import { paths } from '../router/paths'
 import { DemoMenu } from './DemoMenu'
 
 export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
-  const { organization, role } = useSession()
+  const { organization, role, user } = useSession()
   const validateCoupon = useValidateCoupon()
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-divider bg-canvas px-4 sm:px-6 lg:px-8">
       <IconButton label="Abrir menú" icon={<MenuIcon size={20} />} onClick={onOpenNav} className="-ml-2 lg:hidden" />
-      <Link to={paths.home} className="lg:hidden" aria-label="K'Plan, ir a la agenda">
+      <Link to={paths.home} className="lg:hidden" aria-label="K'Plan, ir al inicio">
         <Isologo className="h-8 text-ink" />
       </Link>
 
@@ -33,7 +33,10 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
             )}
           </>
         ) : (
-          <p className="text-body font-semibold text-ink">Equipo K'Plan</p>
+          <>
+            <p className="text-body font-semibold text-ink">Equipo K'Plan</p>
+            {user.staffRoleName && <span className="hidden text-small text-muted md:inline">{user.staffRoleName}</span>}
+          </>
         )}
       </div>
 

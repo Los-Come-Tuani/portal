@@ -1,44 +1,178 @@
-import { ChevronsUpDown, LogOut } from 'lucide-react'
-import { Link, NavLink } from 'react-router'
+import { ChevronDown, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { useEffect, useId, useRef, useState, type FocusEvent, type MouseEvent } from 'react'
+import { Link, matchPath, NavLink, useLocation } from 'react-router'
 import { Logo } from '@/components/brand/Logo'
 import { Avatar, Menu, MenuItem } from '@/components/ui'
+import { useGuideApplications } from '@/data/hooks/use-guides'
+import { useOrganizations } from '@/data/hooks/use-organizations'
 import { ROLE_LABELS } from '@/data/models'
 import { useAuth, useSession } from '@/features/auth/use-auth'
 import { cn } from '@/lib/cn'
 import { paths } from '../router/paths'
-import { navigationFor } from './navigation'
+import { navigationFor, type NavChild, type NavCount, type NavGroupEntry, type NavLinkEntry } from './navigation'
+import type { useSidebarPreferences } from './use-sidebar-preferences'
 
-export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+type Preferences = ReturnType<typeof useSidebarPreferences>
+
+interface SidebarContentProps {
+  preferences: Preferences
+  /** En escritorio la barra se contrae; en el cajón del celular siempre va extendida. */
+  collapsible?: boolean
+  onNavigate?: () => void
+}
+
+/** Lo que flota junto a un ícono con la barra contraída. */
+type Floating = { kind: 'hint'; label: string; top: number } | { kind: 'group'; group: NavGroupEntry; top: number; trigger: HTMLElement }
+
+interface HintProps {
+  onMouseEnter?: (event: MouseEvent<HTMLElement>) => void
+  onFocus?: (event: FocusEvent<HTMLElement>) => void
+  onMouseLeave?: () => void
+  onBlur?: () => void
+}
+
+const ITEM =
+  'group/item relative flex h-10 w-full items-center gap-3 rounded-kp pr-3 pl-3.75 text-left text-body font-medium transition-colors duration-150'
+const IDLE = 'text-ink/80 hover:bg-paper-deep hover:text-ink'
+const ACTIVE = 'bg-ink text-canvas'
+
+function isActive(pathname: string, item: { to: string; end?: boolean }): boolean {
+  return matchPath({ path: item.to, end: item.end ?? false }, pathname) !== null
+}
+
+function usePendingCounts(): Record<NavCount, number> {
+  const { can } = useSession()
+  const guides = useGuideApplications({ status: 'in_review' }, can('guides.review', 'guides.decide'))
+  const organizations = useOrganizations({ status: 'pending' }, can('organizations.review', 'organizations.manage'))
+  return { pendingGuides: guides.data?.length ?? 0, pendingOrganizations: organizations.data?.length ?? 0 }
+}
+
+export function SidebarContent({ preferences, collapsible = false, onNavigate }: SidebarContentProps) {
   const session = useSession()
   const { logout } = useAuth()
-  const items = navigationFor(session)
+  const { pathname } = useLocation()
+  const counts = usePendingCounts()
+  const entries = navigationFor(session)
+  const collapsed = collapsible && preferences.collapsed
+  const [floating, setFloating] = useState<Floating | null>(null)
+  const flyoutRef = useRef<HTMLDivElement>(null)
+
+  const [previous, setPrevious] = useState({ collapsed, pathname })
+  if (previous.collapsed !== collapsed || previous.pathname !== pathname) {
+    setPrevious({ collapsed, pathname })
+    setFloating(null)
+  }
+
+  useEffect(() => {
+    if (floating?.kind !== 'group') return
+    const trigger = floating.trigger
+    flyoutRef.current?.querySelector<HTMLElement>('a')?.focus()
+    const onPointer = (event: PointerEvent) => {
+      const target = event.target as Node
+      if (!flyoutRef.current?.contains(target) && !trigger.contains(target)) setFloating(null)
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setFloating(null)
+      trigger.focus()
+    }
+    document.addEventListener('pointerdown', onPointer)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onPointer)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [floating])
+
+  const hintProps = (label: string): HintProps =>
+    collapsed
+      ? {
+          onMouseEnter: (event: MouseEvent<HTMLElement>) => showHint(label, event.currentTarget),
+          onFocus: (event: FocusEvent<HTMLElement>) => showHint(label, event.currentTarget),
+          onMouseLeave: hideHint,
+          onBlur: hideHint,
+        }
+      : {}
+
+  function showHint(label: string, element: HTMLElement) {
+    setFloating((current) => {
+      if (current?.kind === 'group') return current
+      const rect = element.getBoundingClientRect()
+      return { kind: 'hint', label, top: rect.top + rect.height / 2 }
+    })
+  }
+
+  function hideHint() {
+    setFloating((current) => (current?.kind === 'hint' ? null : current))
+  }
 
   return (
     <div className="flex h-full flex-col">
-      <Link to={paths.home} onClick={onNavigate} className="flex h-16 items-center px-5" aria-label="K'Plan, ir a la agenda">
-        <Logo className="h-9 text-ink" />
-      </Link>
+      <div className={cn('flex h-16 shrink-0 items-center gap-2 overflow-hidden', collapsible ? 'px-3' : 'px-5')}>
+        {collapsible && (
+          <button
+            type="button"
+            onClick={preferences.toggleCollapsed}
+            aria-label={collapsed ? 'Extender el menú' : 'Contraer el menú'}
+            aria-expanded={!collapsed}
+            aria-controls="menu-principal"
+            {...hintProps('Extender el menú')}
+            className="ml-1 flex size-10 shrink-0 items-center justify-center rounded-kp text-ink/80 transition-colors duration-150 hover:bg-paper-deep hover:text-ink"
+          >
+            {collapsed ? (
+              <PanelLeftOpen size={19} strokeWidth={1.75} aria-hidden="true" />
+            ) : (
+              <PanelLeftClose size={19} strokeWidth={1.75} aria-hidden="true" />
+            )}
+          </button>
+        )}
+        <Link
+          to={paths.home}
+          onClick={onNavigate}
+          aria-label="K'Plan, ir al inicio"
+          tabIndex={collapsed ? -1 : undefined}
+          aria-hidden={collapsed || undefined}
+          className={cn('shrink-0 transition-opacity duration-150', collapsed && 'pointer-events-none opacity-0')}
+        >
+          <Logo className="h-9 text-ink" />
+        </Link>
+      </div>
 
-      <nav aria-label="Principal" className="flex-1 overflow-y-auto px-3 pt-2 pb-4">
+      <nav id="menu-principal" aria-label="Principal" className="flex-1 overflow-x-hidden overflow-y-auto px-3 pt-2 pb-4">
         <ul className="flex flex-col gap-0.5">
-          {items.map(({ to, label, icon: Icon, end }) => (
-            <li key={to}>
-              <NavLink
-                to={to}
-                end={end}
-                onClick={onNavigate}
-                className={({ isActive }) =>
-                  cn(
-                    'group flex h-10 items-center gap-3 rounded-kp px-3 text-body font-medium transition-colors duration-150',
-                    isActive ? 'bg-ink text-canvas' : 'text-ink/80 hover:bg-paper-deep hover:text-ink',
-                  )
-                }
-              >
-                <Icon size={18} strokeWidth={1.75} aria-hidden="true" />
-                {label}
-              </NavLink>
-            </li>
-          ))}
+          {entries.map((entry) =>
+            entry.kind === 'link' ? (
+              <li key={entry.to}>
+                <SidebarLink
+                  entry={entry}
+                  count={entry.count ? counts[entry.count] : 0}
+                  collapsed={collapsed}
+                  onNavigate={onNavigate}
+                  hint={hintProps(entry.label)}
+                />
+              </li>
+            ) : (
+              <li key={entry.id}>
+                <SidebarGroup
+                  group={entry}
+                  pathname={pathname}
+                  collapsed={collapsed}
+                  open={preferences.groups[entry.id] ?? entry.children.some((child) => isActive(pathname, child))}
+                  flyoutOpen={floating?.kind === 'group' && floating.group.id === entry.id}
+                  onToggle={(open) => preferences.setGroupOpen(entry.id, open)}
+                  onFlyout={(trigger) => {
+                    const height = 52 + entry.children.length * 38
+                    const top = Math.min(trigger.getBoundingClientRect().top, window.innerHeight - height - 12)
+                    setFloating((current) =>
+                      current?.kind === 'group' && current.group.id === entry.id ? null : { kind: 'group', group: entry, top, trigger },
+                    )
+                  }}
+                  onNavigate={onNavigate}
+                  hint={hintProps(entry.label)}
+                />
+              </li>
+            ),
+          )}
         </ul>
       </nav>
 
@@ -51,24 +185,35 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <button
               type="button"
               {...props}
-              className="flex w-full items-center gap-3 rounded-kp p-2 text-left transition-colors duration-150 hover:bg-paper-deep"
+              aria-label={collapsed ? `Tu cuenta: ${session.user.name}` : undefined}
+              {...hintProps(session.user.name)}
+              className="flex w-full items-center gap-3 overflow-hidden rounded-kp p-1.5 text-left transition-colors duration-150 hover:bg-paper-deep"
             >
               <Avatar name={session.user.name} />
-              <span className="min-w-0 flex-1">
+              <span className={cn('min-w-0 flex-1 transition-opacity duration-150', collapsed && 'opacity-0')}>
                 <span className="block truncate text-small font-semibold text-ink">{session.user.name}</span>
                 <span className="block truncate text-caption text-muted">
-                  {session.organization?.name ?? ROLE_LABELS[session.role]}
+                  {session.organization?.name ?? session.user.staffRoleName ?? ROLE_LABELS[session.role]}
                 </span>
               </span>
-              <ChevronsUpDown size={16} className="shrink-0 text-muted" aria-hidden="true" />
+              <ChevronsUpDown
+                size={16}
+                className={cn('shrink-0 text-muted transition-opacity duration-150', collapsed && 'opacity-0')}
+                aria-hidden="true"
+              />
             </button>
           )}
         >
           {(close) => (
             <>
               <div className="px-2.5 pt-1.5 pb-2">
-                <p className="text-small font-semibold text-ink">{session.user.email}</p>
-                <p className="text-caption text-muted">{ROLE_LABELS[session.role]}</p>
+                <p className="text-small font-semibold text-ink">{session.user.name}</p>
+                <p className="text-caption text-muted">{session.user.email}</p>
+                <p className="mt-1 text-caption text-muted">
+                  {session.user.staffRoleName
+                    ? `${ROLE_LABELS[session.role]} · ${session.user.staffRoleName}`
+                    : ROLE_LABELS[session.role]}
+                </p>
               </div>
               <MenuItem
                 icon={<LogOut size={16} />}
@@ -83,6 +228,189 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           )}
         </Menu>
       </div>
+
+      {floating?.kind === 'hint' && (
+        <span
+          aria-hidden="true"
+          style={{ top: floating.top }}
+          className="pointer-events-none fixed left-20 z-50 -translate-y-1/2 animate-fade rounded-sm bg-ink px-2 py-1 text-caption font-semibold whitespace-nowrap text-canvas shadow-pop"
+        >
+          {floating.label}
+        </span>
+      )}
+      {floating?.kind === 'group' && (
+        <div
+          ref={flyoutRef}
+          id={`submenu-${floating.group.id}`}
+          role="group"
+          aria-label={floating.group.label}
+          style={{ top: floating.top }}
+          className="fixed left-20 z-50 min-w-52 animate-rise rounded-kp border border-divider bg-surface p-1.5 shadow-pop"
+        >
+          <p className="px-2.5 pt-1 pb-1.5 text-small font-semibold text-ink">{floating.group.label}</p>
+          <ul className="flex flex-col gap-0.5">
+            {floating.group.children.map((child) => (
+              <li key={child.to}>
+                <NavLink
+                  to={child.to}
+                  end={child.end}
+                  onClick={() => {
+                    setFloating(null)
+                    onNavigate?.()
+                  }}
+                  className={({ isActive: active }) =>
+                    cn(
+                      'flex h-9 items-center rounded-sm px-2.5 text-body transition-colors duration-150 focus-visible:outline-offset-0',
+                      active ? ACTIVE : 'text-ink hover:bg-canvas',
+                    )
+                  }
+                >
+                  {child.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
+  )
+}
+
+function Count({ value, active }: { value: number; active: boolean }) {
+  return (
+    <span
+      className={cn(
+        'shrink-0 rounded-sm px-1.5 text-caption font-semibold tabular-nums',
+        active ? 'bg-canvas/15 text-canvas' : 'bg-planned/12 text-planned',
+      )}
+    >
+      {value}
+    </span>
+  )
+}
+
+function SidebarLink({
+  entry,
+  count,
+  collapsed,
+  onNavigate,
+  hint,
+}: {
+  entry: NavLinkEntry
+  count: number
+  collapsed: boolean
+  onNavigate?: () => void
+  hint: HintProps
+}) {
+  const { to, end, label, icon: Icon } = entry
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      onClick={onNavigate}
+      aria-label={collapsed ? (count > 0 ? `${label}, ${count} pendientes` : label) : undefined}
+      {...hint}
+      className={({ isActive: active }) => cn(ITEM, active ? ACTIVE : IDLE)}
+    >
+      {({ isActive: active }) => (
+        <>
+          <Icon size={18} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
+          <span className={cn('min-w-0 flex-1 truncate transition-opacity duration-150', collapsed && 'opacity-0')}>{label}</span>
+          {count > 0 &&
+            (collapsed ? (
+              <span aria-hidden="true" className="absolute top-2 left-7.5 size-2 rounded-full bg-planned ring-2 ring-paper" />
+            ) : (
+              <Count value={count} active={active} />
+            ))}
+        </>
+      )}
+    </NavLink>
+  )
+}
+
+function SidebarGroup({
+  group,
+  pathname,
+  collapsed,
+  open,
+  flyoutOpen,
+  onToggle,
+  onFlyout,
+  onNavigate,
+  hint,
+}: {
+  group: NavGroupEntry
+  pathname: string
+  collapsed: boolean
+  open: boolean
+  flyoutOpen: boolean
+  onToggle: (open: boolean) => void
+  onFlyout: (trigger: HTMLElement) => void
+  onNavigate?: () => void
+  hint: HintProps
+}) {
+  const listId = useId()
+  const { label, icon: Icon, children } = group
+  const activeInside = children.some((child) => isActive(pathname, child))
+  const expanded = open && !collapsed
+  const highlight = activeInside && (collapsed || !open)
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={(event) => (collapsed ? onFlyout(event.currentTarget) : onToggle(!open))}
+        aria-expanded={collapsed ? flyoutOpen : open}
+        aria-controls={collapsed ? (flyoutOpen ? `submenu-${group.id}` : undefined) : listId}
+        aria-label={collapsed ? label : undefined}
+        {...(flyoutOpen ? {} : hint)}
+        className={cn(ITEM, highlight ? ACTIVE : activeInside ? 'text-ink hover:bg-paper-deep' : IDLE, flyoutOpen && !highlight && 'bg-paper-deep')}
+      >
+        <Icon size={18} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
+        <span className={cn('min-w-0 flex-1 truncate transition-opacity duration-150', collapsed && 'opacity-0')}>{label}</span>
+        <ChevronDown
+          size={16}
+          aria-hidden="true"
+          className={cn(
+            'shrink-0 transition-[transform,opacity] duration-200 ease-out-expo',
+            open && 'rotate-180',
+            highlight ? 'text-canvas/70' : 'text-muted',
+            collapsed && 'opacity-0',
+          )}
+        />
+      </button>
+      <div
+        className={cn(
+          'grid transition-[grid-template-rows] duration-200 ease-out-expo',
+          expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+        )}
+      >
+        <ul id={listId} inert={!expanded} className="ml-6 min-h-0 overflow-hidden border-l border-outline/70">
+          {children.map((child) => (
+            <li key={child.to} className="py-px first:pt-1 last:pb-1">
+              <SubLink child={child} onNavigate={onNavigate} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
+  )
+}
+
+function SubLink({ child, onNavigate }: { child: NavChild; onNavigate?: () => void }) {
+  return (
+    <NavLink
+      to={child.to}
+      end={child.end}
+      onClick={onNavigate}
+      className={({ isActive: active }) =>
+        cn(
+          'ml-2 flex h-9 items-center truncate rounded-kp px-3 text-body transition-colors duration-150',
+          active ? cn(ACTIVE, 'font-medium') : 'text-ink/75 hover:bg-paper-deep hover:text-ink',
+        )
+      }
+    >
+      {child.label}
+    </NavLink>
   )
 }

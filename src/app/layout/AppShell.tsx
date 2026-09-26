@@ -4,9 +4,11 @@ import { ValidateCouponProvider } from '@/features/coupons/ValidateCouponProvide
 import { cn } from '@/lib/cn'
 import { SidebarContent } from './Sidebar'
 import { Topbar } from './Topbar'
+import { useSidebarPreferences } from './use-sidebar-preferences'
 
 export function AppShell() {
   const [navOpen, setNavOpen] = useState(false)
+  const sidebar = useSidebarPreferences()
   const drawerRef = useRef<HTMLDialogElement>(null)
   const navigation = useNavigation()
   const location = useLocation()
@@ -31,9 +33,14 @@ export function AppShell() {
         Saltar al contenido
       </a>
 
-      <div className="min-h-dvh lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
-        <aside className="hidden border-r border-outline/60 bg-paper lg:sticky lg:top-0 lg:block lg:h-dvh">
-          <SidebarContent />
+      <div className="min-h-dvh lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
+        <aside
+          className={cn(
+            'hidden border-r border-outline/60 bg-paper transition-[width] duration-200 ease-out-expo lg:sticky lg:top-0 lg:z-20 lg:block lg:h-dvh',
+            sidebar.collapsed ? 'lg:w-18' : 'lg:w-66',
+          )}
+        >
+          <SidebarContent preferences={sidebar} collapsible />
         </aside>
 
         <dialog
@@ -48,7 +55,7 @@ export function AppShell() {
           }}
           className="my-0 mr-auto ml-0 h-dvh max-h-none w-[min(17rem,85vw)] bg-paper p-0 backdrop:bg-ink/45 open:animate-fade lg:hidden"
         >
-          {navOpen && <SidebarContent onNavigate={() => setNavOpen(false)} />}
+          {navOpen && <SidebarContent preferences={sidebar} onNavigate={() => setNavOpen(false)} />}
         </dialog>
 
         <div className="flex min-w-0 flex-col">
