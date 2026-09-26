@@ -11,6 +11,7 @@ Portal web de K'Plan para **negocios**, **alcaldías** y el **equipo de K'Plan**
 - **Insignias**: activar la insignia de un lugar y campañas de ×2, ×3 o ×5 insignias por visita.
 - **Pagos**: estado de cuenta mensual con cada cargo explicado.
 - **Admin**: organizaciones (aprobar, suspender), lugares, cupones, eventos, cobros y tarifas.
+- **Postulación**: negocios y alcaldías nuevos se postulan desde `/postular` con sus documentos (RUC, matrícula, cédula…); entran al portal mientras el equipo revisa la solicitud en **Organizaciones → Solicitudes**.
 - **Guías y traductores**: verificación de los documentos que envían desde la app, en tres etapas (documentos, antecedentes y decisión), con historial.
 - **Usuarios y equipo interno**: todas las cuentas del sistema, el equipo de K'Plan con su rol y una matriz de roles y permisos. Cada persona del equipo ve sólo los módulos que su rol permite.
 
@@ -62,7 +63,8 @@ src/
     repositories/ una función por endpoint
     schemas/     validaciones Zod (formularios y backend de demo)
     mock/        backend de demo: JSON, generadores de datos y rutas
-  features/      un módulo por sección: auth, dashboard, arrivals (agenda), places, coupons, events, badges, billing, admin
+  features/      un módulo por sección: auth, onboarding (postulación), dashboard, arrivals (agenda), places, coupons,
+                 events, badges, billing, admin; verification tiene lo común a toda revisión con documentos
   hooks/         hooks compartidos
   lib/           utilidades puras: formatos, fechas de Managua, horas, planificador de itinerarios (port de la app), QR
   styles/        tokens y estilos base
