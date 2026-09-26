@@ -7,6 +7,7 @@ import {
   formatPeople,
   formatRelativeDay,
   formatTimeRange,
+  formatWaiting,
   formatWeekdayDate,
 } from './format'
 
@@ -26,6 +27,13 @@ describe('formatos de la app', () => {
     expect(formatDistance(2.24)).toBe('2.2 km')
     expect(formatPeople(1)).toBe('1 persona')
     expect(formatPeople(4)).toBe('4 personas')
+  })
+
+  it('tiempo de espera', () => {
+    expect(formatWaiting(20)).toBe('menos de 1 h')
+    expect(formatWaiting(5 * 60 + 10)).toBe('5 h')
+    expect(formatWaiting(1440)).toBe('1 día')
+    expect(formatWaiting(4 * 1440 + 90)).toBe('4 días')
   })
 
   it('fechas', () => {
