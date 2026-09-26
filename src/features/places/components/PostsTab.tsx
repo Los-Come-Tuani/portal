@@ -77,7 +77,7 @@ export function PostsTab({ stopId }: { stopId: string }) {
                   label="Borrar novedad"
                   icon={<Trash2 size={16} />}
                   onClick={() => setDeleting(post)}
-                  className="text-danger hover:bg-danger/8"
+                  tone="danger"
                 />
               </div>
             </li>

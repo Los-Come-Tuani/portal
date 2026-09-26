@@ -9,12 +9,20 @@ function initials(name: string): string {
     .join('')
 }
 
-export function Avatar({ name, className }: { name: string; className?: string }) {
+const SIZES = {
+  xs: 'size-6 text-caption',
+  sm: 'size-7 text-caption',
+  md: 'size-9 text-small',
+  lg: 'size-14 text-lead',
+}
+
+export function Avatar({ name, size = 'md', className }: { name: string; size?: keyof typeof SIZES; className?: string }) {
   return (
     <span
       aria-hidden="true"
       className={cn(
-        'flex size-9 shrink-0 items-center justify-center rounded-full bg-ink text-small font-semibold text-canvas',
+        'flex shrink-0 items-center justify-center rounded-full bg-ink font-semibold text-canvas',
+        SIZES[size],
         className,
       )}
     >
