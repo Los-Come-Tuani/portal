@@ -196,7 +196,7 @@ export function EventsPage() {
                       label="Borrar evento"
                       icon={<Trash2 size={16} />}
                       onClick={() => setDeleting(event)}
-                      className="text-danger hover:bg-danger/8"
+                      tone="danger"
                     />
                   </>
                 )}

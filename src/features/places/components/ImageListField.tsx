@@ -83,7 +83,7 @@ export function ImageListField({ value, onChange, error, max = 8 }: ImageListFie
                 label="Quitar foto"
                 icon={<Trash2 size={15} />}
                 onClick={() => onChange(value.filter((item) => item !== url))}
-                className="text-danger hover:bg-danger/8"
+                tone="danger"
               />
             </li>
           ))}

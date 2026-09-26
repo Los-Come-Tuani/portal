@@ -4,8 +4,8 @@ import { endpoints } from '../../api/endpoints'
 import type { Organization } from '../../models'
 import { organizationInputSchema } from '../../schemas/admin.schema'
 import type { MockDatabase } from '../db'
-import { fail, parseBody, requireUser, route } from '../http'
-import { findOrganization, isAdmin } from '../services/access'
+import { fail, MockHttpError, parseBody, requireUser, route } from '../http'
+import { findOrganization, hasPermission, isAdmin } from '../services/access'
 
 function assertStopsAvailable(db: MockDatabase, stopIds: string[], organizationId: string | null) {
   for (const stopId of stopIds) {
@@ -55,18 +55,28 @@ export const organizationRoutes = [
       db.organizations.push(organization)
       return organization
     },
-    { roles: ['admin'] },
+    { permissions: ['organizations.manage'] },
   ),
   route(
     'PUT',
     endpoints.organizations.detail(':id'),
-    ({ db, params, body }) => {
+    (context) => {
+      const { db, params, body } = context
       const organization = findOrganization(db, params.id)
       const input = parseBody(organizationInputSchema, body)
+      if (!hasPermission(db, requireUser(context), ['organizations.manage'])) {
+        const fields = ['type', 'name', 'kind', 'city', 'contactName', 'contactEmail', 'contactPhone'] as const
+        const unchanged =
+          fields.every((field) => input[field] === organization[field]) &&
+          [...input.stopIds].sort().join() === [...organization.stopIds].sort().join()
+        if (organization.status !== 'pending' || !unchanged) {
+          throw new MockHttpError(403, 'Tu rol sólo admite o rechaza organizaciones nuevas')
+        }
+      }
       assertStopsAvailable(db, input.stopIds, organization.id)
       Object.assign(organization, input)
       return organization
     },
-    { roles: ['admin'] },
+    { permissions: ['organizations.manage', 'organizations.review'] },
   ),
 ]

@@ -118,6 +118,13 @@ export function toLocalDateTime(date: ISODate, minutes: number): LocalDateTime {
   return `${day}T${hours}:${mins}:00.000`
 }
 
+/** Minutos de `from` a `to`, las dos en hora de Managua. */
+export function minutesBetween(from: LocalDateTime, to: LocalDateTime): number {
+  const start = splitLocalDateTime(from)
+  const end = splitLocalDateTime(to)
+  return diffDays(start.date, end.date) * 1440 + end.minutes - start.minutes
+}
+
 export function splitLocalDateTime(value: LocalDateTime): { date: ISODate; minutes: number } {
   const date = value.slice(0, 10)
   const hours = Number(value.slice(11, 13))

@@ -6,17 +6,19 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   label: string
   icon: ReactNode
   size?: 'sm' | 'md'
+  tone?: 'default' | 'danger'
 }
 
-export function IconButton({ label, icon, size = 'md', className, type = 'button', ...props }: IconButtonProps) {
+export function IconButton({ label, icon, size = 'md', tone = 'default', className, type = 'button', ...props }: IconButtonProps) {
   return (
     <button
       type={type}
       aria-label={label}
       title={label}
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-kp text-ink transition-colors duration-150',
-        'hover:bg-ink/6 disabled:pointer-events-none disabled:opacity-40',
+        'inline-flex shrink-0 items-center justify-center rounded-kp transition-colors duration-150',
+        'disabled:pointer-events-none disabled:opacity-40',
+        tone === 'danger' ? 'text-danger hover:bg-danger/8' : 'text-ink hover:bg-ink/6',
         size === 'sm' ? 'size-8' : 'size-10',
         className,
       )}

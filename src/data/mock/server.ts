@@ -11,13 +11,19 @@ import { badgeRoutes } from './handlers/badges'
 import { billingRoutes } from './handlers/billing'
 import { couponRoutes } from './handlers/coupons'
 import { eventRoutes } from './handlers/events'
+import { guideRoutes } from './handlers/guides'
 import { organizationRoutes } from './handlers/organizations'
 import { placeRoutes } from './handlers/places'
+import { staffRoleRoutes, userRoutes } from './handlers/users'
 import { visitRoutes } from './handlers/visits'
 import { MockHttpError, matchRoute, type MockRoute } from './http'
+import { hasPermission } from './services/access'
 
 const routes: MockRoute[] = [
   ...authRoutes,
+  ...userRoutes,
+  ...staffRoleRoutes,
+  ...guideRoutes,
   ...organizationRoutes,
   ...placeRoutes,
   ...eventRoutes,
@@ -51,6 +57,9 @@ export async function handleMockRequest(request: TransportRequest): Promise<Tran
       if (!candidate.isPublic && !user) throw new MockHttpError(401, 'Sesión expirada, vuelve a iniciar sesión')
       if (candidate.roles && (!user || !candidate.roles.includes(user.role))) {
         throw new MockHttpError(403, 'No tienes permiso para hacer esto')
+      }
+      if (candidate.permissions && (!user || !hasPermission(db, user, candidate.permissions))) {
+        throw new MockHttpError(403, 'Tu rol no tiene permiso para hacer esto')
       }
 
       const result = await candidate.handler({

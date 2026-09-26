@@ -3,7 +3,7 @@ import { endpoints } from '../../api/endpoints'
 import type { VisitEvent } from '../../models'
 import { getVisitEvents } from '../generators/visits'
 import { requireUser, route } from '../http'
-import { ownStopIds } from '../services/access'
+import { assertPermission, isAdmin, ownStopIds } from '../services/access'
 
 function eventDate(event: VisitEvent): string {
   return (event.type === 'planned_visit' ? event.arrival : event.recordedAt).slice(0, 10)
@@ -18,6 +18,7 @@ export const visitRoutes = [
   /** Visitas planeadas, check-ins y abandonos de los lugares pedidos, por fecha. */
   route('GET', endpoints.visitEvents, (context) => {
     const user = requireUser(context)
+    if (isAdmin(user)) assertPermission(context.db, user, ['agenda.view'])
     const today = todayISO()
     const allowed = ownStopIds(context.db, user)
     const requested = context.query.get('stopIds')?.split(',').filter(Boolean)

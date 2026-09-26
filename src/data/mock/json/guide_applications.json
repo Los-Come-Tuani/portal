@@ -1,0 +1,252 @@
+[
+  {
+    "id": "app-jazmina-tellez",
+    "name": "Jazmina Téllez",
+    "city": "Granada",
+    "phone": "+505 8712 4410",
+    "serviceRole": "guide",
+    "languages": ["Español", "Inglés"],
+    "specialties": ["Historia colonial", "Isletas de Granada"],
+    "yearsExperience": 3,
+    "hasTransport": true,
+    "bio": "Crecí frente al lago. Hago recorridos por el centro histórico y en panga por las isletas, con mi propia microbús para grupos de hasta 12.",
+    "references": [
+      { "name": "Hotel Casa San Francisco", "relation": "Le refiere huéspedes desde 2023", "phone": "+505 2552 8235" },
+      { "name": "Róger Aguilar", "relation": "Guía con quien trabajó 2 años", "phone": "+505 8830 1144" }
+    ],
+    "submittedDaysAgo": 0,
+    "stage": "documents",
+    "stageDaysAgo": 0,
+    "status": "in_review",
+    "assigneeId": null,
+    "documents": {
+      "cedula": "pending",
+      "record-policia": "pending",
+      "carne-intur": "pending",
+      "primeros-auxilios": "pending",
+      "licencia-conducir": "pending",
+      "seguro-vehiculo": "pending"
+    },
+    "checks": {},
+    "notes": {}
+  },
+  {
+    "id": "app-byron-castellon",
+    "name": "Byron Castellón",
+    "city": "León",
+    "phone": "+505 8655 2091",
+    "serviceRole": "both",
+    "languages": ["Español", "Inglés", "Italiano"],
+    "specialties": ["Arte urbano", "Volcanes de León"],
+    "yearsExperience": 7,
+    "hasTransport": false,
+    "bio": "Guía de León y de la cordillera de los Maribios. Traduzco al italiano para grupos que llegan con guías locales.",
+    "references": [
+      { "name": "Tierra Tours León", "relation": "Operador donde trabajó 5 años", "phone": "+505 2315 4370" },
+      { "name": "Giulia Ferrante", "relation": "Coordinadora de grupos italianos", "phone": "+39 347 555 0192" }
+    ],
+    "submittedDaysAgo": 4,
+    "stage": "documents",
+    "stageDaysAgo": 4,
+    "status": "in_review",
+    "assigneeId": "user-daniela",
+    "documents": {
+      "cedula": "accepted",
+      "record-policia": "accepted",
+      "carne-intur": "accepted",
+      "primeros-auxilios": "pending",
+      "certificado-idioma": "pending"
+    },
+    "checks": {},
+    "notes": {}
+  },
+  {
+    "id": "app-oliver-pastora",
+    "name": "Óliver Pastora",
+    "city": "León",
+    "phone": "+505 8290 7735",
+    "serviceRole": "translator",
+    "languages": ["Español", "Inglés", "Alemán"],
+    "specialties": ["Traducción simultánea"],
+    "yearsExperience": 4,
+    "hasTransport": false,
+    "bio": "Estudié en Leipzig. Acompaño a guías locales para traducir al alemán y al inglés; no doy recorridos por mi cuenta.",
+    "references": [
+      { "name": "Academia Europea de León", "relation": "Profesor de alemán desde 2022", "phone": "+505 2311 6608" },
+      { "name": "Fátima Duarte", "relation": "Guía con quien traduce", "phone": "+505 8741 2210" }
+    ],
+    "submittedDaysAgo": 6,
+    "stage": "documents",
+    "stageDaysAgo": 0,
+    "status": "in_review",
+    "assigneeId": "user-daniela",
+    "documents": {
+      "cedula": "accepted",
+      "record-policia": "pending",
+      "certificado-idioma": "accepted"
+    },
+    "checks": {},
+    "notes": {},
+    "correction": {
+      "requestedDaysAgo": 3,
+      "document": "record-policia",
+      "note": "El récord de policía se emitió hace 5 meses. Sube uno de los últimos 3 meses."
+    }
+  },
+  {
+    "id": "app-aura-mendieta",
+    "name": "Aura Mendieta",
+    "city": "Granada",
+    "phone": "+505 8566 3120",
+    "serviceRole": "translator",
+    "languages": ["Español", "Inglés", "Francés"],
+    "specialties": ["Traducción simultánea", "Grupos escolares"],
+    "yearsExperience": 2,
+    "hasTransport": false,
+    "bio": "Traductora de francés e inglés. Trabajo con grupos de intercambio escolar que visitan Granada y Masaya.",
+    "references": [
+      { "name": "Alianza Francesa de Managua", "relation": "Profesora de francés", "phone": "+505 2267 2811" },
+      { "name": "Colegio Centroamérica", "relation": "Coordinó intercambios 2024–2025", "phone": "+505 2278 0000" }
+    ],
+    "submittedDaysAgo": 5,
+    "stage": "documents",
+    "stageDaysAgo": 2,
+    "status": "changes_requested",
+    "assigneeId": "user-daniela",
+    "documents": {
+      "cedula": "accepted",
+      "record-policia": "accepted",
+      "certificado-idioma": "rejected"
+    },
+    "checks": {},
+    "notes": {
+      "certificado-idioma": "El certificado sólo cubre francés. Sube también el de inglés (nivel B2 o más)."
+    }
+  },
+  {
+    "id": "app-wilber-gutierrez",
+    "name": "Wilber Gutiérrez",
+    "city": "Matagalpa",
+    "phone": "+505 8477 6021",
+    "serviceRole": "guide",
+    "languages": ["Español"],
+    "specialties": ["Café", "Senderismo"],
+    "yearsExperience": 9,
+    "hasTransport": true,
+    "bio": "Nací en una finca de café en las montañas de Matagalpa. Llevo grupos por fincas, cascadas y senderos de nebliselva.",
+    "references": [
+      { "name": "Finca El Mirador", "relation": "Le lleva grupos desde 2019", "phone": "+505 8420 3340" },
+      { "name": "Cooperativa La Suiza", "relation": "Socio y guía de la cooperativa", "phone": "+505 2772 4489" }
+    ],
+    "submittedDaysAgo": 7,
+    "stage": "background",
+    "stageDaysAgo": 2,
+    "status": "in_review",
+    "assigneeId": "user-daniela",
+    "documents": {
+      "cedula": "accepted",
+      "record-policia": "accepted",
+      "carne-intur": "accepted",
+      "primeros-auxilios": "accepted",
+      "licencia-conducir": "accepted",
+      "seguro-vehiculo": "accepted"
+    },
+    "checks": { "policia": "clear" },
+    "notes": {}
+  },
+  {
+    "id": "app-lesbia-arroliga",
+    "name": "Lesbia Arróliga",
+    "city": "Estelí",
+    "phone": "+505 8390 1456",
+    "serviceRole": "guide",
+    "languages": ["Español", "Inglés"],
+    "specialties": ["Tabaco", "Murales de Estelí"],
+    "yearsExperience": 5,
+    "hasTransport": false,
+    "bio": "Guía de Estelí: murales, tabacaleras y la reserva de Tisey. Hablo inglés con grupos pequeños.",
+    "references": [
+      { "name": "Tabacalera artesanal de Estelí", "relation": "Recibe sus grupos", "phone": "+505 8420 3325" },
+      { "name": "Hostal Luna", "relation": "Le refiere huéspedes", "phone": "+505 2713 4007" }
+    ],
+    "submittedDaysAgo": 11,
+    "stage": "background",
+    "stageDaysAgo": 6,
+    "status": "in_review",
+    "assigneeId": null,
+    "documents": {
+      "cedula": "accepted",
+      "record-policia": "accepted",
+      "carne-intur": "accepted",
+      "primeros-auxilios": "accepted"
+    },
+    "checks": { "policia": "clear", "intur": "clear", "referencias": "flagged" },
+    "notes": {
+      "referencias": "El hostal confirmó. La tabacalera dice que la conoce desde hace 2 años, no 5 como pone en su perfil."
+    }
+  },
+  {
+    "id": "app-kenneth-robleto",
+    "name": "Kenneth Robleto",
+    "city": "Rivas",
+    "phone": "+505 8611 9043",
+    "serviceRole": "both",
+    "languages": ["Español", "Inglés"],
+    "specialties": ["Playas del Pacífico", "Isla de Ometepe"],
+    "yearsExperience": 6,
+    "hasTransport": true,
+    "bio": "Guía bilingüe en Rivas, San Juan del Sur y Ometepe. Llevo el grupo en mi camioneta y traduzco cuando el guía local no habla inglés.",
+    "references": [
+      { "name": "Ometepe Expeditions", "relation": "Operador donde trabaja", "phone": "+505 2569 4201" },
+      { "name": "Hotel Victoriano", "relation": "Le refiere huéspedes", "phone": "+505 2568 2005" }
+    ],
+    "submittedDaysAgo": 12,
+    "stage": "decision",
+    "stageDaysAgo": 1,
+    "status": "in_review",
+    "assigneeId": "user-raquel",
+    "documents": {
+      "cedula": "accepted",
+      "record-policia": "accepted",
+      "carne-intur": "accepted",
+      "primeros-auxilios": "accepted",
+      "certificado-idioma": "accepted",
+      "licencia-conducir": "accepted",
+      "seguro-vehiculo": "accepted"
+    },
+    "checks": { "policia": "clear", "intur": "clear", "referencias": "clear" },
+    "notes": {}
+  },
+  {
+    "id": "app-mariela-sanchez",
+    "name": "Mariela Sánchez",
+    "city": "Masaya",
+    "phone": "+505 8502 3378",
+    "serviceRole": "guide",
+    "languages": ["Español"],
+    "specialties": ["Artesanías", "Volcán Masaya"],
+    "yearsExperience": 1,
+    "hasTransport": false,
+    "bio": "Artesana de Monimbó. Quiero mostrar los talleres de mi barrio y el volcán.",
+    "references": [
+      { "name": "Taller Los Leones", "relation": "Taller familiar", "phone": "+505 8502 1100" },
+      { "name": "Julio Aburto", "relation": "Alcaldía de Masaya", "phone": "+505 2522 0400" }
+    ],
+    "submittedDaysAgo": 20,
+    "stage": "decision",
+    "stageDaysAgo": 12,
+    "status": "rejected",
+    "assigneeId": "user-raquel",
+    "documents": {
+      "cedula": "accepted",
+      "record-policia": "accepted",
+      "carne-intur": "accepted",
+      "primeros-auxilios": "accepted"
+    },
+    "checks": { "policia": "clear", "intur": "flagged", "referencias": "clear" },
+    "notes": {
+      "intur": "El número del carné no aparece en el registro de guías de INTUR."
+    },
+    "decisionNote": "El carné de INTUR no está activo en el registro. Puede volver a enviar su solicitud cuando lo renueve."
+  }
+]

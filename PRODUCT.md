@@ -10,8 +10,8 @@ web
 
 - **Negocios** (restaurante, museo, finca cafetalera, tabacalera, mercado, operador turístico, hotel): el dueño o encargado, en una computadora de la oficina. Mantiene al día el perfil de su lugar tal como lo ve el turista, atrae visitas con cupones y campañas de insignias, y se prepara para los grupos que los itinerarios de la app ya anuncian.
 - **Alcaldías** (León, Masaya, Estelí…): el equipo de turismo municipal. Hace lo mismo que un negocio sobre los lugares públicos de su ciudad (catedral, parque, murales) y publica eventos propios: talleres, charlas, ferias.
-- **Admin K'Plan**: el equipo de K'Plan. Ve y administra todas las organizaciones, los cupones, las campañas de insignias y los cobros, y publica eventos especiales de la app.
-- Turistas y guías **no** usan el portal: para ellos está la app móvil.
+- **Equipo K'Plan**: los empleados internos. Cada uno tiene un **rol** que decide qué ve y qué hace (verificar guías, admitir organizaciones, moderar contenido, cobros, soporte…). El **super admin** tiene todo, incluido armar los roles e invitar al equipo.
+- Turistas y guías **no** usan el portal: para ellos está la app móvil. Los guías y traductores envían sus documentos desde la app; el equipo los verifica en el portal.
 
 ## Product Purpose
 
@@ -41,6 +41,9 @@ Confirmado por el usuario:
 - **Eventos**: los negocios publican mini eventos; las alcaldías, talleres, charlas y ferias; el admin, eventos especiales de la app.
 - **Insignias**: negocios y alcaldías compran (1) **activar la insignia** en un lugar que hoy no da, y (2) **campañas de insignias extra**: ×2, ×3 o ×5 por visita durante unas fechas, con el lugar destacado en la app.
 - **Admin**: ver y administrar todas las organizaciones, administrar los cupones y publicar eventos especiales.
+- **Verificación de guías y traductores**: envían cédula, récord de policía, carné de INTUR, certificados (primeros auxilios, idiomas) y, si ponen vehículo, licencia y seguro. Pasan tres etapas: revisión de documentos (cada uno contra su lista), antecedentes (Policía, INTUR, referencias) y decisión final. Se puede pedir corrección; todo queda en un historial con quién lo hizo. Nadie aparece como verificado en la app sin pasar las tres.
+- **Usuarios**: un panel con todas las cuentas del sistema (turistas, guías y traductores, negocios, alcaldías y equipo), para suspender, reactivar y ayudar a recuperar acceso.
+- **Equipo interno y roles**: roles personalizables armados con permisos por módulo, con roles de base; el super admin no se edita y siempre queda al menos uno activo.
 
 Contrato con la app (no negociable):
 
@@ -57,6 +60,8 @@ Decisiones por defecto, sin confirmar:
 - Una organización nueva queda en revisión hasta que el admin la aprueba; su contenido se publica directo y el admin puede ocultarlo.
 - Los pagos son simulados en el modo demo.
 - Circuitos, circuitos creativos y horarios de grupo quedan para una fase siguiente.
+- Las listas de revisión de cada documento (por ejemplo "nivel B2 o más" en idiomas, "menos de 3 meses" en el récord) son una propuesta inicial para ajustar con el equipo.
+- Una etapa que lleva más de 3 días se marca como atrasada.
 
 ## Brand Commitments
 

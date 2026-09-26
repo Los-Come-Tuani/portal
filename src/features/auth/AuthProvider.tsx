@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { sessionToken } from '@/data/api/session-token'
-import type { LoginInput, Organization, User } from '@/data/models'
+import type { LoginInput, Organization, SessionUser, User } from '@/data/models'
 import { authRepository } from '@/data/repositories/auth.repository'
 import { organizationsRepository } from '@/data/repositories/organizations.repository'
 import { AuthContext, type AuthStatus } from './auth-context'
@@ -13,7 +13,7 @@ async function loadOrganization(user: User): Promise<Organization | null> {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   const [status, setStatus] = useState<AuthStatus>(() => (sessionToken.get() ? 'loading' : 'anonymous'))
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<SessionUser | null>(null)
   const [organization, setOrganization] = useState<Organization | null>(null)
 
   const clear = useCallback(() => {

@@ -132,6 +132,18 @@ export function formatDateSpan(from: ISODate, to: ISODate): string {
   return `${formatDayMonth(from)} – ${formatDayMonth(to)}`
 }
 
+/** Para meter un nombre a media oración sin tocar siglas: `Registro de INTUR` → `registro de INTUR`. */
+export function lowerFirst(text: string): string {
+  return text.charAt(0).toLowerCase() + text.slice(1)
+}
+
+/** Cuánto lleva esperando algo: `menos de 1 h`, `5 h`, `1 día`, `4 días`. */
+export function formatWaiting(minutes: number): string {
+  if (minutes < 60) return 'menos de 1 h'
+  if (minutes < 1440) return `${Math.floor(minutes / 60)} h`
+  return plural(Math.floor(minutes / 1440), 'día', 'días')
+}
+
 /** `2026-09-26T09:12:00.000` → `26 sep, 9:12 a.m.` */
 export function formatDateTime(value: LocalDateTime): string {
   const { date, minutes } = splitLocalDateTime(value)

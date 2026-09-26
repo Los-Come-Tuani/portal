@@ -1,6 +1,6 @@
 import type { z } from 'zod'
 import type { HttpMethod } from '../api/http-client'
-import type { User, UserRole } from '../models'
+import type { Permission, User, UserRole } from '../models'
 import type { MockDatabase } from './db'
 
 export class MockHttpError extends Error {
@@ -38,12 +38,15 @@ export interface MockRoute {
   handler: (context: MockContext) => unknown
   isPublic: boolean
   roles?: UserRole[]
+  permissions?: Permission[]
 }
 
 interface RouteOptions {
   /** Sin sesión (login, recuperar contraseña). */
   isPublic?: boolean
   roles?: UserRole[]
+  /** Sólo el equipo de K'Plan con al menos uno de estos permisos. */
+  permissions?: Permission[]
 }
 
 /** `route('GET', '/api/stops/:id', handler)`: una ruta del backend de demo. */
@@ -72,6 +75,7 @@ export function route(
     handler,
     isPublic: options.isPublic ?? false,
     roles: options.roles,
+    permissions: options.permissions,
   }
 }
 

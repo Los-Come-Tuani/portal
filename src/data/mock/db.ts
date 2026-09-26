@@ -7,10 +7,12 @@ import type {
   Coupon,
   CouponRedemption,
   EventItem,
+  GuideApplication,
   Organization,
   PlaceProfile,
   Post,
   Pricing,
+  StaffRole,
   Stop,
   User,
 } from '../models'
@@ -28,6 +30,8 @@ export interface MockDatabase {
   version: number
   seededOn: ISODate
   users: User[]
+  staffRoles: StaffRole[]
+  guideApplications: GuideApplication[]
   organizations: Organization[]
   stops: Stop[]
   circuits: Circuit[]

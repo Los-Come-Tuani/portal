@@ -9,6 +9,7 @@ import {
   ORGANIZATION_TYPE_LABELS,
   type OrganizationStatus,
 } from '@/data/models'
+import { useSession } from '@/features/auth/use-auth'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { formatDate } from '@/lib/format'
 import { OrganizationDrawer } from './OrganizationDrawer'
@@ -19,6 +20,7 @@ type Filter = 'todas' | OrganizationStatus
 export function OrganizationsPage() {
   useDocumentTitle('Organizaciones')
   const navigate = useNavigate()
+  const { can } = useSession()
   const organizations = useOrganizations()
   const [filter, setFilter] = useState<Filter>('todas')
   const [search, setSearch] = useState('')
@@ -37,9 +39,11 @@ export function OrganizationsPage() {
         title="Organizaciones"
         description="Los negocios y alcaldías que usan el portal. Las nuevas quedan en revisión hasta que las apruebes."
         actions={
-          <Button icon={<Plus size={16} />} onClick={() => setCreating(true)}>
-            Nueva organización
-          </Button>
+          can('organizations.manage') && (
+            <Button icon={<Plus size={16} />} onClick={() => setCreating(true)}>
+              Nueva organización
+            </Button>
+          )
         }
       />
 

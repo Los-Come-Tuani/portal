@@ -1,0 +1,69 @@
+[
+  {
+    "id": "role-super-admin",
+    "name": "Super admin",
+    "description": "Todo el portal, incluido el equipo interno y sus roles.",
+    "permissions": [
+      "agenda.view",
+      "organizations.review",
+      "organizations.manage",
+      "guides.review",
+      "guides.decide",
+      "places.manage",
+      "content.moderate",
+      "users.manage",
+      "staff.manage",
+      "billing.manage"
+    ],
+    "system": true,
+    "createdAt": "2026-03-01"
+  },
+  {
+    "id": "role-verificacion",
+    "name": "Verificación de guías",
+    "description": "Revisa documentos y antecedentes de guías y traductores.",
+    "permissions": ["guides.review"],
+    "system": false,
+    "createdAt": "2026-03-01"
+  },
+  {
+    "id": "role-coordinacion",
+    "name": "Coordinación de verificación",
+    "description": "Revisa solicitudes de guías y traductores y da la decisión final.",
+    "permissions": ["guides.review", "guides.decide"],
+    "system": false,
+    "createdAt": "2026-03-01"
+  },
+  {
+    "id": "role-admision",
+    "name": "Admisión de organizaciones",
+    "description": "Revisa y admite a los negocios y alcaldías nuevos.",
+    "permissions": ["agenda.view", "organizations.review", "places.manage"],
+    "system": false,
+    "createdAt": "2026-03-01"
+  },
+  {
+    "id": "role-moderacion",
+    "name": "Moderación de contenido",
+    "description": "Cuida lugares, cupones, eventos y campañas que se publican en la app.",
+    "permissions": ["agenda.view", "places.manage", "content.moderate"],
+    "system": false,
+    "createdAt": "2026-03-15"
+  },
+  {
+    "id": "role-finanzas",
+    "name": "Finanzas",
+    "description": "Cobros a las organizaciones y tarifas de K'Plan.",
+    "permissions": ["billing.manage"],
+    "system": false,
+    "createdAt": "2026-03-15"
+  },
+  {
+    "id": "role-soporte",
+    "name": "Soporte",
+    "description": "Atiende a los usuarios: suspende, reactiva y ayuda a recuperar cuentas.",
+    "permissions": ["users.manage"],
+    "system": false,
+    "createdAt": "2026-04-02"
+  }
+]

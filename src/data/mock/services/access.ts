@@ -1,9 +1,32 @@
-import type { Organization, Stop, User } from '../../models'
+import type { Organization, Permission, SessionUser, Stop, User } from '../../models'
 import type { MockDatabase } from '../db'
 import { fail } from '../http'
 
 export function isAdmin(user: User): boolean {
   return user.role === 'admin'
+}
+
+/** Lo que puede hacer alguien del equipo según su rol interno; nada para los demás. */
+export function permissionsOf(db: MockDatabase, user: User): Permission[] {
+  if (!isAdmin(user) || user.status === 'suspended') return []
+  return db.staffRoles.find((role) => role.id === user.staffRoleId)?.permissions ?? []
+}
+
+export function hasPermission(db: MockDatabase, user: User, anyOf: readonly Permission[]): boolean {
+  const granted = permissionsOf(db, user)
+  return anyOf.some((permission) => granted.includes(permission))
+}
+
+export function assertPermission(db: MockDatabase, user: User, anyOf: readonly Permission[]): void {
+  if (!hasPermission(db, user, anyOf)) throw fail.forbidden()
+}
+
+export function toSessionUser(db: MockDatabase, user: User): SessionUser {
+  return {
+    ...user,
+    permissions: permissionsOf(db, user),
+    staffRoleName: db.staffRoles.find((role) => role.id === user.staffRoleId)?.name ?? null,
+  }
 }
 
 export function findOrganization(db: MockDatabase, organizationId: string): Organization {

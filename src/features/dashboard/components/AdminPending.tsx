@@ -1,17 +1,33 @@
-import { ArrowRight, Building2, Receipt } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Building2, Receipt } from 'lucide-react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useStatements } from '@/data/hooks/use-billing'
+import { useGuideApplications } from '@/data/hooks/use-guides'
 import { useOrganizations } from '@/data/hooks/use-organizations'
+import { useSession } from '@/features/auth/use-auth'
 import { formatMoney, plural } from '@/lib/format'
 
-/** Lo que espera una decisión del equipo de K'Plan. Si no hay nada, no se muestra. */
+/** Lo que espera una decisión del equipo de K'Plan, según lo que su rol puede hacer. Si no hay nada, no se muestra. */
 export function AdminPending() {
-  const pending = useOrganizations({ status: 'pending' })
-  const statements = useStatements()
+  const { can } = useSession()
+  const pending = useOrganizations({ status: 'pending' }, can('organizations.review', 'organizations.manage'))
+  const guides = useGuideApplications({ status: 'in_review' }, can('guides.review', 'guides.decide'))
+  const statements = useStatements(undefined, can('billing.manage'))
   const due = (statements.data ?? []).filter((statement) => statement.status === 'due' && statement.total > 0)
   const dueTotal = due.reduce((sum, statement) => sum + statement.total, 0)
+  const toDecide = (guides.data ?? []).filter((application) => application.stage === 'decision').length
+  const guideCount = can('guides.review') ? (guides.data?.length ?? 0) : toDecide
+
   const items = [
+    guideCount > 0
+      ? {
+          to: can('guides.review') ? paths.guides : `${paths.guides}?etapa=decision`,
+          icon: <BadgeCheck size={16} aria-hidden="true" />,
+          text: can('guides.review')
+            ? `${plural(guideCount, 'guía o traductor espera', 'guías y traductores esperan')} verificación`
+            : `${plural(guideCount, 'solicitud espera', 'solicitudes esperan')} tu decisión`,
+        }
+      : null,
     pending.data && pending.data.length > 0
       ? {
           to: paths.organizations,
