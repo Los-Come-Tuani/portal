@@ -1,7 +1,9 @@
 import type { EventFilters } from '../repositories/events.repository'
+import type { GuideApplicationFilters } from '../repositories/guides.repository'
 import type { OrganizationFilters } from '../repositories/organizations.repository'
 import type { RedemptionFilters } from '../repositories/coupons.repository'
 import type { StopFilters } from '../repositories/places.repository'
+import type { UserFilters } from '../repositories/users.repository'
 import type { VisitFilters } from '../repositories/visits.repository'
 
 /** Todas las llaves de caché en un lugar, para invalidar sin adivinar. */
@@ -41,5 +43,17 @@ export const queryKeys = {
   visits: {
     all: ['visits'] as const,
     events: (filters: VisitFilters) => ['visits', 'events', filters] as const,
+  },
+  users: {
+    all: ['users'] as const,
+    list: (filters: UserFilters) => ['users', 'list', filters] as const,
+    detail: (userId: string) => ['users', 'detail', userId] as const,
+  },
+  staffRoles: ['staff-roles'] as const,
+  guides: {
+    all: ['guides'] as const,
+    list: (filters: GuideApplicationFilters) => ['guides', 'list', filters] as const,
+    reviewers: ['guides', 'reviewers'] as const,
+    detail: (applicationId: string) => ['guides', 'detail', applicationId] as const,
   },
 }

@@ -52,6 +52,30 @@ export const endpoints = {
     pay: (statementId: string) => `/api/billing/statements/${id(statementId)}/pay`,
   },
   pricing: '/api/pricing',
+  users: {
+    list: '/api/users',
+    detail: (userId: string) => `/api/users/${id(userId)}`,
+    passwordReset: (userId: string) => `/api/users/${id(userId)}/password-reset`,
+    staffInvite: '/api/users/staff',
+  },
+  staffRoles: {
+    list: '/api/staff-roles',
+    detail: (roleId: string) => `/api/staff-roles/${id(roleId)}`,
+  },
+  guideApplications: {
+    list: '/api/guide-applications',
+    /** Quienes pueden revisar o decidir: para asignar solicitudes y leer nombres. */
+    reviewers: '/api/guide-applications/reviewers',
+    detail: (applicationId: string) => `/api/guide-applications/${id(applicationId)}`,
+    assign: (applicationId: string) => `/api/guide-applications/${id(applicationId)}/assign`,
+    document: (applicationId: string, documentId: string) =>
+      `/api/guide-applications/${id(applicationId)}/documents/${id(documentId)}/review`,
+    check: (applicationId: string, checkType: string) =>
+      `/api/guide-applications/${id(applicationId)}/background/${id(checkType)}`,
+    advance: (applicationId: string) => `/api/guide-applications/${id(applicationId)}/advance`,
+    requestChanges: (applicationId: string) => `/api/guide-applications/${id(applicationId)}/request-changes`,
+    decision: (applicationId: string) => `/api/guide-applications/${id(applicationId)}/decision`,
+  },
   visitEvents: '/api/visit-events',
   /** Sólo existe en el modo demo. */
   demoReset: '/api/demo/reset',
