@@ -11,6 +11,8 @@ Portal web de K'Plan para **negocios**, **alcaldías** y el **equipo de K'Plan**
 - **Insignias**: activar la insignia de un lugar y campañas de ×2, ×3 o ×5 insignias por visita.
 - **Pagos**: estado de cuenta mensual con cada cargo explicado.
 - **Admin**: organizaciones (aprobar, suspender), lugares, cupones, eventos, cobros y tarifas.
+- **Guías y traductores**: verificación de los documentos que envían desde la app, en tres etapas (documentos, antecedentes y decisión), con historial.
+- **Usuarios y equipo interno**: todas las cuentas del sistema, el equipo de K'Plan con su rol y una matriz de roles y permisos. Cada persona del equipo ve sólo los módulos que su rol permite.
 
 ## Stack
 
@@ -32,7 +34,7 @@ npm install
 npm run dev
 ```
 
-La app queda disponible en http://localhost:5173. En modo demo, la pantalla de entrada muestra las cuentas de prueba (negocios, alcaldías y admin): cualquier contraseña sirve.
+La app queda disponible en http://localhost:5173. En modo demo, la pantalla de entrada muestra las cuentas de prueba (negocios, alcaldías y varias personas del equipo con roles distintos): cualquier contraseña sirve.
 
 ## Datos: modo demo y API real
 

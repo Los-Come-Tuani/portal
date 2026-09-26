@@ -212,12 +212,18 @@ components:
     textColor: "{colors.ink}"
     rounded: "{rounded.kp}"
     padding: "20px"
+  sidebar-expanded:
+    backgroundColor: "{colors.paper}"
+    width: "16.5rem"
+  sidebar-collapsed:
+    backgroundColor: "{colors.paper}"
+    width: "4.5rem"
   nav-item:
     backgroundColor: "transparent"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
     rounded: "{rounded.kp}"
-    padding: "0 12px"
+    padding: "0 12px 0 15px"
     height: "40px"
   nav-item-hover:
     backgroundColor: "{colors.paper-deep}"
@@ -225,6 +231,38 @@ components:
   nav-item-active:
     backgroundColor: "{colors.ink}"
     textColor: "{colors.canvas}"
+  nav-subitem:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.kp}"
+    padding: "0 12px"
+    height: "36px"
+  nav-count:
+    backgroundColor: "rgba(47, 102, 144, 0.12)"
+    textColor: "{colors.planned}"
+    typography: "{typography.caption-strong}"
+    rounded: "{rounded.sm}"
+    padding: "0 6px"
+  nav-count-active:
+    backgroundColor: "rgba(248, 244, 230, 0.15)"
+    textColor: "{colors.canvas}"
+  nav-count-dot:
+    backgroundColor: "{colors.planned}"
+    rounded: "{rounded.full}"
+    size: "8px"
+  nav-tooltip:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.canvas}"
+    typography: "{typography.caption-strong}"
+    rounded: "{rounded.sm}"
+    padding: "4px 8px"
+  nav-flyout:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.kp}"
+    padding: "6px"
+    width: "13rem"
   segmented-option:
     textColor: "{colors.muted}"
     typography: "{typography.small}"
@@ -295,6 +333,76 @@ components:
     typography: "{typography.small}"
     rounded: "{rounded.full}"
     size: "36px"
+  avatar-xs:
+    typography: "{typography.caption}"
+    size: "24px"
+  avatar-sm:
+    typography: "{typography.caption}"
+    size: "28px"
+  avatar-lg:
+    typography: "{typography.lead}"
+    size: "56px"
+  icon-button:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.kp}"
+    size: "40px"
+  icon-button-sm:
+    size: "32px"
+  icon-button-danger:
+    backgroundColor: "transparent"
+    textColor: "{colors.danger}"
+  review-segment-done:
+    backgroundColor: "{colors.confirmed}"
+    rounded: "{rounded.full}"
+    height: "6px"
+  review-segment-pending:
+    backgroundColor: "rgba(47, 102, 144, 0.30)"
+    rounded: "{rounded.full}"
+    height: "6px"
+  review-segment-problem:
+    backgroundColor: "{colors.danger}"
+    rounded: "{rounded.full}"
+    height: "6px"
+  review-segment-missing:
+    backgroundColor: "transparent"
+    rounded: "{rounded.full}"
+    height: "6px"
+  stage-step-done:
+    backgroundColor: "{colors.confirmed}"
+    textColor: "{colors.white}"
+    rounded: "{rounded.full}"
+    size: "28px"
+  stage-step-current:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.canvas}"
+    typography: "{typography.small}"
+    rounded: "{rounded.full}"
+    size: "28px"
+  stage-step-upcoming:
+    backgroundColor: "transparent"
+    textColor: "{colors.muted}"
+    typography: "{typography.small}"
+    rounded: "{rounded.full}"
+    size: "28px"
+  stage-step-rejected:
+    backgroundColor: "{colors.danger}"
+    textColor: "{colors.white}"
+    rounded: "{rounded.full}"
+    size: "28px"
+  document-viewer:
+    backgroundColor: "{colors.paper}"
+    rounded: "{rounded.kp}"
+    padding: "12px"
+  permission-granted:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.canvas}"
+    rounded: "{rounded.full}"
+    size: "24px"
+  permission-none:
+    backgroundColor: "{colors.outline}"
+    rounded: "{rounded.full}"
+    size: "6px"
 ---
 
 # Design System: Portal K'Plan
@@ -329,8 +437,8 @@ Los valores crudos viven en `:root` de `src/styles/theme.css` como `--kp-*`, esp
 - **Blanco sobre Terracota** (`on-brand`): texto de los botones primarios.
 
 ### Secondary
-- **Azul Itinerario** (`planned`, `--kp-accent-blue`): lo planeado que todavía no ocurre. Tiñe las celdas de la semana y del mes en cinco escalones según la gente esperada (8 %, 18 %, 32 %, 52 %, 100 % en la semana), las barras de la línea del día y la etiqueta "Por llegar". El build lo extiende a otros estados pendientes: estado de cuenta abierto, canje "Por validar", campaña "Programada".
-- **Verde QR** (`confirmed`, `--kp-accent-green`): lo confirmado. La ficha de llegadas con QR en la cuadrícula, la etiqueta con la hora del escaneo, el canje validado, el estado de cuenta pagado, "Al día", y las barras de avance de ficha completa.
+- **Azul Itinerario** (`planned`, `--kp-accent-blue`): lo planeado que todavía no ocurre. Tiñe las celdas de la semana y del mes en cinco escalones según la gente esperada (8 %, 18 %, 32 %, 52 %, 100 % en la semana), las barras de la línea del día y la etiqueta "Por llegar". El build lo extiende a otros estados pendientes: estado de cuenta abierto, canje "Por validar", campaña "Programada". En la administración es lo pendiente: "Por revisar", "En revisión", "Invitación enviada", el tramo pendiente del riel de revisión (al 30 %) y las fichas de pendientes de la barra lateral (al 12 %).
+- **Verde QR** (`confirmed`, `--kp-accent-green`): lo confirmado. La ficha de llegadas con QR en la cuadrícula, la etiqueta con la hora del escaneo, el canje validado, el estado de cuenta pagado, "Al día", y las barras de avance de ficha completa. En la administración, lo que pasó: documento aceptado, verificación limpia, solicitud aprobada, cuenta activa, etapa hecha.
 
 ### Tertiary
 - **Oro de Medalla** (`badge`, `--kp-medal-gold`): sólo insignias y campañas. La franja de campaña sobre los días de la semana, la raya inferior de un día con campaña en el mes, el círculo `×2 / ×3 / ×5`, la barra de insignias entregadas, la etiqueta "Da insignia" y el borde de una campaña activa.
@@ -338,20 +446,20 @@ Los valores crudos viven en `:root` de `src/styles/theme.css` como `--kp-*`, esp
 - **Medalla sin ganar** (`medal-none`): el estado apagado de un multiplicador no elegido en el editor de campaña.
 
 ### Neutral
-- **Tinta** (`ink`, `--kp-primary-60`): todo el texto principal, reglas fuertes, el anillo de foco, la selección (día elegido, celda elegida, opción de un control segmentado, navegación activa, pestaña activa), el borde del botón secundario, los avisos y la barra de guardado, el velo de los diálogos (al 45 %).
+- **Tinta** (`ink`, `--kp-primary-60`): todo el texto principal, reglas fuertes, el anillo de foco, la selección (día elegido, celda elegida, opción de un control segmentado, navegación activa, pestaña activa), el borde del botón secundario, los avisos y la barra de guardado, el velo de los diálogos (al 45 %). También lo actual y lo concedido: la etapa en curso, el permiso concedido, el grupo de navegación cerrado que contiene la ruta activa, la etiqueta flotante de la barra contraída.
 - **Crema** (`canvas`, `--kp-primary-10`): el fondo de la página y de la barra superior; el texto sobre tinta.
 - **Papel de Mapa** (`paper`, `--kp-map-land`): la barra lateral, el panel ilustrado del login, el fondo de las etiquetas neutras y de los rieles de progreso.
 - **Papel Hondo** (`paper-deep`, `--kp-map-block`): hover de la navegación lateral.
 - **Blanco Tarjeta** (`surface`): paneles, cuadrícula, diálogos, menús, filas.
 - **Relleno de Campo** (`field`): el fondo de inputs, selects y del control segmentado.
-- **Arena** (`outline`): el borde de los campos y del control segmentado, el switch apagado, las barras de desplazamiento.
+- **Arena** (`outline`): el borde de los campos y del control segmentado, el switch apagado, las barras de desplazamiento. Al 60 %, la regla derecha de la barra lateral y la regla sobre la cuenta; al 70 %, la guía de la que cuelgan los hijos de un grupo. El contorno de la etapa por venir y el punto de permiso no concedido.
 - **Arena Clara** (`divider`): el borde de las tarjetas y todas las reglas internas (cabeceras de panel, filas, celdas).
 - **Gris Texto** (`muted`, `--kp-secondary-text`): texto secundario, descripciones, cabeceras de tabla.
 - **Gris Ayuda** (`hint`, mezcla oklab de `--kp-hint-text` 58 % con tinta): placeholders y "Opcional". El gris de la app no llega a 4.5:1 sobre blanco; se oscurece con tinta.
 - **Marcador** (`placeholder`): los esqueletos de carga.
 
 ### Contenido y mapa
-- **Error** (`danger`, `--kp-error`): errores de campo, botón destructivo, "No llegó", estado de cuenta vencido, y la barra del motivo de abandono más frecuente.
+- **Error** (`danger`, `--kp-error`): errores de campo, botón destructivo, "No llegó", estado de cuenta vencido, y la barra del motivo de abandono más frecuente. En la administración, lo que no pasó o se detuvo: rechazado, con observaciones, suspendido, documento vencido, documento que falta (contorno punteado al 60 %), y el tiempo en una etapa cuando pasa de 3 días.
 - **Estrella** (`star`) y **chips de categoría** (`chip-city`, `chip-nature`, `chip-culture`): sólo dentro de la vista previa del teléfono y en la calificación de la ficha, copiados de la app.
 - **Mapa** (`map-land`, `map-water`, `map-park`): el mapa de MapLibre se recolorea leyendo estas variables en tiempo de ejecución, para que se vea como el mapa de papel de la app.
 
@@ -361,6 +469,8 @@ Los valores crudos viven en `:root` de `src/styles/theme.css` como `--kp-*`, esp
 **The Un Significado Rule.** Azul es planeado o pendiente, verde es confirmado, dorado es insignia o campaña, terracota es acción principal, enlace de acción, hoy y ahora. La selección y lo activo son tinta, nunca un acento.
 
 **The El Cero No Es Verde Rule.** Una cuenta de confirmados en cero se dibuja como ficha neutra con borde de tinta al 25 % sobre blanco y número en `muted`. El verde aparece sólo cuando alguien escaneó el QR.
+
+**The Estado De Revisión Rule.** Los estados de revisión y de cuenta usan los mismos cuatro tonos. Azul: pendiente, sigue su curso ("Por revisar", "En revisión", "Invitación enviada"). Verde: pasó (aceptado, aprobado, activo). Rojo: no pasó o se detuvo (rechazado, con observaciones, suspendido). Neutro: se devolvió para que la otra persona corrija ("Corrección pedida"). El tiempo de espera se pone rojo sólo cuando una solicitud lleva más de 3 días en una etapa esperando al equipo.
 
 ## Typography
 
@@ -390,11 +500,11 @@ La escala vive en `@theme` con `--text-*: initial`, así que sólo existen los p
 
 ## Layout
 
-Una barra lateral fija de 15.5 rem a la izquierda (desde `lg`, 1024 px) y el contenido a la derecha con barra superior pegajosa de 64 px (`h-16`) en crema con regla inferior. Por debajo de `lg`, la barra lateral se convierte en un cajón (`<dialog>` nativo de 17 rem, máximo 85 vw) que se abre desde el ícono de menú.
+Una barra lateral a la izquierda desde `lg` (1024 px), pegada a toda la altura de la ventana, de 16.5 rem extendida y 4.5 rem contraída; la persona la contrae y el navegador lo recuerda. El cambio de ancho se anima en 200 ms con `ease-out-expo` y el contenido se reacomoda con él (columna `auto` + `minmax(0,1fr)`). A la derecha, el contenido con barra superior pegajosa de 64 px (`h-16`) en crema con regla inferior. Por debajo de `lg`, la barra lateral se convierte en un cajón (`<dialog>` nativo de 17 rem, máximo 85 vw) que se abre desde el ícono de menú y siempre va extendido.
 
 El contenido principal tiene márgenes de 16 px en móvil, 24 px desde `sm` y 32 px desde `lg`, con 32 px verticales en escritorio. No hay contenedor de ancho máximo: la agenda y las tablas usan todo el ancho; el texto corrido se limita por medida en `ch` (46 a 84 ch según el papel).
 
-El patrón de página recurrente es una columna flexible más un panel lateral de ancho fijo: la agenda (`minmax(0,1fr)` + 22 rem desde `xl`), el detalle de una organización y los cobros (22 rem y 20 rem desde `lg`), el editor del lugar con la vista previa del teléfono (20.5 rem desde `xl`). El panel lateral de la agenda queda pegado a 96 px del borde superior. Por debajo del punto de corte, el panel cae debajo de la columna.
+El patrón de página recurrente es una columna flexible más un panel lateral de ancho fijo: la agenda (`minmax(0,1fr)` + 22 rem desde `xl`), el detalle de una organización, el de una solicitud de guía y los cobros (22 rem, 22 rem y 20 rem desde `lg`), el editor del lugar con la vista previa del teléfono (20.5 rem desde `xl`). El panel lateral de la agenda queda pegado a 96 px del borde superior. Por debajo del punto de corte, el panel cae debajo de la columna.
 
 El ritmo sale de la escala de 4 px de Tailwind: 8 px entre controles, 12 px entre elementos de una fila, 20 px de relleno en paneles y entre bloques de la agenda, 24 px entre columnas. La cuadrícula de la semana tiene un mínimo de 46 rem y se desplaza en horizontal en pantallas angostas, abriendo en la columna del día elegido.
 
@@ -403,8 +513,8 @@ El ritmo sale de la escala de 4 px de Tailwind: 8 px entre controles, 12 px entr
 Un sistema plano con capas tonales: crema, papel y blanco se separan con bordes arena, no con sombra. La profundidad aparece sólo en lo que flota sobre la página (diálogos, menús, avisos, barra de guardado, pin del mapa, el teléfono de la vista previa) y en levantamientos mínimos de piezas pequeñas.
 
 ### Shadow Vocabulary
-- **Raise** (`--shadow-raise`: `0 1px 2px` tinta al 8 %): la perilla del switch, el número de la celda que cruza la línea de "ahora", los íconos flotantes de la vista previa, el cartel QR en pantalla.
-- **Pop** (`--shadow-pop`: `0 18px 40px -12px` tinta al 30 % más `0 2px 6px` tinta al 8 %): diálogos, menús, avisos, barra de guardado, pin del mapa, marco del teléfono.
+- **Raise** (`--shadow-raise`: `0 1px 2px` tinta al 8 %): la perilla del switch, el número de la celda que cruza la línea de "ahora", los íconos flotantes de la vista previa, el cartel QR en pantalla, la imagen del documento sobre el papel del visor.
+- **Pop** (`--shadow-pop`: `0 18px 40px -12px` tinta al 30 % más `0 2px 6px` tinta al 8 %): diálogos, menús, avisos, barra de guardado, pin del mapa, marco del teléfono, y la etiqueta y el submenú que flotan junto a la barra lateral contraída.
 - **Anillos de estado** (sombras `inset`, no elevación): celda elegida o enfocada con anillo interior de 2 px en tinta, hover de celda con 1 px, columna de hoy con raya superior de 3 px en terracota, campaña activa con raya superior de 4 px en oro. Marcan estado sin mover el diseño.
 
 ### Named Rules
@@ -414,7 +524,7 @@ Un sistema plano con capas tonales: crema, papel y blanco se separan con bordes 
 
 ## Shapes
 
-Esquinas suaves de 10 px (`rounded-kp`, `AppTheme.radius` de la app) en todo control y contenedor: botones, campos, paneles, la cuadrícula, menús, avisos, ítems de navegación, esqueletos. Las piezas pequeñas dentro de un contenedor usan 6 px (`rounded-sm`): etiquetas, fichas de la cuadrícula, franjas de campaña, eventos del día, ítems de menú. Las opciones del control segmentado usan 8 px para anidar dentro de su marco de 10 px. Los diálogos centrados y el cartel QR usan 16 px (`rounded-lg`); el diálogo lateral no tiene esquinas. Círculos completos para avatares, números de día, el switch, los rieles de progreso y los íconos de estado vacío.
+Esquinas suaves de 10 px (`rounded-kp`, `AppTheme.radius` de la app) en todo control y contenedor: botones, campos, paneles, la cuadrícula, menús, avisos, ítems de navegación, esqueletos. Las piezas pequeñas dentro de un contenedor usan 6 px (`rounded-sm`): etiquetas, fichas de la cuadrícula, franjas de campaña, eventos del día, ítems de menú y del submenú flotante, fichas de pendientes, la etiqueta flotante de la barra contraída, la imagen dentro del visor de documentos. Las opciones del control segmentado usan 8 px para anidar dentro de su marco de 10 px. Los diálogos centrados y el cartel QR usan 16 px (`rounded-lg`); el diálogo lateral no tiene esquinas. Círculos completos para avatares, números de día, el switch, los rieles de progreso y de revisión, los pasos de etapa, los puntos del historial y de pendientes, las marcas de permiso y los íconos de estado vacío.
 
 Los bordes son de 1 px: `divider` en tarjetas y reglas, `outline` en campos. El botón secundario usa 1.5 px en tinta. Las franjas de campaña que siguen en la semana anterior o siguiente pierden la esquina de ese lado.
 
@@ -431,11 +541,15 @@ Firmes y claros, como los de la app: mayúsculas con tracking en toda acción qu
 - **Secondary:** borde de tinta de 1.5 px, texto en tinta, mayúsculas; hover con tinta al 6 %.
 - **Danger:** fondo `danger`, texto blanco, mayúsculas.
 - **Ghost:** tinta sin borde ni mayúsculas, hover con tinta al 6 %. **Quiet:** texto `danger` sin fondo para acciones destructivas menores ("Cancelar campaña").
-- **IconButton:** cuadrado de 32 o 40 px, 10 px de radio, tinta, con `aria-label` y `title` obligatorios.
+- **IconButton:** cuadrado de 32 o 40 px (`size` `sm` / `md`), 10 px de radio, con `aria-label` y `title` obligatorios; deshabilitado al 40 %. Dos tonos por `tone`: `default` en tinta con hover de tinta al 6 %, y `danger` en rojo con hover de rojo al 8 % para quitar, borrar o suspender desde una fila. El tono se elige con la prop, nunca sobrescribiendo clases.
 
 ### Chips
 - **Style (`Tag`):** 24 px de alto, 6 px de radio, 8 px de relleno, 12 px en 600. Tonos: `neutral` (papel y gris), `planned` (azul al 10 % con texto azul), `confirmed` (verde al 10 % con texto verde), `badge` (oro con texto tinta), `brand` (terracota al 12 % con texto terracota profundo), `danger` (rojo al 10 %), `ink` (tinta con texto crema, para la hora elegida y el rol admin), `outline` (borde arena).
-- **State:** los estados de un grupo son fijos: "Por llegar" azul, "Llegando" terracota, hora del QR en verde con ícono, "No llegó" rojo, "Sin confirmar" neutro.
+- **State:** los estados de un grupo son fijos: "Por llegar" azul, "Llegando" terracota, hora del QR en verde con ícono, "No llegó" rojo, "Sin confirmar" neutro. En la administración siguen The Estado De Revisión Rule: "Por revisar", "En revisión" e "Invitación enviada" azules; aceptado, aprobado y activo verdes; rechazado, con observaciones y suspendido rojos; "Corrección pedida" neutra; "Sin responsable" en `outline`.
+
+### Avatar
+- **Style:** círculo de tinta con las iniciales en crema (600). Es decorativo (`aria-hidden`): el nombre va escrito al lado.
+- **Tamaños (`size`):** `xs` 24 px en menús junto a un nombre, `sm` 28 px en columnas de responsable y filas del equipo, `md` 36 px por defecto (la cuenta en la barra lateral), `lg` 56 px en la cabecera de la ficha de un usuario. Iniciales en `caption` (xs, sm), `small` (md) o `lead` (lg). El tamaño se elige con la prop, nunca sobrescribiendo clases.
 
 ### Cards / Containers
 - **Corner Style:** 10 px (`rounded-kp`).
@@ -452,10 +566,17 @@ Firmes y claros, como los de la app: mayúsculas con tracking en toda acción qu
 - **Switch:** 44 × 24 px, tinta encendido y arena apagado, perilla blanca con `shadow-raise`, 200 ms con `ease-out-expo`. **Checkbox:** nativo con `accent-color` de tinta.
 
 ### Navigation
-- **Barra lateral:** fondo `paper`, regla derecha en arena al 60 %, logotipo en tinta de 36 px arriba. Ítems de 40 px con ícono lineal de 18 px (trazo 1.75) y texto `body` 500 en tinta al 80 %; hover con `paper-deep`; activo con fondo tinta y texto crema. Abajo, la cuenta con avatar de tinta y menú hacia arriba.
+- **Barra lateral:** fondo `paper`, regla derecha en arena al 60 %. Cabecera de 64 px fuera del área que se desplaza: arriba a la izquierda el botón de contraer (ícono de panel de 19 px, cuadro de 40 px, tinta al 80 %, hover `paper-deep`) y a su derecha el logotipo en tinta de 36 px. Ítems de 40 px con ícono lineal de 18 px (trazo 1.75) y texto `body` 500 en tinta al 80 %; hover con `paper-deep`; activo con fondo tinta y texto crema. Abajo, tras una regla arena al 60 %, la cuenta con avatar de tinta y menú hacia arriba.
+- **Contraída (escritorio):** 4.5 rem, sólo íconos. Las etiquetas, el logotipo, los chevrones y los datos de la cuenta se desvanecen en 150 ms mientras el ancho se anima. Al pasar o enfocar un ícono aparece su nombre en una etiqueta de tinta con texto crema (`caption` 600, 6 px de radio, `shadow-pop`, entrada `fade`) 8 px a la derecha de la barra. El ícono de un grupo abre un submenú flotante a la misma altura: tarjeta blanca con borde `divider`, 10 px de radio, `shadow-pop`, entrada `rise`, con el nombre del grupo en `small` 600 y sus enlaces de 36 px (hover crema, activo en tinta). Al abrirse, el foco pasa al primer enlace; un clic fuera lo cierra, y Escape lo cierra y devuelve el foco al ícono.
+- **Grupos (extendida):** en el equipo de K'Plan los módulos se agrupan (Contenido, Usuarios, Finanzas) bajo un ítem con chevron `muted` que gira 180° al abrir. Los hijos cuelgan 24 px adentro de una guía vertical en arena al 70 %, en ítems de 36 px con texto `body` en tinta al 75 %; el activo en tinta con texto crema y 500. La altura se abre y se cierra animando las filas de la cuadrícula en 200 ms con `ease-out-expo`. Cada grupo recuerda si se dejó abierto o cerrado; sin preferencia, abre el que contiene la ruta actual. Un grupo cerrado (o la barra contraída) que contiene la ruta activa pinta el ítem del grupo en tinta, como activo.
+- **Pendientes:** el número por revisar va junto a la etiqueta en una ficha de `planned` al 12 % con texto azul (`caption` 600, 6 px de radio, tabular); sobre el ítem activo se invierte a crema al 15 % con texto crema. Contraída, se reduce a un punto azul de 8 px con anillo `paper` en la esquina del ícono, y el número pasa a la etiqueta accesible.
+- **Por permisos:** el menú del equipo K'Plan se arma con los permisos del rol. Un grupo sin hijos visibles desaparece; uno con un solo hijo se vuelve enlace directo con el ícono del grupo.
+- **Cajón móvil:** la misma barra, siempre extendida y sin botón de contraer; los grupos funcionan igual.
 - **Barra superior:** 64 px, crema, regla inferior `divider`; nombre de la organización en `body` 600, tipo y ciudad en `small` `muted`, acción primaria a la derecha. En móvil muestra el isologo y el botón de menú.
 - **Tabs:** 44 px, `body` 500, subrayado de 2 px en tinta para la activa, contador en ficha de tinta (activa) o papel. Flechas del teclado para moverse.
 - **SegmentedControl:** marco `field` con borde arena y 2 px de relleno; opción elegida en tinta con texto crema; flechas del teclado (Día · Semana · Mes, ×2 · ×3 · ×5).
+
+**The Mismo Lugar Rule.** Contraer la barra lateral no mueve nada: el botón de contraer, cada ícono y el avatar quedan en la misma x en los dos estados (centrados a 36 px del borde, el centro de la barra contraída). Sólo aparece o desaparece el texto.
 
 ### Dialogs, avisos y guardado
 - **Dialog:** sobre `<dialog>` nativo, fondo `surface`, velo de tinta al 45 %, `shadow-pop`. Variante centrada de 26 / 34 / 46 rem con 16 px de radio y entrada `rise`; variante lateral (`sheet`) a toda altura desde la derecha, 28 / 36 / 44 rem, entrada `slide-in`, para formularios largos. Cabecera y pie con reglas `divider`; el pie en crema al 50 % con las acciones a la derecha.
@@ -466,6 +587,15 @@ Firmes y claros, como los de la app: mayúsculas con tracking en toda acción qu
 - **Table:** cabeceras en `label` `muted` sobre blanco; celdas de 16 × 12 px con regla inferior `divider`; filas interactivas con hover crema; números a la derecha y tabulares.
 - **EmptyState:** círculo de 48 px en papel con ícono en tinta, título `lead` 600 y una línea que dice qué hacer, con acción opcional. **ErrorState:** igual con círculo rojo al 10 % y botón "Reintentar" secundario.
 - **Skeleton:** bloques `placeholder` con 10 px de radio y pulso.
+
+### Verificación y equipo
+Las piezas de la administración de K'Plan: la cola de guías y traductores, su expediente y los roles del equipo.
+- **Riel de revisión (`ReviewSegments`):** un tramo por documento o verificación obligatoria, píldoras de 6 px de alto, 12 px mínimo y 4 px entre ellas: verde aceptado o limpio, `planned` al 30 % por revisar, rojo rechazado u observado, contorno rojo punteado al 60 % si nunca se subió. Debajo, la cuenta en `caption` tabular ("3 de 5 documentos"). Cada tramo lleva su nombre en `title` y el riel se lee como una imagen con la lista completa.
+- **Espera:** el tiempo en la etapa va en `small` 600 tabular con "desde…" en `caption` `muted`; pasa a `danger` cuando supera 3 días. La oración de resumen de la cola aplica lo mismo a la solicitud que más espera.
+- **Etapas (`StageTrack`):** panel con los tres pasos (Documentos, Antecedentes, Decisión), en columnas desde `sm` unidas por un riel de 2 px (verde tras un paso hecho, `divider` si no). Círculo de 28 px: verde con palomita si está hecho, tinta con el número si es el actual (o espera al guía), contorno arena con número `muted` si viene después, rojo con equis si se rechazó. Debajo, el nombre en `body` 600, el avance en `small` `muted` y cuánto lleva ahí. Un pie con regla `divider` junta las acciones de etapa a la derecha y, a la izquierda, la oración "**Para avanzar:** …" que dice qué falta, o "Todo listo para pasar a la siguiente etapa."
+- **Revisión de documento:** diálogo lateral grande. Arriba, el visor: el archivo ajustado dentro de una caja de papel de altura fija (34 % de la ventana, mínimo 13 rem; `paper`, borde `divider`, 12 px de relleno) para que la lista de revisión quede a la vista. Encima de la caja, control segmentado pequeño Frente · Reverso cuando hay varias caras, zoom Ajustado · 150 % · 250 % con botones de ícono (también con clic en la imagen) y "Abrir original" fantasma; debajo, el nombre del archivo en `caption`. Luego los datos del documento en tres columnas (vencido en `danger` 600) y "Lo que se revisa" con su etiqueta de estado y una casilla por punto. "Aceptar documento" queda deshabilitado hasta marcar todo; el pie cuenta en vivo "Falta marcar N de M" y lleva anterior · "N de M" · siguiente a la izquierda. Rechazar exige la nota que el guía lee en la app. Al decidir, pasa solo al siguiente documento pendiente.
+- **Historial:** línea de tiempo vertical, regla `divider` de 1 px y puntos de 8 px: tinta al enviar, contorno de tinta al 40 % al asignar, verde al aceptar, limpiar o aprobar, rojo al rechazar, observar o pedir corrección, azul al cambiar de etapa. El hecho en `small` tinta; quién y cuándo en `caption` `muted`. Lo más reciente arriba.
+- **Matriz de roles y permisos:** tabla dentro de una tarjeta que se desplaza de lado. La primera columna (permiso en `body` 500 con descripción `caption` `muted` a 38 ch) queda pegada a la izquierda sobre blanco. Cada rol es una columna de 7 rem con su nombre en `small` 600 y cuántas personas lo tienen; los roles de sistema llevan candado y no se editan, los demás se abren tocando el nombre (lápiz al pasar). Concedido: círculo de tinta de 24 px con palomita crema. No concedido: punto arena de 6 px. Las filas de grupo van en crema con el nombre en `small` 600. Sólo cuando la tabla desborda aparecen "Hay más roles a la derecha →" en `small` `muted` arriba y un desvanecido de blanco de 48 px en el borde derecho.
 
 ### Agenda de la semana
 La pieza que define el portal: una tabla con `role="grid"` de siete columnas de día y filas de una hora, agrupadas por fase (Mañana, Mediodía, Tarde, Noche) con la fase escrita en vertical en una canaleta pegajosa.
@@ -491,7 +621,9 @@ La pieza que define el portal: una tabla con `role="grid"` de siete columnas de 
 - **Do** poner `tabular-nums` en toda cifra que se compara o se alinea.
 - **Do** separar superficies con borde `divider` sobre `surface`, y reservar `shadow-pop` para lo que flota.
 - **Do** usar `text-brand-strong`, no `text-brand`, para texto terracota sobre fondos claros, y `text-badge-deep` para íconos dorados.
-- **Do** animar sólo con los tokens (`animate-rise` 220 ms, `animate-fade` 180 ms, `animate-slide-in` 260 ms, `ease-out-expo`) y transiciones de estado de 150 ms; `prefers-reduced-motion` las apaga todas.
+- **Do** animar sólo con los tokens (`animate-rise` 220 ms, `animate-fade` 180 ms, `animate-slide-in` 260 ms, `ease-out-expo`), transiciones de estado de 150 ms y 200 ms con `ease-out-expo` para lo que cambia de tamaño o gira (switch, ancho de la barra lateral, grupos, chevron); `prefers-reduced-motion` las apaga todas.
+- **Do** pintar los estados de revisión y de cuenta con The Estado De Revisión Rule: azul pendiente, verde pasó, rojo no pasó o se detuvo, neutro devuelto para corregir.
+- **Do** elegir el tamaño del avatar con `size` (`xs` 24, `sm` 28, `md` 36, `lg` 56 px) y el tono del botón de ícono con `tone` (`default`, `danger`).
 
 ### Don't:
 - **Don't** escribir un hex, un `rgb()` ni un color arbitrario en un componente.
@@ -502,3 +634,5 @@ La pieza que define el portal: una tabla con `role="grid"` de siete columnas de 
 - **Don't** usar otra familia tipográfica que Poppins, ni tamaños fuera de la escala con nombre fuera de la vista previa del teléfono.
 - **Don't** usar mayúsculas con tracking como antetítulo sobre un encabezado.
 - **Don't** usar radios fuera de 6, 10 y 16 px y el círculo, salvo el marco del teléfono.
+- **Don't** sobrescribir con `className` el color o el tamaño de `Avatar` e `IconButton`; si falta una variante, se agrega a la prop.
+- **Don't** mover los íconos de la barra lateral al contraerla, ni poner el botón de contraer dentro del área que se desplaza.
