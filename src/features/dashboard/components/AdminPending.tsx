@@ -3,14 +3,14 @@ import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useStatements } from '@/data/hooks/use-billing'
 import { useGuideApplications } from '@/data/hooks/use-guides'
-import { useOrganizations } from '@/data/hooks/use-organizations'
+import { useAdmissions } from '@/data/hooks/use-admissions'
 import { useSession } from '@/features/auth/use-auth'
 import { formatMoney, plural } from '@/lib/format'
 
 /** Lo que espera una decisión del equipo de K'Plan, según lo que su rol puede hacer. Si no hay nada, no se muestra. */
 export function AdminPending() {
   const { can } = useSession()
-  const pending = useOrganizations({ status: 'pending' }, can('organizations.review', 'organizations.manage'))
+  const pending = useAdmissions({ status: 'in_review' }, can('organizations.review', 'organizations.manage'))
   const guides = useGuideApplications({ status: 'in_review' }, can('guides.review', 'guides.decide'))
   const statements = useStatements(undefined, can('billing.manage'))
   const due = (statements.data ?? []).filter((statement) => statement.status === 'due' && statement.total > 0)
@@ -30,9 +30,9 @@ export function AdminPending() {
       : null,
     pending.data && pending.data.length > 0
       ? {
-          to: paths.organizations,
+          to: paths.admissions,
           icon: <Building2 size={16} aria-hidden="true" />,
-          text: `${plural(pending.data.length, 'organización espera', 'organizaciones esperan')} tu aprobación`,
+          text: `${plural(pending.data.length, 'solicitud de organización espera', 'solicitudes de organizaciones esperan')} revisión`,
         }
       : null,
     due.length > 0

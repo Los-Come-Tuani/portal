@@ -2,8 +2,9 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Button, ConfirmDialog, ErrorState, Panel, Skeleton, Tag, useToast } from '@/components/ui'
+import { Button, ButtonLink, ConfirmDialog, ErrorState, Panel, Skeleton, Tag, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
+import { useAdmissions } from '@/data/hooks/use-admissions'
 import { useBadgeCampaigns } from '@/data/hooks/use-badges'
 import { useStatements } from '@/data/hooks/use-billing'
 import { useCoupons } from '@/data/hooks/use-coupons'
@@ -49,6 +50,10 @@ export function OrganizationDetailPage() {
   const save = useSaveOrganization()
   const toast = useToast()
   const canManage = useSession().can('organizations.manage')
+  const admissions = useAdmissions()
+  const admission = admissions.data
+    ?.filter((item) => item.organizationId === organizationId)
+    .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0]
   const [editing, setEditing] = useState(false)
   const [changing, setChanging] = useState<{ to: OrganizationStatus; label: string } | null>(null)
   useDocumentTitle(organization.data?.name ?? 'Organización')
@@ -102,7 +107,12 @@ export function OrganizationDetailPage() {
               Editar
             </Button>
           )}
-          {(canManage || org.status === 'pending' ? STATUS_ACTIONS[org.status] : []).map((action) => (
+          {admission && org.status === 'pending' && (
+            <ButtonLink to={paths.admission(admission.id)} variant="primary" icon={<ArrowRight size={16} />}>
+              Revisar solicitud
+            </ButtonLink>
+          )}
+          {(admission && org.status === 'pending' ? [] : canManage || org.status === 'pending' ? STATUS_ACTIONS[org.status] : []).map((action) => (
             <Button key={action.to} variant={action.tone} onClick={() => setChanging(action)}>
               {action.label}
             </Button>
