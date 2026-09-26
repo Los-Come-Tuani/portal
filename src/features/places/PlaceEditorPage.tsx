@@ -12,6 +12,7 @@ import { placeProfileInputSchema } from '@/data/schemas/profile.schema'
 import { stopInputSchema } from '@/data/schemas/stop.schema'
 import { useSession } from '@/features/auth/use-auth'
 import { useDocumentTitle } from '@/hooks/use-document-title'
+import { cn } from '@/lib/cn'
 import { formatPercent } from '@/lib/format'
 import { AppPreview } from './components/AppPreview'
 import { PostsTab } from './components/PostsTab'
@@ -154,6 +155,7 @@ export function PlaceEditorPage() {
           <div className="min-w-0">
             <h1 className="text-headline font-bold tracking-tight text-ink">{place.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-small text-muted">
+              {place.draft && <Tag tone="ink">Borrador: se publica al aprobar la solicitud</Tag>}
               <Tag tone="outline">{place.category}</Tag>
               <span>{place.city}</span>
               <span aria-hidden="true">·</span>
@@ -186,7 +188,10 @@ export function PlaceEditorPage() {
               aria-valuemax={100}
               aria-label="Ficha completa"
             >
-              <div className="h-full rounded-full bg-confirmed transition-[width] duration-500" style={{ width: `${score * 100}%` }} />
+              <div
+                className={cn('h-full rounded-full transition-[width] duration-500', place.draft ? 'bg-planned' : 'bg-confirmed')}
+                style={{ width: `${score * 100}%` }}
+              />
             </div>
           </div>
         </div>

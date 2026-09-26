@@ -9,6 +9,7 @@ import type {
   EventItem,
   GuideApplication,
   Organization,
+  OrganizationApplication,
   PlaceProfile,
   Post,
   Pricing,
@@ -32,6 +33,7 @@ export interface MockDatabase {
   users: User[]
   staffRoles: StaffRole[]
   guideApplications: GuideApplication[]
+  organizationApplications: OrganizationApplication[]
   organizations: Organization[]
   stops: Stop[]
   circuits: Circuit[]

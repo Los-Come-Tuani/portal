@@ -6,7 +6,9 @@
 import { env } from '@/config/env'
 import type { TransportRequest, TransportResponse } from '../api/http-client'
 import { getDatabase, saveDatabase } from './db'
+import { admissionRoutes } from './handlers/admissions'
 import { authRoutes, userFromToken } from './handlers/auth'
+import { uploadRoutes } from './handlers/uploads'
 import { badgeRoutes } from './handlers/badges'
 import { billingRoutes } from './handlers/billing'
 import { couponRoutes } from './handlers/coupons'
@@ -21,6 +23,8 @@ import { hasPermission } from './services/access'
 
 const routes: MockRoute[] = [
   ...authRoutes,
+  ...uploadRoutes,
+  ...admissionRoutes,
   ...userRoutes,
   ...staffRoleRoutes,
   ...guideRoutes,

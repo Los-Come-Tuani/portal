@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import loginArt from '@/assets/brand/login-illustration.svg'
 import { Logo } from '@/components/brand/Logo'
-import { Button, Field, Input, Tag, useToast } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { Button, ButtonLink, Field, Input, Tag, useToast } from '@/components/ui'
 import { env } from '@/config/env'
 import { errorMessage } from '@/data/api/errors'
 import { ROLE_LABELS, type LoginInput } from '@/data/models'
@@ -92,6 +93,16 @@ export function LoginPage() {
               ¿Olvidaste tu contraseña?
             </button>
           </form>
+
+          <div className="mt-8 flex items-center justify-between gap-4 rounded-kp border border-divider bg-surface px-4 py-3">
+            <p className="text-small text-muted">
+              <span className="block font-semibold text-ink">¿Tu negocio o alcaldía todavía no está en K'Plan?</span>
+              Postúlate con tus documentos y entra mientras lo revisamos.
+            </p>
+            <ButtonLink to={paths.apply} size="sm" variant="secondary" className="shrink-0">
+              Postúlate
+            </ButtonLink>
+          </div>
 
           {env.useMocks && (
             <div className="mt-10 border-t border-divider pt-6">

@@ -1,13 +1,19 @@
 import {
   BACKGROUND_CHECK_INFO,
   CHECK_STATUS_LABELS,
+  checkProgress,
   DOCUMENT_TYPE_INFO,
+  documentProgress,
   requiredChecks,
   requiredDocuments,
+  STAGE_LABELS,
+  VERIFICATION_STAGES,
   type GuideApplication,
   type VerificationStage,
 } from '@/data/models'
-import { minutesBetween, type LocalDateTime } from '@/lib/dates'
+import type { Segment } from '@/features/verification/components/ReviewSegments'
+import type { StageStep } from '@/features/verification/components/StageTrack'
+import { stepState } from '@/features/verification/status'
 
 /** Las pestañas de la cola: las tres etapas y los estados que salen de ellas. */
 export type QueueTab = VerificationStage | 'changes_requested' | 'approved' | 'rejected'
@@ -24,15 +30,6 @@ export const QUEUE_TABS: { value: QueueTab; label: string }[] = [
 export function queueTab(application: GuideApplication): QueueTab {
   return application.status === 'in_review' ? application.stage : application.status
 }
-
-/** Más de esto en una etapa ya es un retraso para quien espera. */
-export const STAGE_LIMIT_MINUTES = 3 * 1440
-
-export function waitingMinutes(application: GuideApplication, now: LocalDateTime): number {
-  return Math.max(0, minutesBetween(application.stageSince, now))
-}
-
-export type Segment = { key: string; label: string; state: 'done' | 'pending' | 'problem' | 'missing' }
 
 /** Un tramo por documento (o por verificación): así se ve de un vistazo qué falta. */
 export function reviewSegments(application: GuideApplication): Segment[] {
@@ -55,5 +52,33 @@ export function reviewSegments(application: GuideApplication): Segment[] {
       label: `${BACKGROUND_CHECK_INFO[type].label}: ${CHECK_STATUS_LABELS[status].toLowerCase()}`,
       state: status === 'clear' ? 'done' : status === 'flagged' ? 'problem' : 'pending',
     }
+  })
+}
+
+/** Documentos, antecedentes y decisión, con lo que lleva cada uno. */
+export function guideSteps(application: GuideApplication): StageStep[] {
+  const current = VERIFICATION_STAGES.indexOf(application.stage)
+  return VERIFICATION_STAGES.map((stage, index) => {
+    const state = stepState(index, current, application.status)
+    let detail: string
+    if (stage === 'documents') {
+      const progress = documentProgress(application)
+      const missing = progress.missing.length > 0 ? ` · faltan ${progress.missing.length}` : ''
+      detail = state === 'upcoming' ? 'Sin empezar' : `${progress.accepted} de ${progress.required} aceptados${missing}`
+    } else if (stage === 'background') {
+      const progress = checkProgress(application)
+      const flagged = progress.flagged > 0 ? ` · ${progress.flagged} con observaciones` : ''
+      detail = state === 'upcoming' ? 'Después de los documentos' : `${progress.clear + progress.flagged} de ${progress.required} verificadas${flagged}`
+    } else {
+      detail =
+        application.status === 'approved'
+          ? 'Aprobado'
+          : application.status === 'rejected'
+            ? 'Rechazado'
+            : state === 'current'
+              ? 'Falta aprobar o rechazar'
+              : 'Al final'
+    }
+    return { key: stage, label: STAGE_LABELS[stage], detail, state }
   })
 }

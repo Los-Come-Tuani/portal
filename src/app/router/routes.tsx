@@ -2,7 +2,15 @@ import { createBrowserRouter } from 'react-router'
 import { AppShell } from '../layout/AppShell'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { RouteErrorPage } from '../pages/RouteErrorPage'
-import { RedirectIfAuthenticated, RequireAgenda, RequireAuth, RequirePermission, RequireRole, SessionLoader } from './guards'
+import {
+  RedirectIfAuthenticated,
+  RequireActiveOrganization,
+  RequireAgenda,
+  RequireAuth,
+  RequirePermission,
+  RequireRole,
+  SessionLoader,
+} from './guards'
 import { paths } from './paths'
 
 /** Cada módulo se descarga cuando se visita por primera vez. */
@@ -12,6 +20,7 @@ export const router = createBrowserRouter([
     HydrateFallback: SessionLoader,
     children: [
       { path: paths.login, lazy: async () => ({ Component: (await import('@/features/auth/LoginPage')).LoginPage }) },
+      { path: paths.apply, lazy: async () => ({ Component: (await import('@/features/onboarding/ApplyPage')).ApplyPage }) },
     ],
   },
   {
@@ -43,33 +52,49 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            element: <RequirePermission anyOf={['content.moderate']} />,
+            element: <RequireRole roles={['negocio', 'alcaldia']} />,
             children: [
               {
-                path: 'eventos',
-                lazy: async () => ({ Component: (await import('@/features/events/EventsPage')).EventsPage }),
-              },
-              {
-                path: 'insignias',
-                lazy: async () => ({ Component: (await import('@/features/badges/BadgesPage')).BadgesPage }),
-              },
-              {
-                element: <RequireRole roles={['negocio', 'admin']} />,
-                children: [
-                  {
-                    path: 'cupones',
-                    lazy: async () => ({ Component: (await import('@/features/coupons/CouponsPage')).CouponsPage }),
-                  },
-                ],
+                path: 'solicitud',
+                lazy: async () => ({
+                  Component: (await import('@/features/onboarding/ApplicationStatusPage')).ApplicationStatusPage,
+                }),
               },
             ],
           },
           {
-            element: <RequireRole roles={['negocio', 'alcaldia']} />,
+            element: <RequireActiveOrganization />,
             children: [
               {
-                path: 'pagos',
-                lazy: async () => ({ Component: (await import('@/features/billing/BillingPage')).BillingPage }),
+                element: <RequirePermission anyOf={['content.moderate']} />,
+                children: [
+                  {
+                    path: 'eventos',
+                    lazy: async () => ({ Component: (await import('@/features/events/EventsPage')).EventsPage }),
+                  },
+                  {
+                    path: 'insignias',
+                    lazy: async () => ({ Component: (await import('@/features/badges/BadgesPage')).BadgesPage }),
+                  },
+                  {
+                    element: <RequireRole roles={['negocio', 'admin']} />,
+                    children: [
+                      {
+                        path: 'cupones',
+                        lazy: async () => ({ Component: (await import('@/features/coupons/CouponsPage')).CouponsPage }),
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                element: <RequireRole roles={['negocio', 'alcaldia']} />,
+                children: [
+                  {
+                    path: 'pagos',
+                    lazy: async () => ({ Component: (await import('@/features/billing/BillingPage')).BillingPage }),
+                  },
+                ],
               },
             ],
           },
@@ -79,6 +104,14 @@ export const router = createBrowserRouter([
               {
                 element: <RequirePermission anyOf={['organizations.review', 'organizations.manage']} />,
                 children: [
+                  {
+                    path: 'solicitudes',
+                    lazy: async () => ({ Component: (await import('@/features/admin/admissions/AdmissionsPage')).AdmissionsPage }),
+                  },
+                  {
+                    path: 'solicitudes/:applicationId',
+                    lazy: async () => ({ Component: (await import('@/features/admin/admissions/AdmissionPage')).AdmissionPage }),
+                  },
                   {
                     path: 'organizaciones',
                     lazy: async () => ({

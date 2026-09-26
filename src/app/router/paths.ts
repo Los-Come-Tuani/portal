@@ -1,6 +1,10 @@
 /** Todas las rutas del portal en un solo lugar. */
 export const paths = {
   login: '/entrar',
+  apply: '/postular',
+  application: '/solicitud',
+  admissions: '/solicitudes',
+  admission: (applicationId: string) => `/solicitudes/${encodeURIComponent(applicationId)}`,
   home: '/',
   places: '/lugares',
   place: (stopId: string) => `/lugares/${encodeURIComponent(stopId)}`,

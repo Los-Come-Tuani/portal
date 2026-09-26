@@ -1,19 +1,21 @@
 /**
  * Escaneos de muestra para la demo: la API real devuelve la URL del archivo
- * que subió el guía. Son SVG genéricos con marca de agua "MUESTRA", no
- * réplicas de documentos oficiales.
+ * que se subió. Son SVG genéricos con marca de agua "MUESTRA", no réplicas de
+ * documentos oficiales.
  */
 import { formatDate } from '@/lib/format'
-import { DOCUMENT_TYPE_INFO, type DocumentPage, type DocumentType } from '../../models'
+import type { DocumentPage, DocumentTypeInfo } from '../../models'
 
-interface ScanData {
-  type: DocumentType
+export interface ScanData {
+  info: DocumentTypeInfo
+  /** A nombre de quién está: la persona o la razón social. */
   name: string
   city: string
   number: string
-  detail: string | null
   issuedOn: string
   expiresOn: string | null
+  /** El texto de una constancia o certificado. */
+  body: string
 }
 
 const PAPER = '#f6f3ec'
@@ -52,13 +54,12 @@ const svg = (width: number, height: number, body: string) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" font-family="Helvetica, Arial, sans-serif"><rect width="${width}" height="${height}" fill="${PAPER}"/>${body}${watermark(width, height)}</svg>`
 
 function cardFront(data: ScanData): string {
-  const info = DOCUMENT_TYPE_INFO[data.type]
   return svg(
     856,
     540,
     `<rect x="14" y="14" width="828" height="512" rx="22" fill="none" stroke="${RULE}" stroke-width="2"/>
-     <text x="48" y="70" font-size="20" fill="${SOFT}">${escape(info.issuer)}</text>
-     <text x="48" y="104" font-size="30" font-weight="700" fill="${INK}">${escape(info.label)}</text>
+     <text x="48" y="70" font-size="20" fill="${SOFT}">${escape(data.info.issuer)}</text>
+     <text x="48" y="104" font-size="30" font-weight="700" fill="${INK}">${escape(data.info.label)}</text>
      <rect x="48" y="140" width="200" height="260" rx="10" fill="#e4dfd3"/>
      <circle cx="148" cy="238" r="52" fill="#cbc4b4"/>
      <path d="M68 400 C 80 318, 216 318, 228 400 Z" fill="#cbc4b4"/>
@@ -89,25 +90,14 @@ function cardBack(data: ScanData): string {
   )
 }
 
-const SHEET_TEXT: Record<DocumentType, (data: ScanData) => string> = {
-  cedula: () => '',
-  'record-policia': (data) => `Se hace constar que ${data.name} no registra antecedentes policiales a la fecha de emisión de esta constancia.`,
-  'carne-intur': () => '',
-  'primeros-auxilios': (data) => `Se certifica que ${data.name} aprobó el curso de primeros auxilios básicos, con prácticas de reanimación y atención de heridas.`,
-  'certificado-idioma': (data) => `Se certifica que ${data.name} acreditó los siguientes niveles, según el Marco Común Europeo: ${data.detail ?? ''}.`,
-  'licencia-conducir': () => '',
-  'seguro-vehiculo': (data) => `Póliza vigente de responsabilidad civil y cobertura de pasajeros a nombre de ${data.name}, para el vehículo registrado en ${data.city}.`,
-}
-
 function sheet(data: ScanData): string {
-  const info = DOCUMENT_TYPE_INFO[data.type]
-  const lines = wrap(SHEET_TEXT[data.type](data), 52)
+  const lines = wrap(data.body, 52)
   return svg(
     850,
     1100,
-    `<text x="425" y="120" text-anchor="middle" font-size="22" fill="${SOFT}">${escape(info.issuer)}</text>
+    `<text x="425" y="120" text-anchor="middle" font-size="22" fill="${SOFT}">${escape(data.info.issuer)}</text>
      <line x1="120" y1="150" x2="730" y2="150" stroke="${RULE}" stroke-width="2"/>
-     <text x="425" y="230" text-anchor="middle" font-size="38" font-weight="700" fill="${INK}">${escape(info.label)}</text>
+     <text x="425" y="230" text-anchor="middle" font-size="38" font-weight="700" fill="${INK}">${escape(data.info.label)}</text>
      <text x="425" y="272" text-anchor="middle" font-size="20" fill="${SOFT}">N.º ${escape(data.number)}</text>
      ${lines.map((line, index) => `<text x="120" y="${380 + index * 44}" font-size="24" fill="${INK}">${escape(line)}</text>`).join('')}
      <text x="120" y="${420 + lines.length * 44}" font-size="20" fill="${SOFT}">Emitido el ${formatDate(data.issuedOn)}${data.expiresOn ? ` · vence el ${formatDate(data.expiresOn)}` : ''}</text>
@@ -120,12 +110,17 @@ function sheet(data: ScanData): string {
 }
 
 export function documentScans(data: ScanData): DocumentPage[] {
-  const info = DOCUMENT_TYPE_INFO[data.type]
-  if (data.type === 'cedula') {
+  const pages = data.info.pages
+  if (data.info.format === 'card' && pages?.includes('Reverso')) {
     return [
-      { label: 'Frente', url: toUrl(cardFront(data)) },
-      { label: 'Reverso', url: toUrl(cardBack(data)) },
+      { label: pages[0], url: toUrl(cardFront(data)) },
+      { label: pages[1], url: toUrl(cardBack(data)) },
     ]
   }
-  return [{ label: info.format === 'card' ? 'Frente' : 'Página 1', url: toUrl(info.format === 'card' ? cardFront(data) : sheet(data)) }]
+  return [
+    {
+      label: pages?.[0] ?? (data.info.format === 'card' ? 'Frente' : 'Página 1'),
+      url: toUrl(data.info.format === 'card' ? cardFront(data) : sheet(data)),
+    },
+  ]
 }

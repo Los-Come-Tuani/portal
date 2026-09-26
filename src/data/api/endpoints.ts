@@ -17,6 +17,8 @@ export const endpoints = {
   },
   stops: {
     list: '/api/stops',
+    /** Pública: los lugares de una ciudad que todavía no administra nadie. */
+    available: '/api/stops/available',
     detail: (stopId: string) => `/api/stops/${id(stopId)}`,
     profile: (stopId: string) => `/api/stops/${id(stopId)}/profile`,
   },
@@ -52,6 +54,24 @@ export const endpoints = {
     pay: (statementId: string) => `/api/billing/statements/${id(statementId)}/pay`,
   },
   pricing: '/api/pricing',
+  /** Sube un archivo y devuelve su URL; se usa antes de mandar una solicitud. */
+  uploads: '/api/uploads',
+  organizationApplications: {
+    list: '/api/organization-applications',
+    reviewers: '/api/organization-applications/reviewers',
+    /** La solicitud de quien entró: negocio o alcaldía en revisión. */
+    mine: '/api/organization-applications/mine',
+    detail: (applicationId: string) => `/api/organization-applications/${id(applicationId)}`,
+    assign: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/assign`,
+    review: (applicationId: string, documentId: string) =>
+      `/api/organization-applications/${id(applicationId)}/documents/${id(documentId)}/review`,
+    /** Quien se postuló sube o reemplaza un documento. */
+    documents: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/documents`,
+    resubmit: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/resubmit`,
+    advance: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/advance`,
+    requestChanges: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/request-changes`,
+    decision: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/decision`,
+  },
   users: {
     list: '/api/users',
     detail: (userId: string) => `/api/users/${id(userId)}`,

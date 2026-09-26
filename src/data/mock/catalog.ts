@@ -14,7 +14,10 @@ import type {
   GuideApplication,
   GuideServiceRole,
   LatLng,
+  NewPlace,
   Organization,
+  OrganizationApplication,
+  OrganizationDocumentType,
   PlaceProfile,
   Post,
   StaffRole,
@@ -26,6 +29,7 @@ import groupSessionsJson from './json/circuit_groups.json'
 import appCouponsJson from './json/coupons.json'
 import appEventsJson from './json/events.json'
 import guideApplicationsJson from './json/guide_applications.json'
+import admissionsJson from './json/organization_applications.json'
 import appGuidesJson from './json/guides.json'
 import organizationsJson from './json/organizations.json'
 import profilesJson from './json/place_profiles.json'
@@ -108,6 +112,33 @@ export type ApplicationSeed = Pick<
   decisionNote?: string
 }
 
+export type AdmissionSeed = Pick<
+  OrganizationApplication,
+  | 'id'
+  | 'organizationId'
+  | 'userId'
+  | 'type'
+  | 'name'
+  | 'legalName'
+  | 'ruc'
+  | 'kind'
+  | 'city'
+  | 'address'
+  | 'description'
+  | 'representative'
+  | 'claimedStopIds'
+  | 'stage'
+  | 'status'
+  | 'assigneeId'
+> & {
+  newPlace: NewPlace | null
+  /** Sin valor: se toma de `joinedAt` de la organización. */
+  submittedDaysAgo?: number
+  stageDaysAgo: number
+  documents: Partial<Record<OrganizationDocumentType, DocumentStatus>>
+  notes: Partial<Record<OrganizationDocumentType, string>>
+}
+
 export const catalog = {
   stops: [...stopsJson, ...portalStopsJson] as Stop[],
   circuits: circuitsJson as Circuit[],
@@ -119,6 +150,7 @@ export const catalog = {
   staffRoles: staffRolesJson as StaffRole[],
   appGuides: appGuidesJson as AppGuide[],
   guideApplications: guideApplicationsJson as ApplicationSeed[],
+  admissions: admissionsJson as AdmissionSeed[],
   profiles: profilesJson as ProfileSeed[],
   posts: postsJson as PostSeed[],
   portalEvents: portalEventsJson as PortalEventSeed[],

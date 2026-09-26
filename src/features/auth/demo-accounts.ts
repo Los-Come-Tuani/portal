@@ -7,6 +7,8 @@ export const DEMO_ACCOUNTS: { email: string; role: PortalRole; label: string; de
   { email: 'tabacalera@kplan.demo', role: 'negocio', label: 'Tabacalera artesanal', detail: 'Estelí, campaña activa' },
   { email: 'leon@kplan.demo', role: 'alcaldia', label: 'Alcaldía de León', detail: '5 lugares públicos' },
   { email: 'masaya@kplan.demo', role: 'alcaldia', label: 'Alcaldía de Masaya', detail: '4 lugares públicos' },
+  { email: 'cafe@kplan.demo', role: 'negocio', label: 'Café La Calzada', detail: 'Se postuló hoy: solicitud en revisión' },
+  { email: 'ceramica@kplan.demo', role: 'negocio', label: 'Cerámica Los Ancestros', detail: 'Le pidieron corregir un documento' },
   { email: 'admin@kplan.demo', role: 'admin', label: 'Sofía Lacayo', detail: 'Super admin: todo el portal' },
   { email: 'coordinacion@kplan.demo', role: 'admin', label: 'Raquel Úbeda', detail: 'Revisa y decide guías y traductores' },
   { email: 'verificacion@kplan.demo', role: 'admin', label: 'Daniela Jarquín', detail: 'Sólo revisa guías y traductores' },

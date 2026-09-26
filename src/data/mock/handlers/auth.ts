@@ -6,6 +6,7 @@ import type { MockDatabase } from '../db'
 import { resetDatabase } from '../db'
 import { MockHttpError, parseBody, requireUser, route } from '../http'
 import { toSessionUser } from '../services/access'
+import { rejectionNote } from './admissions'
 
 const TOKEN_PREFIX = 'demo.'
 
@@ -31,6 +32,13 @@ export const authRoutes = [
         throw new MockHttpError(403, "Tu cuenta está suspendida. Escríbele al equipo de K'Plan para reactivarla.")
       }
       const organization = db.organizations.find((item) => item.id === user.organizationId)
+      const rejected = organization?.status === 'suspended' ? rejectionNote(db, organization.id) : null
+      if (rejected !== null) {
+        throw new MockHttpError(
+          403,
+          `La solicitud de ${organization?.name} no fue aprobada${rejected ? `: ${rejected}` : '.'} Puedes escribirle al equipo de K'Plan.`,
+        )
+      }
       if (organization?.status === 'suspended') {
         throw new MockHttpError(
           403,

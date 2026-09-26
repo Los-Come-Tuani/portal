@@ -29,9 +29,17 @@ export function RequireRole({ roles }: { roles: PortalRole[] }) {
   return <Outlet />
 }
 
+/** Mientras una organización está en revisión, sólo ve su solicitud y el borrador de su lugar. */
+export function RequireActiveOrganization() {
+  const { organization } = useSession()
+  if (organization?.status === 'pending') return <Navigate to={paths.application} replace />
+  return <Outlet />
+}
+
 /** La agenda es el inicio; quien del equipo no la ve entra a su primer módulo. */
 export function RequireAgenda() {
   const session = useSession()
+  if (session.organization?.status === 'pending') return <Navigate to={paths.application} replace />
   if (!session.isAdmin || session.can('agenda.view')) return <Outlet />
   const landing = landingPath(session)
   if (landing) return <Navigate to={landing} replace />

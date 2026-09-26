@@ -42,6 +42,7 @@ Confirmado por el usuario:
 - **Insignias**: negocios y alcaldías compran (1) **activar la insignia** en un lugar que hoy no da, y (2) **campañas de insignias extra**: ×2, ×3 o ×5 por visita durante unas fechas, con el lugar destacado en la app.
 - **Admin**: ver y administrar todas las organizaciones, administrar los cupones y publicar eventos especiales.
 - **Verificación de guías y traductores**: envían cédula, récord de policía, carné de INTUR, certificados (primeros auxilios, idiomas) y, si ponen vehículo, licencia y seguro. Pasan tres etapas: revisión de documentos (cada uno contra su lista), antecedentes (Policía, INTUR, referencias) y decisión final. Se puede pedir corrección; todo queda en un historial con quién lo hizo. Nadie aparece como verificado en la app sin pasar las tres.
+- **Postulación de organizaciones**: un negocio o una alcaldía nuevos se postulan desde el portal sin cuenta: datos de la organización (razón social y RUC para negocios), su lugar (uno que ya está en la app o uno nuevo como borrador), quién la representa y sus documentos. Negocios: constancia de RUC, matrícula municipal y cédula del representante (opcionales: licencia de turismo INTUR y permiso sanitario MINSA). Alcaldías: carta de designación y cédula. Al enviar se crea su cuenta: entra, ve en qué va la solicitud, corrige lo que le pidan y arma la ficha de su lugar; nada se publica en la app hasta que el equipo la aprueba (documentos con su lista y decisión). Al aprobarla se activa la organización, se publica su lugar y se le asignan los lugares que dijo administrar; al rechazarla, la cuenta queda suspendida y ve la nota al entrar.
 - **Usuarios**: un panel con todas las cuentas del sistema (turistas, guías y traductores, negocios, alcaldías y equipo), para suspender, reactivar y ayudar a recuperar acceso.
 - **Equipo interno y roles**: roles personalizables armados con permisos por módulo, con roles de base; el super admin no se edita y siempre queda al menos uno activo.
 
@@ -57,7 +58,8 @@ Decisiones por defecto, sin confirmar:
 - Las startups y operadores turísticos entran como un tipo de negocio, no como un rol aparte.
 - Los cupones son de negocios y de K'Plan; las alcaldías no dan cupones.
 - Cada canje genera un código único que el negocio valida en el portal.
-- Una organización nueva queda en revisión hasta que el admin la aprueba; su contenido se publica directo y el admin puede ocultarlo.
+- Una organización nueva queda en revisión hasta que el admin la aprueba; una vez aprobada, su contenido se publica directo y el admin puede ocultarlo.
+- En la postulación, un negocio puede decir que administra cualquier lugar de su ciudad que no tenga dueño (también lugares públicos); el equipo lo confirma al revisar. Pendiente decidir si los lugares públicos sólo los pueden reclamar las alcaldías.
 - Los pagos son simulados en el modo demo.
 - Circuitos, circuitos creativos y horarios de grupo quedan para una fase siguiente.
 - Las listas de revisión de cada documento (por ejemplo "nivel B2 o más" en idiomas, "menos de 3 meses" en el récord) son una propuesta inicial para ajustar con el equipo.

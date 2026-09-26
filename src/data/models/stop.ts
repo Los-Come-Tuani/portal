@@ -26,6 +26,11 @@ export interface Stop {
   /** URLs; la primera es la portada. */
   images: string[]
   coordinates: LatLng
+  /**
+   * Sólo en el portal: el lugar de una organización que todavía no se aprueba.
+   * La API no se lo manda a la app hasta que se publica.
+   */
+  draft?: boolean
 }
 
 /** Lo que una organización puede editar de su lugar. */

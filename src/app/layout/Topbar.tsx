@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { Isologo } from '@/components/brand/Logo'
 import { Button, IconButton, Tag } from '@/components/ui'
 import { ORGANIZATION_STATUS_LABELS, ORGANIZATION_TYPE_LABELS } from '@/data/models'
+import { ORGANIZATION_STATUS_TONES } from '@/features/admin/organizations/status'
 import { useSession } from '@/features/auth/use-auth'
 import { useValidateCoupon } from '@/features/coupons/validate-coupon-context'
 import { paths } from '../router/paths'
@@ -27,7 +28,7 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
               {ORGANIZATION_TYPE_LABELS[organization.type]} · {organization.city}
             </span>
             {organization.status !== 'active' && (
-              <Tag tone={organization.status === 'pending' ? 'neutral' : 'danger'}>
+              <Tag tone={ORGANIZATION_STATUS_TONES[organization.status]}>
                 {ORGANIZATION_STATUS_LABELS[organization.status]}
               </Tag>
             )}
@@ -42,7 +43,7 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
 
       <div className="ml-auto flex items-center gap-2">
         <DemoMenu />
-        {role === 'negocio' && (
+        {role === 'negocio' && organization?.status === 'active' && (
           <Button icon={<ScanLine size={16} />} onClick={() => validateCoupon.open()}>
             <span className="hidden sm:inline">Validar cupón</span>
             <span className="sm:hidden">Validar</span>
