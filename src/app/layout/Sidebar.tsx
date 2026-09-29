@@ -114,24 +114,7 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
 
   return (
     <div className="flex h-full flex-col">
-      <div className={cn('flex h-16 shrink-0 items-center gap-2 overflow-hidden', collapsible ? 'px-3' : 'px-5')}>
-        {collapsible && (
-          <button
-            type="button"
-            onClick={preferences.toggleCollapsed}
-            aria-label={collapsed ? 'Extender el menú' : 'Contraer el menú'}
-            aria-expanded={!collapsed}
-            aria-controls="menu-principal"
-            {...hintProps('Extender el menú')}
-            className="ml-1 flex size-10 shrink-0 items-center justify-center rounded-kp text-ink/80 transition-colors duration-150 hover:bg-paper-deep hover:text-ink"
-          >
-            {collapsed ? (
-              <PanelLeftOpen size={19} strokeWidth={1.75} aria-hidden="true" />
-            ) : (
-              <PanelLeftClose size={19} strokeWidth={1.75} aria-hidden="true" />
-            )}
-          </button>
-        )}
+      <div className="relative flex h-16 shrink-0 items-center overflow-hidden pr-16 pl-6.75">
         <Link
           to={paths.home}
           onClick={onNavigate}
@@ -142,6 +125,23 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
         >
           <Logo className="h-9 text-ink" />
         </Link>
+        {collapsible && (
+          <button
+            type="button"
+            onClick={preferences.toggleCollapsed}
+            aria-label={collapsed ? 'Extender el menú' : 'Contraer el menú'}
+            aria-expanded={!collapsed}
+            aria-controls="menu-principal"
+            {...hintProps('Extender el menú')}
+            className="absolute top-3 right-4 flex size-10 items-center justify-center rounded-kp text-ink/80 transition-colors duration-150 hover:bg-paper-deep hover:text-ink"
+          >
+            {collapsed ? (
+              <PanelLeftOpen size={19} strokeWidth={1.75} aria-hidden="true" />
+            ) : (
+              <PanelLeftClose size={19} strokeWidth={1.75} aria-hidden="true" />
+            )}
+          </button>
+        )}
       </div>
 
       <nav id="menu-principal" aria-label="Principal" className="flex-1 overflow-x-hidden overflow-y-auto px-3 pt-2 pb-4">
