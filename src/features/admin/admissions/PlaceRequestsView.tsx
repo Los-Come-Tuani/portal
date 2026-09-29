@@ -21,12 +21,28 @@ import {
 } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useDecidePlaceRequest, usePlaceRequests } from '@/data/hooks/use-place-requests'
-import { PLACE_REQUEST_STATUS_LABELS, type PlaceRequest, type PlaceRequestStatus } from '@/data/models'
+import { PLACE_REQUEST_STATUS_LABELS, readinessGaps, type PlaceRequest, type PlaceRequestStatus } from '@/data/models'
 import { formatDateTime, plural } from '@/lib/format'
 
 const TONES: Record<PlaceRequestStatus, TagTone> = { pending: 'planned', approved: 'confirmed', rejected: 'danger' }
 
 type Deciding = { request: PlaceRequest; decision: 'approved' | 'rejected' }
+
+function placeLine(request: PlaceRequest): string {
+  if (request.kind === 'claim') return 'Ya está en la app'
+  if (request.status === 'approved') return 'Nuevo · publicado'
+  if (request.status === 'rejected') return 'Nuevo · se borró el borrador'
+  return 'Nuevo · en borrador'
+}
+
+function ReadinessLine({ request }: { request: PlaceRequest }) {
+  const gaps = request.readiness ? readinessGaps(request.readiness) : []
+  return gaps.length === 0 ? (
+    <p className="mt-0.5 text-caption text-confirmed">Tiene foto y ubicación: se puede publicar</p>
+  ) : (
+    <p className="mt-0.5 text-caption text-danger">Antes de publicarlo le falta {gaps.join(' y ')}</p>
+  )
+}
 
 /** Organizaciones aprobadas que piden administrar otro lugar. */
 export function PlaceRequestsView() {
@@ -91,21 +107,26 @@ export function PlaceRequestsView() {
                   </Link>
                   <p className="text-caption text-muted">Lo pidió {request.requestedByName}</p>
                 </Td>
-                <Td>
-                  <Link to={paths.place(request.stopId)} className="font-semibold text-ink hover:underline">
-                    {request.stopName}
-                  </Link>
-                  <p className="text-caption text-muted">{request.kind === 'new' ? 'Nuevo · en borrador' : 'Ya está en la app'}</p>
+                <Td className="whitespace-normal">
+                  {request.kind === 'new' && request.status === 'rejected' ? (
+                    <span className="font-semibold text-ink">{request.stopName}</span>
+                  ) : (
+                    <Link to={paths.place(request.stopId)} className="font-semibold text-ink hover:underline">
+                      {request.stopName}
+                    </Link>
+                  )}
+                  <p className="text-caption text-muted">{placeLine(request)}</p>
+                  {request.readiness && <ReadinessLine request={request} />}
                 </Td>
                 <Td className="max-w-80 text-small whitespace-normal text-ink">{request.note || <span className="text-muted">Sin nota</span>}</Td>
                 <Td className="whitespace-nowrap text-muted tabular-nums">{formatDateTime(request.requestedAt)}</Td>
-                <Td align="right">
+                <Td align="right" className="whitespace-normal">
                   {request.status === 'pending' ? (
                     <div className="flex justify-end gap-1">
                       <Button size="sm" variant="quiet" onClick={() => setDeciding({ request, decision: 'rejected' })}>
                         Rechazar
                       </Button>
-                      <Button size="sm" onClick={() => setDeciding({ request, decision: 'approved' })}>
+                      <Button size="sm" variant="secondary" onClick={() => setDeciding({ request, decision: 'approved' })}>
                         Aprobar
                       </Button>
                     </div>
@@ -115,6 +136,7 @@ export function PlaceRequestsView() {
                       <p className="mt-1 text-caption text-muted">
                         {request.decidedByName} · {request.decidedAt && formatDateTime(request.decidedAt)}
                       </p>
+                      {request.decisionNote && <p className="mt-1 text-small text-ink">{request.decisionNote}</p>}
                     </div>
                   )}
                 </Td>
@@ -137,6 +159,7 @@ function DecideDialog({ deciding, onClose }: { deciding: Deciding | null; onClos
 
   const approving = deciding?.decision === 'approved'
   const request = deciding?.request
+  const gaps = approving && request?.readiness ? readinessGaps(request.readiness) : []
 
   const submit = () => {
     if (!deciding || !request) return
@@ -148,7 +171,13 @@ function DecideDialog({ deciding, onClose }: { deciding: Deciding | null; onClos
       { id: request.id, decision: deciding.decision, note: state.note.trim() },
       {
         onSuccess: () => {
-          toast({ title: approving ? `${request.stopName} ya es de ${request.organizationName}` : 'Pedido rechazado' })
+          toast({
+            title: !approving
+              ? 'Pedido rechazado'
+              : request.kind === 'new'
+                ? `${request.stopName} ya está en la app`
+                : `${request.stopName} ya es de ${request.organizationName}`,
+          })
           onClose()
         },
         onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
@@ -178,12 +207,18 @@ function DecideDialog({ deciding, onClose }: { deciding: Deciding | null; onClos
           <Button variant="ghost" onClick={onClose} disabled={decide.isPending}>
             Cancelar
           </Button>
-          <Button variant={approving ? 'primary' : 'danger'} onClick={submit} loading={decide.isPending}>
+          <Button variant={approving ? 'primary' : 'danger'} onClick={submit} loading={decide.isPending} disabled={gaps.length > 0}>
             {approving ? 'Aprobar' : 'Rechazar'}
           </Button>
         </>
       }
     >
+      {gaps.length > 0 && (
+        <p className="mb-4 rounded-kp border border-divider bg-canvas px-4 py-3 text-small text-ink">
+          Todavía no se puede publicar: le falta {gaps.join(' y ')}. {request?.organizationName} lo agrega desde la ficha del lugar en su portal;
+          apruébalo cuando lo tenga.
+        </p>
+      )}
       <Field
         label={approving ? 'Nota' : 'Por qué no se aprueba'}
         optional={approving}

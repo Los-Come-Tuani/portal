@@ -28,6 +28,22 @@ export interface PlaceRequest {
   decidedAt: LocalDateTime | null
   decidedByName: string | null
   decisionNote: string
+  /** Sólo en un lugar nuevo por decidir: lo mínimo para poder publicarlo. */
+  readiness?: PlaceReadiness
+}
+
+export interface PlaceReadiness {
+  photos: number
+  /** Su pin no es el de otro lugar: se le copia uno de su ciudad al crearlo. */
+  ownPin: boolean
+}
+
+/** Qué le falta a un lugar nuevo para aprobarlo; vacío si ya se puede. */
+export function readinessGaps(readiness: PlaceReadiness): string[] {
+  const gaps: string[] = []
+  if (readiness.photos === 0) gaps.push('una foto')
+  if (!readiness.ownPin) gaps.push('su ubicación en el mapa')
+  return gaps
 }
 
 export type PlaceRequestInput =

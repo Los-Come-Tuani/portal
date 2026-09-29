@@ -1,16 +1,27 @@
 import { nowLocalDateTime } from '@/lib/dates'
 import { uniqueSlug } from '@/lib/slug'
 import { endpoints } from '../../api/endpoints'
-import type { PlaceRequest, Stop } from '../../models'
+import { readinessGaps, type PlaceReadiness, type PlaceRequest, type Stop } from '../../models'
 import { placeRequestDecisionSchema, placeRequestInputSchema } from '../../schemas/place-request.schema'
 import type { MockDatabase } from '../db'
 import { fail, parseBody, requireUser, route } from '../http'
 import { hasPermission, isAdmin } from '../services/access'
+import { assertStopFree, ownerOf } from '../services/ownership'
 
 const REVIEWERS = ['organizations.review', 'organizations.manage'] as const
 
-function ownerOf(db: MockDatabase, stopId: string) {
-  return db.organizations.find((item) => item.stopIds.includes(stopId))
+function readinessOf(db: MockDatabase, stop: Stop): PlaceReadiness {
+  const { latitude, longitude } = stop.coordinates
+  return {
+    photos: stop.images.length,
+    ownPin: !db.stops.some((item) => item.id !== stop.id && item.coordinates.latitude === latitude && item.coordinates.longitude === longitude),
+  }
+}
+
+function withReadiness(db: MockDatabase, request: PlaceRequest): PlaceRequest {
+  if (request.kind !== 'new' || request.status !== 'pending') return request
+  const stop = db.stops.find((item) => item.id === request.stopId)
+  return stop ? { ...request, readiness: readinessOf(db, stop) } : request
 }
 
 export const placeRequestRoutes = [
@@ -23,6 +34,7 @@ export const placeRequestRoutes = [
       .filter((item) => reviewer || item.organizationId === user.organizationId)
       .filter((item) => !status || item.status === status)
       .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
+      .map((item) => withReadiness(context.db, item))
   }),
   route(
     'POST',
@@ -36,14 +48,7 @@ export const placeRequestRoutes = [
       const now = nowLocalDateTime()
       let stop: Stop
       if (input.kind === 'claim') {
-        const found = db.stops.find((item) => item.id === input.stopId && !item.draft)
-        if (!found) throw fail.invalid('Revisa el lugar', { stopId: 'Ese lugar ya no está en la app' })
-        const owner = ownerOf(db, found.id)
-        if (owner) throw fail.invalid('Revisa el lugar', { stopId: `${found.name} ya lo administra ${owner.name}` })
-        if (db.placeRequests.some((item) => item.stopId === found.id && item.status === 'pending')) {
-          throw fail.invalid('Revisa el lugar', { stopId: 'Alguien ya pidió este lugar: el equipo lo está revisando' })
-        }
-        stop = found
+        stop = assertStopFree(db, input.stopId, { organizationId: organization.id, city: organization.city, field: 'stopId' })
       } else {
         const inCity = db.stops.find((item) => item.city === organization.city)
         stop = {
@@ -81,7 +86,7 @@ export const placeRequestRoutes = [
         decisionNote: '',
       }
       db.placeRequests.push(request)
-      return request
+      return withReadiness(db, request)
     },
     { roles: ['negocio', 'alcaldia'] },
   ),
@@ -105,6 +110,8 @@ export const placeRequestRoutes = [
           if (owner && owner.id !== organization.id) throw fail.conflict(`${stop.name} ya lo administra ${owner.name}`)
           if (!organization.stopIds.includes(stop.id)) organization.stopIds.push(stop.id)
         } else {
+          const gaps = readinessGaps(readinessOf(db, stop))
+          if (gaps.length > 0) throw fail.conflict(`Antes de publicarlo, a ${stop.name} le falta ${gaps.join(' y ')}`)
           delete stop.draft
         }
       } else if (request.kind === 'new') {

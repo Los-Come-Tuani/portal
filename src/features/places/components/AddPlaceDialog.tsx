@@ -67,7 +67,7 @@ function AddPlaceForm({ city, onDone }: { city: string; onDone: () => void }) {
       onSuccess: (request) => {
         toast({
           title: 'Mandaste tu pedido',
-          description: request.kind === 'new' ? 'Ya puedes armar su ficha en Mis lugares: se publica cuando lo aprueben.' : 'Te avisamos cuando el equipo lo revise.',
+          description: request.kind === 'new' ? 'Arma su ficha en Mis lugares: con una foto y su ubicación en el mapa, el equipo lo puede aprobar.' : 'Te avisamos cuando el equipo lo revise.',
         })
         onDone()
       },
@@ -176,7 +176,11 @@ function AddPlaceForm({ city, onDone }: { city: string; onDone: () => void }) {
       <Field
         label={draft.kind === 'claim' ? 'Por qué lo administras' : 'Algo que el equipo deba saber'}
         optional={draft.kind === 'new'}
-        hint={draft.kind === 'claim' ? 'Ej.: es nuestro local desde 2019; la matrícula está a nombre de la empresa.' : undefined}
+        hint={
+          draft.kind === 'claim'
+            ? 'Ej.: es nuestro local desde 2019; la matrícula está a nombre de la empresa.'
+            : 'Se crea como borrador: para aprobarlo necesita al menos una foto y su ubicación en el mapa. Si no se aprueba, el borrador se borra.'
+        }
         error={errors.note}
       >
         {(control) => <Textarea {...control} rows={3} value={draft.note} onChange={(event) => update({ note: event.target.value })} />}
