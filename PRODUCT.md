@@ -47,6 +47,7 @@ Confirmado por el usuario:
 - **Pedidos de lugares**: una organización ya aprobada pide desde "Mis lugares" uno que ya está en la app (con una nota de por qué es suyo) o uno nuevo, que se crea como borrador. El equipo lo aprueba o rechaza en Solicitudes > Lugares pedidos. Un lugar nuevo (en un pedido o en una solicitud) sólo se aprueba con al menos una foto y su propia ubicación en el mapa; la organización ve qué le falta. Si un pedido se rechaza, el borrador se borra. Un lugar pedido (en un pedido o en una solicitud abierta) queda apartado para quien lo pidió primero. El equipo también puede asignar o quitar lugares sin dueño desde el detalle de la organización; el formulario de edición ya no toca lugares ni estado.
 - **Usuarios**: un panel con todas las cuentas del sistema (turistas, guías y traductores, negocios, alcaldías y equipo), para suspender, reactivar y ayudar a recuperar acceso.
 - **Equipo interno y roles**: roles personalizables armados con permisos por módulo, con roles de base; el super admin no se edita y siempre queda al menos uno activo.
+- **Circuitos**: el equipo administra todo el catálogo de la app (los privados, los creativos de las alcaldías y los **especiales de K'Plan**). Un especial da de 1 a 5 insignias extra de la categoría "Circuitos K'Plan" al completarlo; se elige si es privado (cada grupo agenda el suyo) o en grupo (horarios publicados por guías certificados, con cupo), y puede ser de temporada (desde y hasta). La duración, las insignias y su nota se calculan con el mismo planificador de la app; no se publica una hora de salida con avisos de horario. Un circuito con personas inscritas en horarios de grupo no se saca de la app, no se vuelve privado ni se borra. Los eventos especiales de K'Plan ya se publican desde Eventos.
 
 Contrato con la app (no negociable):
 
@@ -54,6 +55,7 @@ Contrato con la app (no negociable):
 - Categorías de lugar cerradas: Historia, Cultura, Gastronomía, Naturaleza, Aventura.
 - Un solo horario diario por lugar, sin cruzar la medianoche.
 - Las medallas de la app se calibraron para unas 11 insignias; las campañas de insignias extra obligan a recalibrarlas en la app.
+- Pendiente en la app: leer los campos nuevos de `circuits.json` para los especiales (`isKplanCircuit`, `bonusBadges`, `bookingMode`, `availableFrom`, `availableUntil`), entregar las insignias extra de "Circuitos K'Plan", mostrar horarios de grupo en un especial (hoy `circuit_groups.json` sólo trae creativos) y ocultar un especial fuera de su temporada. La nota de insignias de un especial termina en `, más N insignias extra de "Circuitos K'Plan" al completarlo`. Hasta entonces el turista ve el especial todo el año como un circuito normal.
 
 Decisiones por defecto, sin confirmar:
 
@@ -63,7 +65,7 @@ Decisiones por defecto, sin confirmar:
 - Una organización nueva queda en revisión hasta que el admin la aprueba; una vez aprobada, su contenido se publica directo y el admin puede ocultarlo.
 - En la postulación, un negocio puede decir que administra cualquier lugar de su ciudad que no tenga dueño (también lugares públicos); el equipo lo confirma al revisar. Pendiente decidir si los lugares públicos sólo los pueden reclamar las alcaldías.
 - Los pagos son simulados en el modo demo.
-- Circuitos, circuitos creativos y horarios de grupo quedan para una fase siguiente.
+- En el MVP los horarios de grupo sólo se ven en el portal; los publican los guías desde la app.
 - Las listas de revisión de cada documento (por ejemplo "nivel B2 o más" en idiomas, "menos de 3 meses" en el récord) son una propuesta inicial para ajustar con el equipo.
 - Una etapa que lleva más de 3 días se marca como atrasada.
 
