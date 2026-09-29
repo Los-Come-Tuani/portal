@@ -4,11 +4,11 @@ import { cityLocation, type Coupon, type EventItem } from '../models'
 import { catalog } from './catalog'
 import type { MockDatabase } from './db'
 import { generateRedemptions, seedActivations, seedCampaigns, seedPayments } from './generators/activity'
-import { seedAdmissions } from './generators/admissions'
+import { seedAdmissions, seedPlaceRequests } from './generators/admissions'
 import { seedPeople } from './generators/people'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 4
+export const SCHEMA_VERSION = 5
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -19,6 +19,7 @@ const DEMO_PRICING = {
     { id: 'pack-250', badges: 250, price: 2750 },
     { id: 'pack-500', badges: 500, price: 5000 },
   ],
+  assistedOnboardingFee: 1500,
 }
 
 /** Quién organiza cada evento que ya trae la app. */
@@ -76,6 +77,7 @@ export function seedDatabase(today: ISODate): MockDatabase {
 
   const people = seedPeople(today)
   const admissions = seedAdmissions(today, people.users, structuredClone(catalog.organizations), structuredClone(catalog.stops))
+  const placeRequests = seedPlaceRequests(today, admissions.organizations, admissions.stops)
 
   return {
     version: SCHEMA_VERSION,
@@ -84,6 +86,7 @@ export function seedDatabase(today: ISODate): MockDatabase {
     staffRoles: structuredClone(catalog.staffRoles),
     guideApplications: people.guideApplications,
     organizationApplications: admissions.applications,
+    placeRequests,
     organizations: admissions.organizations,
     stops: admissions.stops,
     circuits: structuredClone(catalog.circuits),

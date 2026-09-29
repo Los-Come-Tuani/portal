@@ -2,6 +2,7 @@ import type { AdmissionFilters } from '../repositories/admissions.repository'
 import type { EventFilters } from '../repositories/events.repository'
 import type { GuideApplicationFilters } from '../repositories/guides.repository'
 import type { OrganizationFilters } from '../repositories/organizations.repository'
+import type { PlaceRequestFilters } from '../repositories/place-requests.repository'
 import type { RedemptionFilters } from '../repositories/coupons.repository'
 import type { StopFilters } from '../repositories/places.repository'
 import type { UserFilters } from '../repositories/users.repository'
@@ -51,6 +52,10 @@ export const queryKeys = {
     detail: (userId: string) => ['users', 'detail', userId] as const,
   },
   staffRoles: ['staff-roles'] as const,
+  placeRequests: {
+    all: ['place-requests'] as const,
+    list: (filters: PlaceRequestFilters) => ['place-requests', 'list', filters] as const,
+  },
   admissions: {
     all: ['admissions'] as const,
     list: (filters: AdmissionFilters) => ['admissions', 'list', filters] as const,

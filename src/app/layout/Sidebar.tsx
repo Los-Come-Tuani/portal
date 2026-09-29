@@ -5,6 +5,7 @@ import { Logo } from '@/components/brand/Logo'
 import { Avatar, Menu, MenuItem } from '@/components/ui'
 import { useGuideApplications } from '@/data/hooks/use-guides'
 import { useAdmissions } from '@/data/hooks/use-admissions'
+import { usePlaceRequests } from '@/data/hooks/use-place-requests'
 import { ROLE_LABELS } from '@/data/models'
 import { useAuth, useSession } from '@/features/auth/use-auth'
 import { cn } from '@/lib/cn'
@@ -43,8 +44,13 @@ function isActive(pathname: string, item: { to: string; end?: boolean }): boolea
 function usePendingCounts(): Record<NavCount, number> {
   const { can } = useSession()
   const guides = useGuideApplications({ status: 'in_review' }, can('guides.review', 'guides.decide'))
-  const admissions = useAdmissions({ status: 'in_review' }, can('organizations.review', 'organizations.manage'))
-  return { pendingGuides: guides.data?.length ?? 0, pendingAdmissions: admissions.data?.length ?? 0 }
+  const reviewsOrganizations = can('organizations.review', 'organizations.manage')
+  const admissions = useAdmissions({ status: 'in_review' }, reviewsOrganizations)
+  const placeRequests = usePlaceRequests({ status: 'pending' }, reviewsOrganizations)
+  return {
+    pendingGuides: guides.data?.length ?? 0,
+    pendingAdmissions: (admissions.data?.length ?? 0) + (placeRequests.data?.length ?? 0),
+  }
 }
 
 export function SidebarContent({ preferences, collapsible = false, onNavigate }: SidebarContentProps) {

@@ -1,15 +1,17 @@
-﻿import { ArrowRight, MapPin, Medal, Search } from 'lucide-react'
+﻿import { ArrowRight, MapPin, Medal, Plus, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Link, Navigate } from 'react-router'
+import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { EmptyState, ErrorState, Input, PageHeader, Select, SkeletonRows, Tag } from '@/components/ui'
+import { Button, EmptyState, ErrorState, Input, PageHeader, Panel, Select, SkeletonRows, Tag, type TagTone } from '@/components/ui'
 import { useOrganizations } from '@/data/hooks/use-organizations'
+import { usePlaceRequests } from '@/data/hooks/use-place-requests'
 import { usePlaces } from '@/data/hooks/use-places'
-import { CITIES } from '@/data/models'
+import { CITIES, PLACE_REQUEST_STATUS_LABELS, type PlaceRequestStatus } from '@/data/models'
 import { useSession } from '@/features/auth/use-auth'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { cn } from '@/lib/cn'
-import { formatPercent } from '@/lib/format'
+import { formatDateTime, formatPercent } from '@/lib/format'
+import { AddPlaceDialog } from './components/AddPlaceDialog'
 import { completeness, placeIssues } from './lib/completeness'
 
 export function PlacesPage() {
@@ -19,14 +21,15 @@ export function PlacesPage() {
   const organizations = useOrganizations({}, isAdmin)
   const [city, setCity] = useState('')
   const [search, setSearch] = useState('')
+  const [adding, setAdding] = useState(false)
+  const canRequest = !isAdmin && organization?.status === 'active'
+  const requests = usePlaceRequests({}, canRequest)
 
   const owners = useMemo(() => {
     const map = new Map<string, string>()
     for (const item of organizations.data ?? []) item.stopIds.forEach((stopId) => map.set(stopId, item.name))
     return map
   }, [organizations.data])
-
-  if (!isAdmin && places.data?.length === 1) return <Navigate to={paths.place(places.data[0].id)} replace />
 
   const filtered = (places.data ?? []).filter(
     (stop) =>
@@ -43,7 +46,17 @@ export function PlacesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={title} description={description} />
+      <PageHeader
+        title={title}
+        description={description}
+        actions={
+          canRequest && (
+            <Button icon={<Plus size={16} />} onClick={() => setAdding(true)}>
+              Agregar un lugar
+            </Button>
+          )
+        }
+      />
 
       {isAdmin && (
         <div className="flex flex-wrap gap-3">
@@ -123,6 +136,33 @@ export function PlacesPage() {
           })}
         </ul>
       )}
+
+      {canRequest && (requests.data ?? []).length > 0 && (
+        <Panel title="Tus pedidos" description="Lugares que pediste administrar. El equipo de K'Plan los revisa." bodyClassName="p-0">
+          <ul className="divide-y divide-divider">
+            {requests.data?.map((request) => (
+              <li key={request.id} className="flex flex-wrap items-start gap-x-4 gap-y-1 px-5 py-3.5">
+                <div className="min-w-0 flex-1">
+                  <p className="text-body font-semibold text-ink">{request.stopName}</p>
+                  <p className="text-small text-muted">
+                    {request.kind === 'new' ? 'Lugar nuevo' : 'Ya estaba en la app'} · pedido el {formatDateTime(request.requestedAt)}
+                  </p>
+                  {request.status === 'rejected' && request.decisionNote && (
+                    <p className="mt-1 text-body text-danger">
+                      <span className="font-semibold">No se aprobó:</span> {request.decisionNote}
+                    </p>
+                  )}
+                </div>
+                <Tag tone={REQUEST_TONES[request.status]}>{PLACE_REQUEST_STATUS_LABELS[request.status]}</Tag>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
+
+      {canRequest && organization && <AddPlaceDialog open={adding} city={organization.city} onClose={() => setAdding(false)} />}
     </div>
   )
 }
+
+const REQUEST_TONES: Record<PlaceRequestStatus, TagTone> = { pending: 'planned', approved: 'confirmed', rejected: 'danger' }
