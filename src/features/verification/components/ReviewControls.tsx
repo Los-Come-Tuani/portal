@@ -62,7 +62,7 @@ export function AssigneeMenu({ assigneeId, reviewers, closed, onAssign, assignin
     ) : null
   }
 
-  if (!assignee) {
+  if (!assignee && reviewers.some((reviewer) => reviewer.id === user.id)) {
     return (
       <Button variant="secondary" icon={<UserCheck size={16} />} loading={assigning} onClick={() => void assign(user.id)}>
         Tomar solicitud
@@ -78,10 +78,16 @@ export function AssigneeMenu({ assigneeId, reviewers, closed, onAssign, assignin
           {...props}
           className="inline-flex h-10 items-center gap-2 rounded-kp px-2.5 text-small text-muted transition-colors duration-150 hover:bg-ink/6"
         >
-          <Avatar name={assignee.name} size="sm" />
-          <span>
-            Responsable: <span className="font-semibold text-ink">{assignee.id === user.id ? 'tú' : assignee.name}</span>
-          </span>
+          {assignee ? (
+            <>
+              <Avatar name={assignee.name} size="sm" />
+              <span>
+                Responsable: <span className="font-semibold text-ink">{assignee.id === user.id ? 'tú' : assignee.name}</span>
+              </span>
+            </>
+          ) : (
+            <span className="font-semibold text-ink">Asignar responsable</span>
+          )}
           <ChevronDown size={15} aria-hidden="true" />
         </button>
       )}
@@ -90,7 +96,7 @@ export function AssigneeMenu({ assigneeId, reviewers, closed, onAssign, assignin
         <>
           <p className="px-2.5 pt-1.5 pb-1 text-caption text-muted">Asignar a</p>
           {reviewers
-            .filter((reviewer) => reviewer.id !== assignee.id)
+            .filter((reviewer) => reviewer.id !== assignee?.id)
             .map((reviewer) => (
               <MenuItem
                 key={reviewer.id}
@@ -106,15 +112,17 @@ export function AssigneeMenu({ assigneeId, reviewers, closed, onAssign, assignin
                 )}
               </MenuItem>
             ))}
-          <MenuItem
-            icon={<UserMinus size={16} />}
-            onSelect={() => {
-              close()
-              void assign(null)
-            }}
-          >
-            Dejar sin responsable
-          </MenuItem>
+          {assignee && (
+            <MenuItem
+              icon={<UserMinus size={16} />}
+              onSelect={() => {
+                close()
+                void assign(null)
+              }}
+            >
+              Dejar sin responsable
+            </MenuItem>
+          )}
         </>
       )}
     </Menu>

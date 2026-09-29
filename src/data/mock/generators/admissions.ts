@@ -5,7 +5,7 @@
  * revisión y el borrador de su lugar.
  */
 import { addDays, diffDays, nowMinutes, toLocalDateTime, type ISODate, type LocalDateTime } from '@/lib/dates'
-import { lowerFirst } from '@/lib/format'
+import { formatMoney, lowerFirst } from '@/lib/format'
 import { createRandom, hashSeed, type Random } from '@/lib/random'
 import { slugify } from '@/lib/slug'
 import {
@@ -91,7 +91,7 @@ function buildApplication(seed: AdmissionSeed, submittedDaysAgo: number, today: 
       kind: 'submitted',
       actorId: assisted.byId,
       actorName: assisted.byName,
-      text: `Llenó la solicitud por ${seed.name} con ${types.length} documentos (alta asistida${assisted.fee > 0 ? `, se cobra C$ ${assisted.fee} al aprobarla` : ', sin costo'}). Le llegó una invitación a ${seed.representative.email}`,
+      text: `Llenó la solicitud por ${seed.name} con ${types.length} documentos (alta asistida${assisted.fee > 0 ? `, se cobra ${formatMoney(assisted.fee)} al aprobarla` : ', sin costo'}). Le llegó una invitación a ${seed.representative.email}`,
     })
   } else {
     log(submittedAt, 'submitted', `Envió la solicitud desde el portal con ${types.length} documentos`, true)

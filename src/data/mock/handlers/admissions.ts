@@ -1,5 +1,5 @@
 import { nowLocalDateTime, todayISO } from '@/lib/dates'
-import { lowerFirst } from '@/lib/format'
+import { formatMoney, lowerFirst } from '@/lib/format'
 import { uniqueSlug } from '@/lib/slug'
 import { endpoints } from '../../api/endpoints'
 import {
@@ -24,6 +24,7 @@ import {
 import type { MockDatabase } from '../db'
 import { fail, parseBody, requireUser, route, type MockContext } from '../http'
 import { hasPermission, toSessionUser } from '../services/access'
+import { assertStopFree, ownerOf } from '../services/ownership'
 import { claimReview, logReview } from '../services/review'
 
 const REVIEWERS = ['organizations.review', 'organizations.manage'] as const
@@ -58,8 +59,9 @@ function forApplicant(application: OrganizationApplication): OrganizationApplica
   }
 }
 
-function ownerOf(db: MockDatabase, stopId: string): Organization | undefined {
-  return db.organizations.find((item) => item.stopIds.includes(stopId))
+/** Quien llenó un alta asistida no la revisa ni la decide: la ve otra persona del equipo. */
+function assertNotFiller(application: OrganizationApplication, actor: User) {
+  if (application.assisted?.byId === actor.id) throw fail.conflict('La llenaste tú: la revisa y la decide otra persona del equipo')
 }
 
 /** Una acción del equipo sobre una solicitud: la busca, la valida y devuelve la solicitud actualizada. */
@@ -95,10 +97,7 @@ function createApplication(
     throw fail.invalid('Revisa el correo', { 'representative.email': 'Ya hay una cuenta con este correo: entra con ella' })
   }
   for (const stopId of input.claimedStopIds) {
-    const stop = db.stops.find((item) => item.id === stopId && !item.draft)
-    if (!stop) throw fail.invalid('Revisa los lugares', { claimedStopIds: 'Uno de los lugares ya no está en la app' })
-    const owner = ownerOf(db, stopId)
-    if (owner) throw fail.invalid('Revisa los lugares', { claimedStopIds: `${stop.name} ya lo administra ${owner.name}: escríbenos si es un error` })
+    assertStopFree(db, stopId, { city: input.city, field: 'claimedStopIds' })
   }
 
   const organizationId = uniqueSlug(`org-${input.name}`, (id) => db.organizations.some((item) => item.id === id))
@@ -198,7 +197,7 @@ function createApplication(
       application,
       assistedBy,
       'submitted',
-      `Llenó la solicitud por ${input.name} con ${input.documents.length} documentos (alta asistida${fee > 0 ? `, se cobra C$ ${fee} al aprobarla` : ', sin costo'}). Le llegó una invitación a ${email}`,
+      `Llenó la solicitud por ${input.name} con ${input.documents.length} documentos (alta asistida${fee > 0 ? `, se cobra ${formatMoney(fee)} al aprobarla` : ', sin costo'}). Le llegó una invitación a ${email}`,
     )
   } else {
     logReview(application, { id: null, name: user.name }, 'submitted', `Envió la solicitud desde el portal con ${input.documents.length} documentos`)
@@ -330,6 +329,7 @@ export const admissionRoutes = [
       }
       const assignee = db.users.find((item) => item.id === assigneeId)
       if (!assignee || !hasPermission(db, assignee, REVIEWERS)) throw fail.invalid('Esa persona no revisa solicitudes de organizaciones')
+      if (application.assisted?.byId === assignee.id) throw fail.invalid(`${assignee.name} la llenó: asígnala a otra persona del equipo`)
       application.assigneeId = assignee.id
       logReview(application, actor, 'assigned', assignee.id === actor.id ? `${actor.name} tomó la solicitud` : `Se la asignó a ${assignee.name}`)
     }),
@@ -340,6 +340,7 @@ export const admissionRoutes = [
     endpoints.organizationApplications.review(':id', ':documentId'),
     act((application, actor, { params, body }) => {
       assertInReview(application, 'documents')
+      assertNotFiller(application, actor)
       const document = application.documents.find((item) => item.id === params.documentId)
       if (!document) throw fail.notFound('No encontramos ese documento')
       const input = parseBody(documentReviewSchema, body)
@@ -367,6 +368,7 @@ export const admissionRoutes = [
     'POST',
     endpoints.organizationApplications.advance(':id'),
     act((application, actor) => {
+      assertNotFiller(application, actor)
       const blocker = admissionBlocker(application)
       if (blocker) throw fail.conflict(blocker)
       claimReview(application, actor)
@@ -394,6 +396,7 @@ export const admissionRoutes = [
     endpoints.organizationApplications.decision(':id'),
     act((application, actor, { db, body }) => {
       assertInReview(application, 'decision')
+      assertNotFiller(application, actor)
       const input = parseBody(decisionSchema, body)
       const organization = db.organizations.find((item) => item.id === application.organizationId)
       if (!organization) throw fail.notFound('No encontramos la organización de esta solicitud')

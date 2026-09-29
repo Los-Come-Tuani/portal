@@ -8,7 +8,7 @@ import { seedAdmissions, seedPlaceRequests } from './generators/admissions'
 import { seedPeople } from './generators/people'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 5
+export const SCHEMA_VERSION = 6
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {

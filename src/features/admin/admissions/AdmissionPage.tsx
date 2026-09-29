@@ -46,7 +46,7 @@ export function AdmissionPage() {
 function AdmissionView({ application, reviewers }: { application: OrganizationApplication; reviewers: readonly Reviewer[] }) {
   const action = useAdmissionAction(application.id)
   const toast = useToast()
-  const { can } = useSession()
+  const { can, user } = useSession()
   const { today, minutes } = useNow()
   const [documentId, setDocumentId] = useState<string | null>(null)
   const [requesting, setRequesting] = useState(false)
@@ -55,7 +55,8 @@ function AdmissionView({ application, reviewers }: { application: OrganizationAp
   const places = usePlaces({ ids: stopIds }, stopIds.length > 0)
 
   const inReview = application.status === 'in_review'
-  const canReview = can('organizations.review', 'organizations.manage')
+  const filledByMe = application.assisted?.byId === user.id
+  const canReview = can('organizations.review', 'organizations.manage') && !filledByMe
   const reviewingDocuments = canReview && inReview && application.stage === 'documents'
   const blocker = application.stage === 'decision' ? null : admissionBlocker(application)
   const pending = (kind: string) => action.isPending && action.variables?.kind === kind
@@ -99,19 +100,26 @@ function AdmissionView({ application, reviewers }: { application: OrganizationAp
               {inReview ? `${APPLICATION_STATUS_LABELS.in_review} · ${ADMISSION_STAGE_LABELS[application.stage]}` : APPLICATION_STATUS_LABELS[application.status]}
             </Tag>
             <span>
-              {application.kind} · {application.city} · envió su solicitud el {formatDate(application.submittedAt.slice(0, 10))}
+              {application.kind} · {application.city} ·{' '}
+              {application.assisted ? `${filledByMe ? 'la llenaste' : 'se llenó'} el` : 'envió su solicitud el'}{' '}
+              {formatDate(application.submittedAt.slice(0, 10))}
             </span>
           </div>
         </div>
         <AssigneeMenu
           assigneeId={application.assigneeId}
-          reviewers={reviewers}
+          reviewers={reviewers.filter((reviewer) => reviewer.id !== application.assisted?.byId)}
           closed={!inReview && application.status !== 'changes_requested'}
           onAssign={(assigneeId) => action.mutateAsync({ kind: 'assign', assigneeId })}
           assigning={pending('assign')}
         />
       </header>
 
+      {filledByMe && inReview && (
+        <Notice tone="neutral" title="La llenaste tú">
+          Para que pase por la misma revisión que cualquier otra, sus documentos los revisa y la decide otra persona del equipo.
+        </Notice>
+      )}
       {application.status === 'changes_requested' && (
         <Notice tone="neutral" title={`Esperando a que ${who.toLowerCase()} corrija desde el portal`}>
           {lastEvent('changes_requested')?.text.replace(/^Pidió una corrección: /, '')}
@@ -182,7 +190,7 @@ function AdmissionView({ application, reviewers }: { application: OrganizationAp
                 </ul>
               }
               canDecide={canReview}
-              noPermission="Tu rol no puede decidir solicitudes de organizaciones."
+              noPermission={filledByMe ? 'La llenaste tú: la decide otra persona del equipo.' : 'Tu rol no puede decidir solicitudes de organizaciones.'}
               approveLabel="Aprobar y publicar"
               approveEffect="Entra al portal completo, su lugar se publica en la app y los lugares que dijo administrar se le asignan."
               rejectEffect="Su cuenta queda suspendida y no entra al portal. Al intentar entrar, lee tu nota."
@@ -225,7 +233,7 @@ function AdmissionView({ application, reviewers }: { application: OrganizationAp
                             {isNew && <Tag tone="outline">{stop?.draft ? 'Borrador' : 'Nuevo'}</Tag>}
                           </span>
                           <span className={owner ? 'block text-small text-danger' : 'block text-small text-muted'}>
-                            {owner ? `Ya lo administra ${owner.name}` : isNew ? `${stop?.category ?? ''} · lo creó al postularse` : `${stop?.category ?? ''} · ya está en la app`}
+                            {owner ? `Ya lo administra ${owner.name}` : isNew ? `${stop?.category ?? ''} · ${application.assisted ? 'se creó con el alta asistida' : 'lo creó al postularse'}` : `${stop?.category ?? ''} · ya está en la app`}
                           </span>
                         </span>
                         <ArrowRight size={16} className="text-muted group-hover:text-ink" aria-hidden="true" />
