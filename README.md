@@ -11,7 +11,8 @@ Portal web de K'Plan para **negocios**, **alcaldías** y el **equipo de K'Plan**
 - **Insignias**: activar la insignia de un lugar y campañas de ×2, ×3 o ×5 insignias por visita.
 - **Pagos**: estado de cuenta mensual con cada cargo explicado.
 - **Admin**: organizaciones (aprobar, suspender), lugares, cupones, eventos, cobros y tarifas.
-- **Postulación**: negocios y alcaldías nuevos se postulan desde `/postular` con sus documentos (RUC, matrícula, cédula…); entran al portal mientras el equipo revisa la solicitud en **Organizaciones → Solicitudes**.
+- **Postulación**: negocios y alcaldías nuevos se postulan desde `/postular` con sus documentos (RUC, matrícula, cédula…); entran al portal mientras el equipo revisa la solicitud en **Organizaciones → Solicitudes**. El equipo también puede hacer un **alta asistida** (`/solicitudes/nueva`): llena la misma solicitud por la organización, con cobro opcional.
+- **Pedidos de lugares**: una organización aprobada pide otro lugar desde **Mis lugares** y el equipo lo decide en **Solicitudes → Lugares pedidos**; también puede asignar o quitar lugares desde el detalle de la organización.
 - **Guías y traductores**: verificación de los documentos que envían desde la app, en tres etapas (documentos, antecedentes y decisión), con historial.
 - **Usuarios y equipo interno**: todas las cuentas del sistema, el equipo de K'Plan con su rol y una matriz de roles y permisos. Cada persona del equipo ve sólo los módulos que su rol permite.
 
