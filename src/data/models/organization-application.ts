@@ -1,5 +1,6 @@
 import type { LocalDateTime } from './common'
 import type { OrganizationType } from './organization'
+import type { PlaceReadiness } from './place-request'
 import {
   LEGIBLE,
   UNALTERED,
@@ -183,6 +184,8 @@ export interface OrganizationApplication {
   history: ReviewEvent[]
   /** `null`: se postuló sola desde el portal. */
   assisted: AssistedOnboarding | null
+  /** Sólo mientras está abierta y trae un lugar nuevo: lo mínimo para poder aprobarla. */
+  newPlaceReadiness?: PlaceReadiness
 }
 
 export interface ApplicationDocumentInput {

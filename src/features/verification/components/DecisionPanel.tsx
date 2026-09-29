@@ -18,6 +18,8 @@ interface DecisionPanelProps {
   rejectEffect: string
   noteHint: string
   approvedToast: string
+  /** Por qué todavía no se puede aprobar; rechazar sigue disponible. */
+  approveBlocker?: string | null
   onDecide: (input: DecisionInput) => Promise<unknown>
   deciding: boolean
 }
@@ -33,6 +35,7 @@ export function DecisionPanel({
   rejectEffect,
   noteHint,
   approvedToast,
+  approveBlocker = null,
   onDecide,
   deciding,
 }: DecisionPanelProps) {
@@ -79,11 +82,16 @@ export function DecisionPanel({
                 />
               )}
             </Field>
-            <div className="flex flex-wrap justify-end gap-2">
-              <Button variant="quiet" onClick={() => ask('rejected')}>
-                Rechazar
-              </Button>
-              <Button onClick={() => ask('approved')}>{approveLabel}</Button>
+            <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+              {approveBlocker && <p className="mr-auto text-small text-muted">{approveBlocker}</p>}
+              <div className="flex gap-2">
+                <Button variant="quiet" onClick={() => ask('rejected')}>
+                  Rechazar
+                </Button>
+                <Button onClick={() => ask('approved')} disabled={!!approveBlocker}>
+                  {approveLabel}
+                </Button>
+              </div>
             </div>
           </>
         ) : (

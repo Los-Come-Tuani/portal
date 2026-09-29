@@ -29,11 +29,12 @@ export const placeRoutes = [
   route(
     'GET',
     endpoints.stops.available,
-    ({ db, query }) => {
+    ({ db, query, user }) => {
       const city = query.get('city')
       const owned = new Set(db.organizations.flatMap((item) => item.stopIds))
+      const mine = user?.organizationId ?? null
       return db.stops
-        .filter((stop) => !stop.draft && !owned.has(stop.id) && !isClaimed(db, stop.id) && (!city || stop.city === city))
+        .filter((stop) => !stop.draft && !owned.has(stop.id) && !isClaimed(db, stop.id, mine) && (!city || stop.city === city))
         .sort((a, b) => a.name.localeCompare(b.name, 'es'))
     },
     { isPublic: true },
