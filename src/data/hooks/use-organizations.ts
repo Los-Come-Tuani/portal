@@ -22,8 +22,7 @@ export function useOrganization(organizationId: string | null | undefined) {
 export function useSaveOrganization() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, input }: { id?: string; input: OrganizationInput }) =>
-      id ? organizationsRepository.update(id, input) : organizationsRepository.create(input),
+    mutationFn: ({ id, input }: { id: string; input: OrganizationInput }) => organizationsRepository.update(id, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.organizations.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.places.all })
