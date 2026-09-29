@@ -77,6 +77,21 @@ export function buildStatements(db: MockDatabase, organizationId: string, today:
     })
   }
 
+  for (const application of db.organizationApplications) {
+    if (application.organizationId !== organizationId || application.status !== 'approved') continue
+    if (!application.assisted?.fee || !application.decidedAt) continue
+    const date = application.decidedAt.slice(0, 10)
+    add(monthKey(date), {
+      id: `alta-${application.id}`,
+      date,
+      kind: 'assisted_onboarding',
+      description: `Alta asistida por ${application.assisted.byName}`,
+      quantity: 1,
+      unitPrice: application.assisted.fee,
+      amount: application.assisted.fee,
+    })
+  }
+
   return [...linesByPeriod.entries()]
     .sort(([a], [b]) => b.localeCompare(a))
     .map(([period, lines]) => {

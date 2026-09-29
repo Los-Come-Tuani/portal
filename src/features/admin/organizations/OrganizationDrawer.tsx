@@ -1,98 +1,58 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Controller, useForm, useWatch } from 'react-hook-form'
-import { Button, Checkbox, Dialog, Field, Input, Select, useToast } from '@/components/ui'
+import { useForm } from 'react-hook-form'
+import { Button, Dialog, Field, Input, Select, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useSaveOrganization } from '@/data/hooks/use-organizations'
-import { usePlaces } from '@/data/hooks/use-places'
-import {
-  CITIES,
-  ORGANIZATION_STATUS_LABELS,
-  ORGANIZATION_TYPE_LABELS,
-  ORGANIZATION_TYPES,
-  type Organization,
-  type OrganizationInput,
-} from '@/data/models'
+import { CITIES, ORGANIZATION_TYPE_LABELS, ORGANIZATION_TYPES, type Organization, type OrganizationInput } from '@/data/models'
 import { organizationInputSchema } from '@/data/schemas/admin.schema'
 
 interface OrganizationDrawerProps {
   open: boolean
-  organization: Organization | null
-  /** Para saber qué lugares ya tienen dueño. */
-  organizations: readonly Organization[]
+  organization: Organization
   onClose: () => void
-  onSaved?: (organization: Organization) => void
 }
 
-export function OrganizationDrawer({ open, organization, organizations, onClose, onSaved }: OrganizationDrawerProps) {
+/**
+ * Los datos de una organización que ya existe. Entra con una solicitud; su
+ * estado se cambia con Aprobar o Suspender, y sus lugares desde el detalle.
+ */
+export function OrganizationDrawer({ open, organization, onClose }: OrganizationDrawerProps) {
   return (
-    <Dialog open={open} onClose={onClose} variant="sheet" title={organization ? 'Editar organización' : 'Nueva organización'}>
-      <OrganizationForm
-        key={organization?.id ?? 'new'}
-        organization={organization}
-        organizations={organizations}
-        onDone={(saved) => {
-          onClose()
-          if (saved) onSaved?.(saved)
-        }}
-      />
+    <Dialog open={open} onClose={onClose} variant="sheet" title="Editar organización" description="Datos y contacto. Sus lugares se asignan desde el detalle.">
+      <OrganizationForm key={`${organization.id}-${String(open)}`} organization={organization} onDone={onClose} />
     </Dialog>
   )
 }
 
-function OrganizationForm({
-  organization,
-  organizations,
-  onDone,
-}: {
-  organization: Organization | null
-  organizations: readonly Organization[]
-  onDone: (saved?: Organization) => void
-}) {
+function OrganizationForm({ organization, onDone }: { organization: Organization; onDone: () => void }) {
   const save = useSaveOrganization()
-  const places = usePlaces({})
   const toast = useToast()
   const {
     register,
-    control,
     handleSubmit,
     formState: { errors },
   } = useForm<OrganizationInput>({
     resolver: zodResolver(organizationInputSchema),
-    defaultValues: organization
-      ? {
-          type: organization.type,
-          name: organization.name,
-          kind: organization.kind,
-          city: organization.city,
-          stopIds: [...organization.stopIds],
-          status: organization.status,
-          contactName: organization.contactName,
-          contactEmail: organization.contactEmail,
-          contactPhone: organization.contactPhone,
-        }
-      : {
-          type: 'negocio',
-          name: '',
-          kind: '',
-          city: 'Granada',
-          stopIds: [],
-          status: 'active',
-          contactName: '',
-          contactEmail: '',
-          contactPhone: '',
-        },
+    defaultValues: {
+      type: organization.type,
+      name: organization.name,
+      kind: organization.kind,
+      city: organization.city,
+      stopIds: [...organization.stopIds],
+      status: organization.status,
+      contactName: organization.contactName,
+      contactEmail: organization.contactEmail,
+      contactPhone: organization.contactPhone,
+    },
   })
-  const city = useWatch({ control, name: 'city' })
-  const ownerOf = (stopId: string) =>
-    organizations.find((item) => item.id !== organization?.id && item.stopIds.includes(stopId))?.name
 
   const submit = handleSubmit((input) =>
     save.mutate(
-      { id: organization?.id, input },
+      { id: organization.id, input: { ...input, stopIds: organization.stopIds, status: organization.status } },
       {
-        onSuccess: (saved) => {
-          toast({ title: organization ? 'Organización actualizada' : 'Organización creada' })
-          onDone(saved)
+        onSuccess: () => {
+          toast({ title: 'Organización actualizada' })
+          onDone()
         },
         onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
       },
@@ -113,25 +73,6 @@ function OrganizationForm({
             </Select>
           )}
         </Field>
-        <Field label="Estado" error={errors.status?.message}>
-          {(field) => (
-            <Select {...field} {...register('status')}>
-              {(['pending', 'active', 'suspended'] as const).map((status) => (
-                <option key={status} value={status}>
-                  {ORGANIZATION_STATUS_LABELS[status]}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-      </div>
-      <Field label="Nombre" error={errors.name?.message}>
-        {(field) => <Input {...field} {...register('name')} />}
-      </Field>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="A qué se dedica" error={errors.kind?.message}>
-          {(field) => <Input {...field} placeholder="Restaurante, museo, tabacalera…" {...register('kind')} />}
-        </Field>
         <Field label="Ciudad" error={errors.city?.message}>
           {(field) => (
             <Select {...field} {...register('city')}>
@@ -144,41 +85,12 @@ function OrganizationForm({
           )}
         </Field>
       </div>
-
-      <Controller
-        control={control}
-        name="stopIds"
-        render={({ field, fieldState }) => (
-          <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1 text-small font-medium text-ink">Lugares que administra en {city}</legend>
-            <div className="flex max-h-64 flex-col gap-2.5 overflow-y-auto rounded-kp border border-divider bg-surface p-3">
-              {(places.data ?? [])
-                .filter((stop) => stop.city === city)
-                .map((stop) => {
-                  const owner = ownerOf(stop.id)
-                  return (
-                    <Checkbox
-                      key={stop.id}
-                      label={stop.name}
-                      description={owner ? `Ya es de ${owner}` : stop.category}
-                      disabled={!!owner}
-                      checked={field.value.includes(stop.id)}
-                      onChange={(event) =>
-                        field.onChange(
-                          event.target.checked ? [...field.value, stop.id] : field.value.filter((id) => id !== stop.id),
-                        )
-                      }
-                    />
-                  )
-                })}
-            </div>
-            {fieldState.error && <p className="text-caption font-medium text-danger">{fieldState.error.message}</p>}
-            {errors.stopIds && !fieldState.error && (
-              <p className="text-caption font-medium text-danger">{errors.stopIds.message}</p>
-            )}
-          </fieldset>
-        )}
-      />
+      <Field label="Nombre" error={errors.name?.message}>
+        {(field) => <Input {...field} {...register('name')} />}
+      </Field>
+      <Field label="A qué se dedica" error={errors.kind?.message}>
+        {(field) => <Input {...field} placeholder="Ej.: restaurante, museo, tabacalera…" {...register('kind')} />}
+      </Field>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Contacto" error={errors.contactName?.message}>
@@ -193,11 +105,11 @@ function OrganizationForm({
       </Field>
 
       <div className="flex justify-end gap-2 border-t border-divider pt-5">
-        <Button variant="ghost" onClick={() => onDone()}>
+        <Button variant="ghost" onClick={onDone}>
           Cancelar
         </Button>
         <Button type="submit" loading={save.isPending}>
-          {organization ? 'Guardar' : 'Crear organización'}
+          Guardar
         </Button>
       </div>
     </form>

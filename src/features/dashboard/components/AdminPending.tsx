@@ -1,8 +1,9 @@
-import { ArrowRight, BadgeCheck, Building2, Receipt } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Building2, MapPin, Receipt } from 'lucide-react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useStatements } from '@/data/hooks/use-billing'
 import { useGuideApplications } from '@/data/hooks/use-guides'
+import { usePlaceRequests } from '@/data/hooks/use-place-requests'
 import { useAdmissions } from '@/data/hooks/use-admissions'
 import { useSession } from '@/features/auth/use-auth'
 import { formatMoney, plural } from '@/lib/format'
@@ -11,6 +12,7 @@ import { formatMoney, plural } from '@/lib/format'
 export function AdminPending() {
   const { can } = useSession()
   const pending = useAdmissions({ status: 'in_review' }, can('organizations.review', 'organizations.manage'))
+  const placeRequests = usePlaceRequests({ status: 'pending' }, can('organizations.review', 'organizations.manage'))
   const guides = useGuideApplications({ status: 'in_review' }, can('guides.review', 'guides.decide'))
   const statements = useStatements(undefined, can('billing.manage'))
   const due = (statements.data ?? []).filter((statement) => statement.status === 'due' && statement.total > 0)
@@ -33,6 +35,13 @@ export function AdminPending() {
           to: paths.admissions,
           icon: <Building2 size={16} aria-hidden="true" />,
           text: `${plural(pending.data.length, 'solicitud de organización espera', 'solicitudes de organizaciones esperan')} revisión`,
+        }
+      : null,
+    placeRequests.data && placeRequests.data.length > 0
+      ? {
+          to: `${paths.admissions}?vista=lugares`,
+          icon: <MapPin size={16} aria-hidden="true" />,
+          text: `${plural(placeRequests.data.length, 'organización pide', 'organizaciones piden')} otro lugar`,
         }
       : null,
     due.length > 0

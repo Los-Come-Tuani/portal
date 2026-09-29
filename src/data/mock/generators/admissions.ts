@@ -16,6 +16,7 @@ import {
   type OrganizationApplication,
   type OrganizationDocument,
   type OrganizationDocumentType,
+  type PlaceRequest,
   type ReviewEvent,
   type Stop,
   type User,
@@ -81,7 +82,20 @@ function buildApplication(seed: AdmissionSeed, submittedDaysAgo: number, today: 
     history.push({ at, kind, text, actorId: byApplicant ? null : reviewerId, actorName: byApplicant ? seed.representative.name : reviewerName })
 
   const types = Object.keys(seed.documents) as OrganizationDocumentType[]
-  log(submittedAt, 'submitted', `Envió la solicitud desde el portal con ${types.length} documentos`, true)
+  const assisted = seed.assisted
+    ? { byId: seed.assisted.byId, byName: staff.get(seed.assisted.byId) ?? "Equipo K'Plan", fee: seed.assisted.fee }
+    : null
+  if (assisted) {
+    history.push({
+      at: submittedAt,
+      kind: 'submitted',
+      actorId: assisted.byId,
+      actorName: assisted.byName,
+      text: `Llenó la solicitud por ${seed.name} con ${types.length} documentos (alta asistida${assisted.fee > 0 ? `, se cobra C$ ${assisted.fee} al aprobarla` : ', sin costo'}). Le llegó una invitación a ${seed.representative.email}`,
+    })
+  } else {
+    log(submittedAt, 'submitted', `Envió la solicitud desde el portal con ${types.length} documentos`, true)
+  }
   if (seed.assigneeId) log(later(submittedAt, 2 * HOUR), 'assigned', `${reviewerName} tomó la solicitud`)
 
   const year = Number(today.slice(0, 4))
@@ -131,9 +145,18 @@ function buildApplication(seed: AdmissionSeed, submittedDaysAgo: number, today: 
   if (seed.stage === 'decision') log(decided ? later(stageSince, -4 * HOUR) : stageSince, 'stage', 'Pasó a decisión')
   if (seed.status === 'approved') log(stageSince, 'approved', 'Aprobó la solicitud')
 
-  const { submittedDaysAgo: _submitted, stageDaysAgo: _stage, documents: _documents, notes: _notes, newPlace: _newPlace, ...fields } = seed
+  const {
+    submittedDaysAgo: _submitted,
+    stageDaysAgo: _stage,
+    documents: _documents,
+    notes: _notes,
+    newPlace: _newPlace,
+    assisted: _assisted,
+    ...fields
+  } = seed
   return {
     ...fields,
+    assisted,
     newStopId: null,
     submittedAt,
     stageSince,
@@ -184,6 +207,47 @@ function cityCenter(stops: readonly Stop[], city: string) {
     latitude: inCity.reduce((sum, stop) => sum + stop.coordinates.latitude, 0) / inCity.length,
     longitude: inCity.reduce((sum, stop) => sum + stop.coordinates.longitude, 0) / inCity.length,
   }
+}
+
+/** Una organización aprobada pidió un lugar nuevo: queda como borrador suyo hasta que se decida. */
+export function seedPlaceRequests(today: ISODate, organizations: Organization[], stops: Stop[]): PlaceRequest[] {
+  const finca = organizations.find((organization) => organization.id === 'org-finca-el-mirador')
+  if (!finca) return []
+  const stop: Stop = {
+    id: 'matagalpa-sendero-del-cafetal',
+    name: 'Sendero del cafetal',
+    category: 'Naturaleza',
+    city: finca.city,
+    address: 'Finca El Mirador, entrada por el beneficio húmedo',
+    duration: '1 h',
+    rating: 0,
+    reviewsCount: 0,
+    hasBadge: false,
+    description: 'Caminata de una hora entre los cafetos de sombra, con parada en el mirador del valle.',
+    tip: '',
+    images: [],
+    coordinates: cityCenter(stops, finca.city),
+    draft: true,
+  }
+  stops.push(stop)
+  finca.stopIds.push(stop.id)
+  return [
+    {
+      id: 'pedido-sendero-del-cafetal',
+      organizationId: finca.id,
+      organizationName: finca.name,
+      requestedByName: finca.contactName,
+      kind: 'new',
+      stopId: stop.id,
+      stopName: stop.name,
+      note: 'Abrimos el sendero en agosto; queremos que los grupos del circuito del café lo puedan agendar.',
+      status: 'pending',
+      requestedAt: moment(today, 1, 16 * HOUR + 20),
+      decidedAt: null,
+      decidedByName: null,
+      decisionNote: '',
+    },
+  ]
 }
 
 export function seedAdmissions(

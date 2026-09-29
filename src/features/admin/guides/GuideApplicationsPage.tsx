@@ -144,33 +144,31 @@ export function GuideApplicationsPage() {
           {scope === 'mias' ? 'Mira las de todo el equipo con "Todas" y toma una sin responsable.' : 'Cuando un guía o traductor envíe sus documentos desde la app, aparece aquí.'}
         </EmptyState>
       ) : (
-        <div className="rounded-kp border border-divider bg-surface">
-          <Table caption={`Solicitudes: ${QUEUE_TABS.find((item) => item.value === tab)?.label}`}>
-            <thead>
-              <tr>
-                <Th>Solicitante</Th>
-                <Th>Ofrece</Th>
-                <Th>Ciudad</Th>
-                {!decided && tab !== 'changes_requested' && <Th className="w-44">Revisión</Th>}
-                <Th>{decided ? 'Decidida' : tab === 'changes_requested' ? 'Esperando al guía' : 'En la etapa'}</Th>
-                <Th>Responsable</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((application) => (
-                <ApplicationRow
-                  key={application.id}
-                  application={application}
-                  tab={tab}
-                  now={now}
-                  assignee={reviewerName(application.assigneeId)}
-                  isMine={application.assigneeId === user.id}
-                  onOpen={() => navigate(paths.guideApplication(application.id))}
-                />
-              ))}
-            </tbody>
-          </Table>
-        </div>
+        <Table id={`guias-${tab}`} caption={`Solicitudes: ${QUEUE_TABS.find((item) => item.value === tab)?.label}`}>
+          <thead>
+            <tr>
+              <Th>Solicitante</Th>
+              <Th>Ofrece</Th>
+              <Th>Ciudad</Th>
+              {!decided && tab !== 'changes_requested' && <Th className="w-44">Revisión</Th>}
+              <Th>{decided ? 'Decidida' : tab === 'changes_requested' ? 'Esperando al guía' : 'En la etapa'}</Th>
+              <Th>Responsable</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((application) => (
+              <ApplicationRow
+                key={application.id}
+                application={application}
+                tab={tab}
+                now={now}
+                assignee={reviewerName(application.assigneeId)}
+                isMine={application.assigneeId === user.id}
+                onOpen={() => navigate(paths.guideApplication(application.id))}
+              />
+            ))}
+          </tbody>
+        </Table>
       )}
     </div>
   )

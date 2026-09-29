@@ -3,6 +3,7 @@ import { http } from '../api/http-client'
 import type {
   ApplicationDocumentInput,
   ApplicationStatus,
+  AssistedApplicationInput,
   AuthResponse,
   DecisionInput,
   DocumentReviewInput,
@@ -27,6 +28,8 @@ export const admissionsRepository = {
     http.post<OrganizationApplication>(endpoints.organizationApplications.documents(applicationId), { body: input }),
   resubmit: (applicationId: string) => http.post<OrganizationApplication>(endpoints.organizationApplications.resubmit(applicationId)),
 
+  createAssisted: (input: AssistedApplicationInput) =>
+    http.post<OrganizationApplication>(endpoints.organizationApplications.assisted, { body: input }),
   list: (filters: AdmissionFilters = {}) =>
     http.get<OrganizationApplication[]>(endpoints.organizationApplications.list, { query: { ...filters } }),
   get: (applicationId: string) => http.get<OrganizationApplication>(endpoints.organizationApplications.detail(applicationId)),

@@ -1,7 +1,4 @@
-import { todayISO } from '@/lib/dates'
-import { uniqueSlug } from '@/lib/slug'
 import { endpoints } from '../../api/endpoints'
-import type { Organization } from '../../models'
 import { organizationInputSchema } from '../../schemas/admin.schema'
 import type { MockDatabase } from '../db'
 import { fail, MockHttpError, parseBody, requireUser, route } from '../http'
@@ -19,6 +16,7 @@ function assertStopsAvailable(db: MockDatabase, stopIds: string[], organizationI
   }
 }
 
+/** No hay alta directa: una organización entra con una solicitud (postulación o alta asistida). */
 export const organizationRoutes = [
   route(
     'GET',
@@ -41,22 +39,6 @@ export const organizationRoutes = [
     if (!isAdmin(user) && user.organizationId !== organization.id) throw fail.forbidden()
     return organization
   }),
-  route(
-    'POST',
-    endpoints.organizations.list,
-    ({ db, body }) => {
-      const input = parseBody(organizationInputSchema, body)
-      assertStopsAvailable(db, input.stopIds, null)
-      const organization: Organization = {
-        ...input,
-        id: uniqueSlug(`org-${input.name}`, (id) => db.organizations.some((item) => item.id === id)),
-        joinedAt: todayISO(),
-      }
-      db.organizations.push(organization)
-      return organization
-    },
-    { permissions: ['organizations.manage'] },
-  ),
   route(
     'PUT',
     endpoints.organizations.detail(':id'),

@@ -29,7 +29,7 @@ import { APPLICATION_STATUS_TONES, waitingMinutes } from '@/features/verificatio
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useNow } from '@/hooks/use-now'
 import { toLocalDateTime } from '@/lib/dates'
-import { formatDate, formatDateTime } from '@/lib/format'
+import { formatDate, formatDateTime, formatMoney } from '@/lib/format'
 import { admissionSteps } from './lib/queue'
 
 export function AdmissionPage() {
@@ -89,6 +89,12 @@ function AdmissionView({ application, reviewers }: { application: OrganizationAp
           <h1 className="text-headline font-bold tracking-tight text-ink">{application.name}</h1>
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-small text-muted">
             <Tag tone="ink">{ORGANIZATION_TYPE_LABELS[application.type]}</Tag>
+            {application.assisted && (
+              <Tag tone="outline">
+                Alta asistida por {application.assisted.byName}
+                {application.assisted.fee > 0 ? ` · ${formatMoney(application.assisted.fee)}` : ' · sin costo'}
+              </Tag>
+            )}
             <Tag tone={APPLICATION_STATUS_TONES[application.status]}>
               {inReview ? `${APPLICATION_STATUS_LABELS.in_review} · ${ADMISSION_STAGE_LABELS[application.stage]}` : APPLICATION_STATUS_LABELS[application.status]}
             </Tag>
@@ -156,6 +162,12 @@ function AdmissionView({ application, reviewers }: { application: OrganizationAp
                     documentos aceptados.
                   </li>
                   {application.newStopId && <li>Se publica su lugar nuevo.</li>}
+                  {application.assisted && application.assisted.fee > 0 && (
+                    <li>
+                      Se le cobra el alta asistida: <span className="font-semibold tabular-nums">{formatMoney(application.assisted.fee)}</span> en su
+                      estado de cuenta de este mes.
+                    </li>
+                  )}
                   {application.claimedStopIds.length > 0 && (
                     <li>
                       Se le asignan <span className="font-semibold tabular-nums">{application.claimedStopIds.length}</span> lugares que ya están en la app.

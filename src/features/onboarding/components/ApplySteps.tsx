@@ -1,7 +1,9 @@
 import { Building2, Landmark, MapPin, Pencil } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button, Checkbox, EmptyState, Field, Input, Select, SkeletonRows, Switch, Textarea } from '@/components/ui'
+import { usePricing } from '@/data/hooks/use-billing'
 import { useAvailablePlaces } from '@/data/hooks/use-places'
+import { formatMoney } from '@/lib/format'
 import {
   admissionRequirements,
   CITIES,
@@ -12,13 +14,14 @@ import {
   type StopCategory,
 } from '@/data/models'
 import { cn } from '@/lib/cn'
-import type { ApplicationDraft, FieldErrors, StepKey } from '../lib/draft'
+import type { ApplicationDraft, FieldErrors, StepKey, WizardMode } from '../lib/draft'
 import { DocumentUpload } from './DocumentUpload'
 
 export interface StepProps {
   draft: ApplicationDraft
   errors: FieldErrors
   update: (patch: Partial<ApplicationDraft>) => void
+  mode: WizardMode
 }
 
 const TYPE_OPTIONS: { value: OrganizationType; title: string; detail: string; icon: ReactNode }[] = [
@@ -26,12 +29,12 @@ const TYPE_OPTIONS: { value: OrganizationType; title: string; detail: string; ic
   { value: 'alcaldia', title: 'Una alcaldía', detail: 'El equipo de turismo de un municipio, para sus lugares públicos y eventos.', icon: <Landmark size={20} /> },
 ]
 
-export function StepOrganization({ draft, errors, update }: StepProps) {
+export function StepOrganization({ draft, errors, update, mode }: StepProps) {
   const negocio = draft.type === 'negocio'
   return (
     <div className="flex flex-col gap-5">
       <fieldset>
-        <legend className="mb-2 text-small font-medium text-ink">Te postulas como</legend>
+        <legend className="mb-2 text-small font-medium text-ink">{mode === 'assisted' ? 'Se postula como' : 'Te postulas como'}</legend>
         <div role="radiogroup" className="grid gap-3 sm:grid-cols-2">
           {TYPE_OPTIONS.map((option) => {
             const selected = draft.type === option.value
@@ -132,9 +135,10 @@ export function StepOrganization({ draft, errors, update }: StepProps) {
   )
 }
 
-export function StepPlace({ draft, errors, update }: StepProps) {
+export function StepPlace({ draft, errors, update, mode }: StepProps) {
   const places = useAvailablePlaces(draft.city)
   const negocio = draft.type === 'negocio'
+  const own = mode === 'assisted' ? 'su' : 'tu'
   const toggle = (stopId: string, checked: boolean) =>
     update({ claimedStopIds: checked ? [...draft.claimedStopIds, stopId] : draft.claimedStopIds.filter((id) => id !== stopId) })
 
@@ -146,7 +150,7 @@ export function StepPlace({ draft, errors, update }: StepProps) {
         </legend>
         <p className="-mt-1 mb-1 text-small text-muted">
           {negocio
-            ? 'Si tu lugar ya aparece, márcalo. Si no, agrégalo abajo como nuevo.'
+            ? `Si ${own} lugar ya aparece, márcalo. Si no, agrégalo abajo como nuevo.`
             : 'Marca los que administra la alcaldía. El equipo de K\'Plan los confirma antes de asignártelos.'}
         </p>
         {places.isPending ? (
@@ -186,8 +190,12 @@ export function StepPlace({ draft, errors, update }: StepProps) {
             onChange={(checked) =>
               update({ newPlace: checked ? { name: draft.name, category: 'Gastronomía', address: draft.address } : null })
             }
-            label="Mi lugar todavía no está en la app"
-            description="Lo creamos como borrador: completas su ficha desde el portal y se publica cuando te aprueben."
+            label={mode === 'assisted' ? 'Su lugar todavía no está en la app' : 'Mi lugar todavía no está en la app'}
+            description={
+              mode === 'assisted'
+                ? 'Se crea como borrador: su ficha se completa desde el portal y se publica cuando se apruebe.'
+                : 'Lo creamos como borrador: completas su ficha desde el portal y se publica cuando te aprueben.'
+            }
           />
           {draft.newPlace && (
             <div className="grid gap-4 border-t border-divider pt-4 sm:grid-cols-2">
@@ -232,7 +240,7 @@ export function StepPlace({ draft, errors, update }: StepProps) {
   )
 }
 
-export function StepRepresentative({ draft, errors, update }: StepProps) {
+export function StepRepresentative({ draft, errors, update, mode }: StepProps) {
   const setRepresentative = (patch: Partial<ApplicationDraft['representative']>) =>
     update({ representative: { ...draft.representative, ...patch } })
   return (
@@ -277,7 +285,11 @@ export function StepRepresentative({ draft, errors, update }: StepProps) {
           )}
         </Field>
       </div>
-      <Field label="Correo" hint="Con este correo entras al portal y te avisamos de tu solicitud." error={errors['representative.email']}>
+      <Field
+        label="Correo"
+        hint={mode === 'assisted' ? 'Aquí le llega la invitación para crear su contraseña.' : 'Con este correo entras al portal y te avisamos de tu solicitud.'}
+        error={errors['representative.email']}
+      >
         {(control) => (
           <Input
             {...control}
@@ -288,24 +300,26 @@ export function StepRepresentative({ draft, errors, update }: StepProps) {
           />
         )}
       </Field>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Contraseña" hint="Mínimo 8 caracteres." error={errors.password}>
-          {(control) => (
-            <Input {...control} type="password" autoComplete="new-password" value={draft.password} onChange={(event) => update({ password: event.target.value })} />
-          )}
-        </Field>
-        <Field label="Repite la contraseña" error={errors.passwordConfirm}>
-          {(control) => (
-            <Input
-              {...control}
-              type="password"
-              autoComplete="new-password"
-              value={draft.passwordConfirm}
-              onChange={(event) => update({ passwordConfirm: event.target.value })}
-            />
-          )}
-        </Field>
-      </div>
+      {mode === 'public' && (
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Contraseña" hint="Mínimo 8 caracteres." error={errors.password}>
+            {(control) => (
+              <Input {...control} type="password" autoComplete="new-password" value={draft.password} onChange={(event) => update({ password: event.target.value })} />
+            )}
+          </Field>
+          <Field label="Repite la contraseña" error={errors.passwordConfirm}>
+            {(control) => (
+              <Input
+                {...control}
+                type="password"
+                autoComplete="new-password"
+                value={draft.passwordConfirm}
+                onChange={(event) => update({ passwordConfirm: event.target.value })}
+              />
+            )}
+          </Field>
+        </div>
+      )}
     </div>
   )
 }
@@ -373,11 +387,20 @@ function Item({ label, value, wide }: { label: string; value: ReactNode; wide?: 
   )
 }
 
-export function StepReview({ draft, errors, update, goTo, placeNames }: StepProps & { goTo: (step: StepKey) => void; placeNames: string[] }) {
+export function StepReview({
+  draft,
+  errors,
+  update,
+  goTo,
+  placeNames,
+  mode,
+}: StepProps & { goTo: (step: StepKey) => void; placeNames: string[] }) {
   const negocio = draft.type === 'negocio'
+  const assisted = mode === 'assisted'
+  const pricing = usePricing(assisted)
   return (
     <div className="flex flex-col gap-4">
-      <Summary title="Tu organización" onEdit={() => goTo('organization')}>
+      <Summary title={assisted ? 'La organización' : 'Tu organización'} onEdit={() => goTo('organization')}>
         <Item label="Tipo" value={ORGANIZATION_TYPE_LABELS[draft.type]} />
         <Item label="Nombre" value={draft.name} />
         {negocio && <Item label="Razón social" value={draft.legalName} />}
@@ -386,7 +409,7 @@ export function StepReview({ draft, errors, update, goTo, placeNames }: StepProp
         <Item label="Dirección" value={draft.address} />
         <Item label="Qué ofrecen" value={draft.description} wide />
       </Summary>
-      <Summary title="Tu lugar" onEdit={() => goTo('place')}>
+      <Summary title={assisted ? 'Su lugar' : 'Tu lugar'} onEdit={() => goTo('place')}>
         <Item label="Ya en la app" value={placeNames.length > 0 ? placeNames.join(', ') : 'Ninguno'} wide />
         {draft.newPlace && <Item label="Lugar nuevo" value={`${draft.newPlace.name} · ${draft.newPlace.category}`} wide />}
       </Summary>
@@ -405,12 +428,30 @@ export function StepReview({ draft, errors, update, goTo, placeNames }: StepProp
           />
         ))}
       </Summary>
+      {assisted && (
+        <div className="rounded-kp border border-divider bg-surface p-4">
+          <Switch
+            checked={draft.charge}
+            onChange={(charge) => update({ charge })}
+            label={`Cobrar el alta asistida${pricing.data ? ` (${formatMoney(pricing.data.assistedOnboardingFee)})` : ''}`}
+            description="Se agrega a su estado de cuenta cuando se apruebe la solicitud. Apágalo si es una cortesía o parte de un convenio."
+          />
+        </div>
+      )}
       <div className="mt-2 flex flex-col gap-1.5">
         <Checkbox
           checked={draft.accepted}
           onChange={(event) => update({ accepted: event.target.checked })}
-          label="Declaro que la información y los documentos son verdaderos"
-          description="Si algo no coincide, el equipo de K'Plan puede rechazar la solicitud o suspender la cuenta."
+          label={
+            assisted
+              ? 'La organización me entregó estos datos y documentos, y autorizó el alta'
+              : 'Declaro que la información y los documentos son verdaderos'
+          }
+          description={
+            assisted
+              ? 'Queda en el historial de la solicitud con tu nombre.'
+              : "Si algo no coincide, el equipo de K'Plan puede rechazar la solicitud o suspender la cuenta."
+          }
         />
         {errors.accepted && <p className="text-caption font-medium text-danger">{errors.accepted}</p>}
       </div>

@@ -19,11 +19,12 @@ export function usePayStatement() {
   })
 }
 
-export function usePricing() {
+export function usePricing(enabled = true) {
   return useQuery({
     queryKey: queryKeys.billing.pricing,
     queryFn: billingRepository.getPricing,
     staleTime: 5 * 60_000,
+    enabled,
   })
 }
 

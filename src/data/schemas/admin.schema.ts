@@ -27,6 +27,7 @@ export const pricingInputSchema = z.object({
     )
     .min(1, { error: 'Deja al menos un paquete' })
     .max(6),
+  assistedOnboardingFee: z.number({ error: 'Escribe la tarifa' }).int().min(0).max(100_000),
 })
 
 export const loginSchema = z.object({

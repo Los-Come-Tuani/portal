@@ -1,25 +1,28 @@
-﻿import { ArrowLeft, ArrowRight, Mail, Pencil, Phone, User } from 'lucide-react'
+﻿import { ArrowLeft, ArrowRight, Mail, Pencil, Phone, Plus, User, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Button, ButtonLink, ConfirmDialog, ErrorState, Panel, Skeleton, Tag, useToast } from '@/components/ui'
+import { Button, ButtonLink, ConfirmDialog, ErrorState, IconButton, Panel, Skeleton, Tag, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useAdmissions } from '@/data/hooks/use-admissions'
 import { useBadgeCampaigns } from '@/data/hooks/use-badges'
 import { useStatements } from '@/data/hooks/use-billing'
 import { useCoupons } from '@/data/hooks/use-coupons'
 import { useEvents } from '@/data/hooks/use-events'
-import { useOrganization, useOrganizations, useSaveOrganization } from '@/data/hooks/use-organizations'
+import { useOrganization, useSaveOrganization } from '@/data/hooks/use-organizations'
 import { usePlaces } from '@/data/hooks/use-places'
 import {
   ORGANIZATION_STATUS_LABELS,
   ORGANIZATION_TYPE_LABELS,
   type Organization,
   type OrganizationStatus,
+  type Stop,
 } from '@/data/models'
 import { useSession } from '@/features/auth/use-auth'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { formatDate, formatMoney, formatMonth, plural } from '@/lib/format'
+import { AssignPlacesDialog } from './AssignPlacesDialog'
+import { toOrganizationInput } from './input'
 import { OrganizationDrawer } from './OrganizationDrawer'
 import { ORGANIZATION_STATUS_TONES } from './status'
 
@@ -41,7 +44,6 @@ const CONFIRM_TEXT: Record<OrganizationStatus, string> = {
 export function OrganizationDetailPage() {
   const { organizationId = '' } = useParams()
   const organization = useOrganization(organizationId)
-  const organizations = useOrganizations()
   const places = usePlaces({ organizationId })
   const coupons = useCoupons(organizationId)
   const events = useEvents({ organizerId: organizationId })
@@ -55,6 +57,8 @@ export function OrganizationDetailPage() {
     ?.filter((item) => item.organizationId === organizationId)
     .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0]
   const [editing, setEditing] = useState(false)
+  const [assigning, setAssigning] = useState(false)
+  const [removing, setRemoving] = useState<Stop | null>(null)
   const [changing, setChanging] = useState<{ to: OrganizationStatus; label: string } | null>(null)
   useDocumentTitle(organization.data?.name ?? 'Organización')
 
@@ -66,9 +70,8 @@ export function OrganizationDetailPage() {
   const open = statements.data?.find((statement) => statement.status === 'open')
 
   const changeStatus = (current: Organization, to: OrganizationStatus) => {
-    const { id, joinedAt: _joinedAt, ...input } = current
     save.mutate(
-      { id, input: { ...input, status: to } },
+      { id: current.id, input: toOrganizationInput(current, { status: to }) },
       {
         onSuccess: () => {
           setChanging(null)
@@ -122,19 +125,40 @@ export function OrganizationDetailPage() {
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="flex flex-col gap-6">
-          <Panel title="Lugares" description="Las paradas de la app que administra." bodyClassName="p-0">
+          <Panel
+            title="Lugares"
+            description="Las paradas de la app que administra. También puede pedir otros desde su portal."
+            actions={
+              canManage &&
+              org.status === 'active' && (
+                <Button size="sm" variant="secondary" icon={<Plus size={15} />} onClick={() => setAssigning(true)}>
+                  Asignar lugar
+                </Button>
+              )
+            }
+            bodyClassName="p-0"
+          >
             {places.isPending ? (
               <Skeleton className="m-5 h-20" />
             ) : (places.data ?? []).length === 0 ? (
-              <p className="p-5 text-body text-muted">Todavía no tiene lugares. Asígnalos con "Editar".</p>
+              <p className="p-5 text-body text-muted">
+                {org.status === 'pending' ? 'Se le asignan al aprobar su solicitud.' : 'Todavía no administra ningún lugar.'}
+              </p>
             ) : (
               <ul className="divide-y divide-divider">
                 {places.data?.map((stop) => (
-                  <li key={stop.id}>
-                    <Link to={paths.place(stop.id)} className="group flex items-center gap-4 px-5 py-3 hover:bg-canvas">
-                      <img src={stop.images[0]} alt="" loading="lazy" className="size-12 rounded-sm bg-placeholder object-cover" />
+                  <li key={stop.id} className="flex items-center gap-2 pr-3 hover:bg-canvas">
+                    <Link to={paths.place(stop.id)} className="group flex min-w-0 flex-1 items-center gap-4 py-3 pl-5">
+                      {stop.images[0] ? (
+                        <img src={stop.images[0]} alt="" loading="lazy" className="size-12 rounded-sm bg-placeholder object-cover" />
+                      ) : (
+                        <span className="flex size-12 items-center justify-center rounded-sm bg-paper text-caption text-muted">Sin foto</span>
+                      )}
                       <span className="min-w-0 flex-1">
-                        <span className="block text-body font-semibold text-ink">{stop.name}</span>
+                        <span className="flex flex-wrap items-center gap-2 text-body font-semibold text-ink">
+                          {stop.name}
+                          {stop.draft && <Tag tone="outline">Borrador</Tag>}
+                        </span>
                         <span className="block text-small text-muted">
                           {stop.category}
                           {stop.hasBadge && ' · da insignia'}
@@ -142,6 +166,9 @@ export function OrganizationDetailPage() {
                       </span>
                       <ArrowRight size={16} className="text-muted group-hover:text-ink" aria-hidden="true" />
                     </Link>
+                    {canManage && !stop.draft && (
+                      <IconButton size="sm" tone="danger" label={`Quitarle ${stop.name}`} icon={<X size={16} />} onClick={() => setRemoving(stop)} />
+                    )}
                   </li>
                 ))}
               </ul>
@@ -213,12 +240,30 @@ export function OrganizationDetailPage() {
         </div>
       </div>
 
-      <OrganizationDrawer
-        open={editing}
-        organization={org}
-        organizations={organizations.data ?? []}
-        onClose={() => setEditing(false)}
-      />
+      <OrganizationDrawer open={editing} organization={org} onClose={() => setEditing(false)} />
+      <AssignPlacesDialog open={assigning} organization={org} onClose={() => setAssigning(false)} />
+      <ConfirmDialog
+        open={removing !== null}
+        title={`Quitarle ${removing?.name ?? ''} a ${org.name}`}
+        confirmLabel="Quitar"
+        loading={save.isPending}
+        onClose={() => setRemoving(null)}
+        onConfirm={() =>
+          removing &&
+          save.mutate(
+            { id: org.id, input: toOrganizationInput(org, { stopIds: org.stopIds.filter((id) => id !== removing.id) }) },
+            {
+              onSuccess: () => {
+                toast({ title: `${removing.name} quedó sin dueño` })
+                setRemoving(null)
+              },
+              onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
+            },
+          )
+        }
+      >
+        El lugar sigue en la app, pero {org.name} deja de editarlo y de ver sus llegadas. Sus cupones y campañas en ese lugar dejan de mostrarse.
+      </ConfirmDialog>
       <ConfirmDialog
         open={changing !== null}
         tone={changing?.to === 'active' ? 'primary' : 'danger'}

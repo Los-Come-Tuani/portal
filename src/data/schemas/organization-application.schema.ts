@@ -123,4 +123,22 @@ export function parseApplication(value: unknown) {
   return issues
 }
 
+/** Alta asistida: lo mismo menos la contraseña; la persona la crea con su invitación. */
+export function parseAssistedApplication(value: unknown) {
+  const steps = [
+    applicationOrganizationSchema,
+    applicationPlaceSchema,
+    applicationRepresentativeSchema.pick({ representative: true }),
+    applicationDocumentsSchema,
+    applicationConsentSchema,
+    z.object({ charge: z.boolean() }),
+  ] as const
+  const issues: z.ZodError['issues'] = []
+  for (const schema of steps) {
+    const result = schema.safeParse(value)
+    if (!result.success) issues.push(...result.error.issues)
+  }
+  return issues
+}
+
 export const documentReplaceSchema = documentInputSchema

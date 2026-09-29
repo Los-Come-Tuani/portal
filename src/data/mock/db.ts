@@ -11,6 +11,7 @@ import type {
   Organization,
   OrganizationApplication,
   PlaceProfile,
+  PlaceRequest,
   Post,
   Pricing,
   StaffRole,
@@ -34,6 +35,7 @@ export interface MockDatabase {
   staffRoles: StaffRole[]
   guideApplications: GuideApplication[]
   organizationApplications: OrganizationApplication[]
+  placeRequests: PlaceRequest[]
   organizations: Organization[]
   stops: Stop[]
   circuits: Circuit[]

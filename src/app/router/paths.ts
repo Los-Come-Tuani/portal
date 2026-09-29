@@ -4,6 +4,7 @@ export const paths = {
   apply: '/postular',
   application: '/solicitud',
   admissions: '/solicitudes',
+  assistedApplication: '/solicitudes/nueva',
   admission: (applicationId: string) => `/solicitudes/${encodeURIComponent(applicationId)}`,
   home: '/',
   places: '/lugares',

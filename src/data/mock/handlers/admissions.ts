@@ -7,6 +7,7 @@ import {
   ORGANIZATION_DOCUMENT_INFO,
   ORGANIZATION_DOCUMENT_RULES,
   resubmitBlocker,
+  type AssistedApplicationInput,
   type Organization,
   type OrganizationApplication,
   type OrganizationApplicationInput,
@@ -14,7 +15,12 @@ import {
   type User,
 } from '../../models'
 import { assignSchema, changesRequestSchema, decisionSchema, documentReviewSchema } from '../../schemas/guide.schema'
-import { documentReplaceSchema, normalizeRuc, parseApplication } from '../../schemas/organization-application.schema'
+import {
+  documentReplaceSchema,
+  normalizeRuc,
+  parseApplication,
+  parseAssistedApplication,
+} from '../../schemas/organization-application.schema'
 import type { MockDatabase } from '../db'
 import { fail, parseBody, requireUser, route, type MockContext } from '../http'
 import { hasPermission, toSessionUser } from '../services/access'
@@ -71,7 +77,17 @@ function assertInReview(application: OrganizationApplication, stage?: Organizati
   if (stage && application.stage !== stage) throw fail.conflict('La solicitud ya pasó de etapa: recarga la página')
 }
 
-function createApplication(db: MockDatabase, input: OrganizationApplicationInput) {
+/**
+ * Crea la cuenta, la organización en revisión, el borrador de su lugar y la
+ * solicitud. En un alta asistida la cuenta queda invitada: la persona crea su
+ * contraseña con el correo que le llega.
+ */
+function createApplication(
+  db: MockDatabase,
+  input: Omit<OrganizationApplicationInput, 'password'>,
+  assistedBy: User | null = null,
+  fee = 0,
+) {
   const now = nowLocalDateTime()
   const today = todayISO()
   const email = input.representative.email.trim().toLowerCase()
@@ -130,11 +146,11 @@ function createApplication(db: MockDatabase, input: OrganizationApplicationInput
     organizationId,
     staffRoleId: null,
     serviceRole: null,
-    status: 'active',
+    status: assistedBy ? 'invited' : 'active',
     phone: input.representative.phone,
     city: input.city,
     createdAt: today,
-    lastSeenAt: now,
+    lastSeenAt: assistedBy ? null : now,
   }
   const application: OrganizationApplication = {
     id: applicationId,
@@ -175,13 +191,32 @@ function createApplication(db: MockDatabase, input: OrganizationApplicationInput
     decisionNote: '',
     decidedAt: null,
     history: [],
+    assisted: assistedBy ? { byId: assistedBy.id, byName: assistedBy.name, fee } : null,
   }
-  logReview(application, { id: null, name: user.name }, 'submitted', `Envió la solicitud desde el portal con ${input.documents.length} documentos`)
+  if (assistedBy) {
+    logReview(
+      application,
+      assistedBy,
+      'submitted',
+      `Llenó la solicitud por ${input.name} con ${input.documents.length} documentos (alta asistida${fee > 0 ? `, se cobra C$ ${fee} al aprobarla` : ', sin costo'}). Le llegó una invitación a ${email}`,
+    )
+  } else {
+    logReview(application, { id: null, name: user.name }, 'submitted', `Envió la solicitud desde el portal con ${input.documents.length} documentos`)
+  }
 
   db.organizations.push(organization)
   db.users.push(user)
   db.organizationApplications.push(application)
-  return user
+  return { user, application }
+}
+
+function invalid(issues: ReturnType<typeof parseApplication>): never {
+  const fieldErrors: Record<string, string> = {}
+  for (const issue of issues) {
+    const key = issue.path.join('.')
+    if (!(key in fieldErrors)) fieldErrors[key] = issue.message
+  }
+  throw fail.invalid('Revisa los campos marcados', fieldErrors)
 }
 
 export const admissionRoutes = [
@@ -190,18 +225,23 @@ export const admissionRoutes = [
     endpoints.organizationApplications.list,
     ({ db, body }) => {
       const issues = parseApplication(body)
-      if (issues.length > 0) {
-        const fieldErrors: Record<string, string> = {}
-        for (const issue of issues) {
-          const key = issue.path.join('.')
-          if (!(key in fieldErrors)) fieldErrors[key] = issue.message
-        }
-        throw fail.invalid('Revisa los campos marcados', fieldErrors)
-      }
-      const user = createApplication(db, body as OrganizationApplicationInput)
+      if (issues.length > 0) invalid(issues)
+      const { user } = createApplication(db, body as OrganizationApplicationInput)
       return { token: `demo.${user.id}`, user: toSessionUser(db, user) }
     },
     { isPublic: true },
+  ),
+  route(
+    'POST',
+    endpoints.organizationApplications.assisted,
+    (context) => {
+      const actor = requireUser(context)
+      const issues = parseAssistedApplication(context.body)
+      if (issues.length > 0) invalid(issues)
+      const input = context.body as AssistedApplicationInput
+      return createApplication(context.db, input, actor, input.charge ? context.db.pricing.assistedOnboardingFee : 0).application
+    },
+    { permissions: [...REVIEWERS] },
   ),
   route('GET', endpoints.organizationApplications.mine, (context) => forApplicant(ownApplication(context.db, requireUser(context)))),
   route(

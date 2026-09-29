@@ -1,12 +1,13 @@
 import type { BadgePack } from './badges'
 import type { ISODate, LocalDateTime } from './common'
 
-export type ChargeKind = 'coupon_fee' | 'badge_activation' | 'badge_campaign'
+export type ChargeKind = 'coupon_fee' | 'badge_activation' | 'badge_campaign' | 'assisted_onboarding'
 
 export const CHARGE_KIND_LABELS: Record<ChargeKind, string> = {
   coupon_fee: 'Cupones canjeados',
   badge_activation: 'Insignia activada',
   badge_campaign: 'Campaña de insignias',
+  assisted_onboarding: 'Alta asistida',
 }
 
 export interface StatementLine {
@@ -48,6 +49,8 @@ export interface Pricing {
   /** C$ al mes por lugar con la insignia activada. */
   badgeActivationMonthly: number
   badgePacks: BadgePack[]
+  /** C$ una sola vez, si el equipo llenó la solicitud por la organización y se marcó cobrarla. */
+  assistedOnboardingFee: number
   updatedAt: LocalDateTime
 }
 

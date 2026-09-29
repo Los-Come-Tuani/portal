@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { ApplicationDocumentInput, DecisionInput, DocumentReviewInput, OrganizationApplication } from '../models'
+import type {
+  ApplicationDocumentInput,
+  AssistedApplicationInput,
+  DecisionInput,
+  DocumentReviewInput,
+  OrganizationApplication,
+} from '../models'
 import { admissionsRepository, type AdmissionFilters } from '../repositories/admissions.repository'
 import { queryKeys } from './query-keys'
 
@@ -30,6 +36,18 @@ export function useResubmit(applicationId: string) {
 }
 
 // ── Equipo de K'Plan ─────────────────────────────────────────────────────
+
+export function useCreateAssisted() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: AssistedApplicationInput) => admissionsRepository.createAssisted(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admissions.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.organizations.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all })
+    },
+  })
+}
 
 export function useAdmissions(filters: AdmissionFilters = {}, enabled = true) {
   return useQuery({

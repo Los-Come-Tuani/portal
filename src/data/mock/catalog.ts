@@ -137,6 +137,8 @@ export type AdmissionSeed = Pick<
   stageDaysAgo: number
   documents: Partial<Record<OrganizationDocumentType, DocumentStatus>>
   notes: Partial<Record<OrganizationDocumentType, string>>
+  /** El equipo llenó la solicitud; `fee` 0 si no se cobra. */
+  assisted?: { byId: string; fee: number }
 }
 
 export const catalog = {

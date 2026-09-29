@@ -1,9 +1,10 @@
-import { Building2, Search } from 'lucide-react'
+import { Building2, Plus, Search } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import {
   Avatar,
+  ButtonLink,
   EmptyState,
   ErrorState,
   Input,
@@ -18,6 +19,7 @@ import {
   Tr,
 } from '@/components/ui'
 import { useAdmissionReviewers, useAdmissions } from '@/data/hooks/use-admissions'
+import { usePlaceRequests } from '@/data/hooks/use-place-requests'
 import { ORGANIZATION_TYPE_LABELS, type OrganizationApplication } from '@/data/models'
 import { useSession } from '@/features/auth/use-auth'
 import { ReviewSegments } from '@/features/verification/components/ReviewSegments'
@@ -28,6 +30,7 @@ import { cn } from '@/lib/cn'
 import { toLocalDateTime } from '@/lib/dates'
 import { formatDate, formatDateTime, formatWaiting, plural } from '@/lib/format'
 import { ADMISSION_TABS, admissionSegments, admissionTab, type AdmissionTab } from './lib/queue'
+import { PlaceRequestsView } from './PlaceRequestsView'
 
 type Scope = 'todas' | 'mias'
 
@@ -57,6 +60,8 @@ export function AdmissionsPage() {
   const now = toLocalDateTime(today, minutes)
   const [params, setParams] = useSearchParams()
   const [search, setSearch] = useState('')
+  const view = params.get('vista') === 'lugares' ? 'lugares' : 'organizaciones'
+  const pendingPlaces = usePlaceRequests({ status: 'pending' }).data?.length ?? 0
 
   const all = applications.data ?? []
   const countOf = (tab: AdmissionTab) => all.filter((item) => admissionTab(item) === tab).length
@@ -79,15 +84,48 @@ export function AdmissionsPage() {
     .filter((item) => !search || `${item.name} ${item.city} ${item.representative.email}`.toLowerCase().includes(search.trim().toLowerCase()))
     .sort((a, b) => (decided ? b.stageSince.localeCompare(a.stageSince) : a.stageSince.localeCompare(b.stageSince)))
   const inReview = all.filter((item) => item.status === 'in_review')
+  const open = inReview.length + countOf('changes_requested')
   const oldest = inReview.reduce((max, item) => Math.max(max, waitingMinutes(item.stageSince, now)), 0)
   const reviewerName = (id: string | null) => reviewers.data?.find((reviewer) => reviewer.id === id)?.name ?? null
 
-  return (
-    <div className="flex flex-col gap-6">
+  const header = (
+    <>
       <PageHeader
         title="Solicitudes"
-        description="Negocios y alcaldías que se postularon desde el portal con sus documentos. Entran a la app cuando los apruebas."
+        description="Organizaciones nuevas que se postularon o que el equipo dio de alta, y organizaciones aprobadas que piden otro lugar."
+        actions={
+          view === 'organizaciones' && (
+            <ButtonLink to={paths.assistedApplication} variant="primary" icon={<Plus size={16} />}>
+              Alta asistida
+            </ButtonLink>
+          )
+        }
       />
+      <SegmentedControl
+        label="Tipo de solicitud"
+        value={view}
+        onChange={(value) => setParams(value === 'lugares' ? { vista: 'lugares' } : {}, { replace: true })}
+        options={[
+          { value: 'organizaciones', label: `Organizaciones nuevas · ${open}` },
+          { value: 'lugares', label: `Lugares pedidos · ${pendingPlaces}` },
+        ]}
+        className="self-start"
+      />
+    </>
+  )
+
+  if (view === 'lugares') {
+    return (
+      <div className="flex flex-col gap-6">
+        {header}
+        <PlaceRequestsView />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      {header}
 
       {applications.isSuccess && (
         <p className="max-w-[84ch] text-lead text-muted">
@@ -151,74 +189,73 @@ export function AdmissionsPage() {
             : 'Cuando un negocio o una alcaldía se postule desde el portal, aparece aquí.'}
         </EmptyState>
       ) : (
-        <div className="rounded-kp border border-divider bg-surface">
-          <Table caption={`Solicitudes: ${ADMISSION_TABS.find((item) => item.value === tab)?.label}`}>
-            <thead>
-              <tr>
-                <Th>Organización</Th>
-                <Th>Ciudad</Th>
-                <Th>Lugares</Th>
-                {!decided && tab !== 'changes_requested' && <Th className="w-44">Revisión</Th>}
-                <Th>{decided ? 'Decidida' : tab === 'changes_requested' ? 'Esperando corrección' : 'En la etapa'}</Th>
-                <Th>Responsable</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((application) => {
-                const waiting = waitingMinutes(application.stageSince, now)
-                const late = !decided && tab !== 'changes_requested' && waiting > STAGE_LIMIT_MINUTES
-                const segments = admissionSegments(application)
-                const assignee = reviewerName(application.assigneeId)
-                return (
-                  <Tr key={application.id} interactive onClick={() => navigate(paths.admission(application.id))}>
+        <Table id={`solicitudes-${tab}`} caption={`Solicitudes: ${ADMISSION_TABS.find((item) => item.value === tab)?.label}`}>
+          <thead>
+            <tr>
+              <Th>Organización</Th>
+              <Th>Ciudad</Th>
+              <Th>Lugares</Th>
+              {!decided && tab !== 'changes_requested' && <Th className="w-44">Revisión</Th>}
+              <Th>{decided ? 'Decidida' : tab === 'changes_requested' ? 'Esperando corrección' : 'En la etapa'}</Th>
+              <Th>Responsable</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((application) => {
+              const waiting = waitingMinutes(application.stageSince, now)
+              const late = !decided && tab !== 'changes_requested' && waiting > STAGE_LIMIT_MINUTES
+              const segments = admissionSegments(application)
+              const assignee = reviewerName(application.assigneeId)
+              return (
+                <Tr key={application.id} interactive onClick={() => navigate(paths.admission(application.id))}>
+                  <Td>
+                    <Link
+                      to={paths.admission(application.id)}
+                      onClick={(event) => event.stopPropagation()}
+                      className="font-semibold text-ink hover:underline"
+                    >
+                      {application.name}
+                    </Link>
+                    <p className="text-caption text-muted">
+                      {ORGANIZATION_TYPE_LABELS[application.type]} · {application.kind}
+                      {application.assisted && ' · alta asistida'}
+                    </p>
+                  </Td>
+                  <Td className="whitespace-nowrap">{application.city}</Td>
+                  <Td className="text-small whitespace-nowrap text-muted">{placeSummary(application)}</Td>
+                  {!decided && tab !== 'changes_requested' && (
                     <Td>
-                      <Link
-                        to={paths.admission(application.id)}
-                        onClick={(event) => event.stopPropagation()}
-                        className="font-semibold text-ink hover:underline"
-                      >
-                        {application.name}
-                      </Link>
-                      <p className="text-caption text-muted">
-                        {ORGANIZATION_TYPE_LABELS[application.type]} · {application.kind}
+                      <ReviewSegments segments={segments} className="w-36" />
+                      <p className="mt-1.5 text-caption text-muted tabular-nums">
+                        {segments.filter((segment) => segment.state === 'done').length} de {segments.length} documentos
                       </p>
                     </Td>
-                    <Td className="whitespace-nowrap">{application.city}</Td>
-                    <Td className="text-small whitespace-nowrap text-muted">{placeSummary(application)}</Td>
-                    {!decided && tab !== 'changes_requested' && (
-                      <Td>
-                        <ReviewSegments segments={segments} className="w-36" />
-                        <p className="mt-1.5 text-caption text-muted tabular-nums">
-                          {segments.filter((segment) => segment.state === 'done').length} de {segments.length} documentos
-                        </p>
-                      </Td>
+                  )}
+                  <Td className="whitespace-nowrap">
+                    {decided ? (
+                      <span className="text-muted">{formatDate(application.stageSince.slice(0, 10))}</span>
+                    ) : (
+                      <>
+                        <p className={cn('text-small font-semibold tabular-nums', late ? 'text-danger' : 'text-ink')}>{formatWaiting(waiting)}</p>
+                        <p className="text-caption text-muted">desde {formatDateTime(application.stageSince)}</p>
+                      </>
                     )}
-                    <Td className="whitespace-nowrap">
-                      {decided ? (
-                        <span className="text-muted">{formatDate(application.stageSince.slice(0, 10))}</span>
-                      ) : (
-                        <>
-                          <p className={cn('text-small font-semibold tabular-nums', late ? 'text-danger' : 'text-ink')}>{formatWaiting(waiting)}</p>
-                          <p className="text-caption text-muted">desde {formatDateTime(application.stageSince)}</p>
-                        </>
-                      )}
-                    </Td>
-                    <Td>
-                      {assignee ? (
-                        <span className="flex items-center gap-2">
-                          <Avatar name={assignee} size="sm" />
-                          <span className="text-small whitespace-nowrap text-ink">{application.assigneeId === user.id ? 'Tú' : assignee}</span>
-                        </span>
-                      ) : (
-                        <Tag tone="outline">Sin responsable</Tag>
-                      )}
-                    </Td>
-                  </Tr>
-                )
-              })}
-            </tbody>
-          </Table>
-        </div>
+                  </Td>
+                  <Td>
+                    {assignee ? (
+                      <span className="flex items-center gap-2">
+                        <Avatar name={assignee} size="sm" />
+                        <span className="text-small whitespace-nowrap text-ink">{application.assigneeId === user.id ? 'Tú' : assignee}</span>
+                      </span>
+                    ) : (
+                      <Tag tone="outline">Sin responsable</Tag>
+                    )}
+                  </Td>
+                </Tr>
+              )
+            })}
+          </tbody>
+        </Table>
       )}
     </div>
   )

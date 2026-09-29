@@ -138,69 +138,67 @@ export function UsersPage() {
           Prueba con otro nombre, otro tipo de usuario o todos los estados.
         </EmptyState>
       ) : (
-        <div className="rounded-kp border border-divider bg-surface">
-          <Table caption="Usuarios">
-            <thead>
-              <tr>
-                <Th>Usuario</Th>
-                <Th>Tipo</Th>
-                <Th>Detalle</Th>
-                <Th>Estado</Th>
-                <Th>Último acceso</Th>
-                <Th>Cuenta creada</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((user) => {
-                const application = user.role === 'guia' ? applicationOf(user) : undefined
-                return (
-                  <Tr key={user.id} interactive onClick={() => setOpenId(user.id)}>
-                    <Td>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          setOpenId(user.id)
-                        }}
-                        className="flex items-center gap-3 text-left"
-                      >
-                        <Avatar name={user.name} size="sm" />
-                        <span className="min-w-0">
-                          <span className="block font-semibold text-ink hover:underline">{user.name}</span>
-                          <span className="block truncate text-caption text-muted">{user.email}</span>
-                        </span>
-                      </button>
-                    </Td>
-                    <Td>
-                      <p className="text-small whitespace-nowrap text-ink">{userKind(user)}</p>
-                      <p className="text-caption text-muted">{usesApp(user) ? 'Usa la app' : 'Entra al portal'}</p>
-                    </Td>
-                    <Td>
-                      {user.role === 'admin' ? (
-                        <span className="text-small text-ink">{roleOf(user)?.name ?? 'Sin rol'}</span>
-                      ) : user.role === 'negocio' || user.role === 'alcaldia' ? (
-                        <span className="text-small text-ink">{organizationOf(user)?.name ?? '—'}</span>
-                      ) : application ? (
-                        <Tag tone={APPLICATION_STATUS_TONES[application.status]}>
-                          {application.status === 'approved' ? 'Verificado' : APPLICATION_STATUS_LABELS[application.status]}
-                        </Tag>
-                      ) : (
-                        <span className="text-small text-muted">{user.city ?? '—'}</span>
-                      )}
-                    </Td>
-                    <Td>
-                      <Tag tone={USER_STATUS_TONES[user.status]}>{USER_STATUS_LABELS[user.status]}</Tag>
-                    </Td>
-                    <Td className="whitespace-nowrap text-muted tabular-nums">
-                      {user.lastSeenAt ? formatDateTime(user.lastSeenAt) : 'Todavía no entra'}
-                    </Td>
-                    <Td className="whitespace-nowrap text-muted tabular-nums">{formatDate(user.createdAt)}</Td>
-                  </Tr>
-                )
-              })}
-            </tbody>
-          </Table>
-        </div>
+        <Table id="usuarios" caption="Usuarios">
+          <thead>
+            <tr>
+              <Th>Usuario</Th>
+              <Th>Tipo</Th>
+              <Th>Detalle</Th>
+              <Th>Estado</Th>
+              <Th>Último acceso</Th>
+              <Th>Cuenta creada</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((user) => {
+              const application = user.role === 'guia' ? applicationOf(user) : undefined
+              return (
+                <Tr key={user.id} interactive onClick={() => setOpenId(user.id)}>
+                  <Td>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setOpenId(user.id)
+                      }}
+                      className="flex items-center gap-3 text-left"
+                    >
+                      <Avatar name={user.name} size="sm" />
+                      <span className="min-w-0">
+                        <span className="block font-semibold text-ink hover:underline">{user.name}</span>
+                        <span className="block truncate text-caption text-muted">{user.email}</span>
+                      </span>
+                    </button>
+                  </Td>
+                  <Td>
+                    <p className="text-small whitespace-nowrap text-ink">{userKind(user)}</p>
+                    <p className="text-caption text-muted">{usesApp(user) ? 'Usa la app' : 'Entra al portal'}</p>
+                  </Td>
+                  <Td>
+                    {user.role === 'admin' ? (
+                      <span className="text-small text-ink">{roleOf(user)?.name ?? 'Sin rol'}</span>
+                    ) : user.role === 'negocio' || user.role === 'alcaldia' ? (
+                      <span className="text-small text-ink">{organizationOf(user)?.name ?? '—'}</span>
+                    ) : application ? (
+                      <Tag tone={APPLICATION_STATUS_TONES[application.status]}>
+                        {application.status === 'approved' ? 'Verificado' : APPLICATION_STATUS_LABELS[application.status]}
+                      </Tag>
+                    ) : (
+                      <span className="text-small text-muted">{user.city ?? '—'}</span>
+                    )}
+                  </Td>
+                  <Td>
+                    <Tag tone={USER_STATUS_TONES[user.status]}>{USER_STATUS_LABELS[user.status]}</Tag>
+                  </Td>
+                  <Td className="whitespace-nowrap text-muted tabular-nums">
+                    {user.lastSeenAt ? formatDateTime(user.lastSeenAt) : 'Todavía no entra'}
+                  </Td>
+                  <Td className="whitespace-nowrap text-muted tabular-nums">{formatDate(user.createdAt)}</Td>
+                </Tr>
+              )
+            })}
+          </tbody>
+        </Table>
       )}
 
       <UserSheet

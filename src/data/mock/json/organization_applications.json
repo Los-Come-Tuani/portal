@@ -43,7 +43,8 @@
     "status": "in_review",
     "assigneeId": "user-ivan",
     "documents": { "ruc": "accepted", "matricula-municipal": "accepted", "cedula-representante": "accepted", "licencia-intur": "pending" },
-    "notes": {}
+    "notes": {},
+    "assisted": { "byId": "user-ivan", "fee": 1500 }
   },
   {
     "id": "orgapp-ceramica-ancestros",

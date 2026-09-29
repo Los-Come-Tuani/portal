@@ -15,6 +15,7 @@ import { couponRoutes } from './handlers/coupons'
 import { eventRoutes } from './handlers/events'
 import { guideRoutes } from './handlers/guides'
 import { organizationRoutes } from './handlers/organizations'
+import { placeRequestRoutes } from './handlers/place-requests'
 import { placeRoutes } from './handlers/places'
 import { staffRoleRoutes, userRoutes } from './handlers/users'
 import { visitRoutes } from './handlers/visits'
@@ -25,6 +26,7 @@ const routes: MockRoute[] = [
   ...authRoutes,
   ...uploadRoutes,
   ...admissionRoutes,
+  ...placeRequestRoutes,
   ...userRoutes,
   ...staffRoleRoutes,
   ...guideRoutes,
