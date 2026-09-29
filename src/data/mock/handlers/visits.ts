@@ -10,11 +10,6 @@ function eventDate(event: VisitEvent): string {
 }
 
 export const visitRoutes = [
-  route('GET', endpoints.circuits.list, (context) => {
-    requireUser(context)
-    return context.db.circuits
-  }),
-
   /** Visitas planeadas, check-ins y abandonos de los lugares pedidos, por fecha. */
   route('GET', endpoints.visitEvents, (context) => {
     const user = requireUser(context)

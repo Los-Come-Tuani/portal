@@ -10,6 +10,7 @@
       "guides.review",
       "guides.decide",
       "places.manage",
+      "circuits.manage",
       "content.moderate",
       "users.manage",
       "staff.manage",
@@ -45,8 +46,8 @@
   {
     "id": "role-moderacion",
     "name": "Moderación de contenido",
-    "description": "Cuida lugares, cupones, eventos y campañas que se publican en la app.",
-    "permissions": ["agenda.view", "places.manage", "content.moderate"],
+    "description": "Cuida lugares, circuitos, cupones, eventos y campañas que se publican en la app.",
+    "permissions": ["agenda.view", "places.manage", "circuits.manage", "content.moderate"],
     "system": false,
     "createdAt": "2026-03-15"
   },

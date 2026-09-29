@@ -11,6 +11,7 @@ import { authRoutes, userFromToken } from './handlers/auth'
 import { uploadRoutes } from './handlers/uploads'
 import { badgeRoutes } from './handlers/badges'
 import { billingRoutes } from './handlers/billing'
+import { circuitRoutes } from './handlers/circuits'
 import { couponRoutes } from './handlers/coupons'
 import { eventRoutes } from './handlers/events'
 import { guideRoutes } from './handlers/guides'
@@ -32,6 +33,7 @@ const routes: MockRoute[] = [
   ...guideRoutes,
   ...organizationRoutes,
   ...placeRoutes,
+  ...circuitRoutes,
   ...eventRoutes,
   ...couponRoutes,
   ...badgeRoutes,

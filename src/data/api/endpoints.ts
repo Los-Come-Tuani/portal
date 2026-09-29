@@ -31,6 +31,9 @@ export const endpoints = {
   },
   circuits: {
     list: '/api/circuits',
+    detail: (circuitId: string) => `/api/circuits/${id(circuitId)}`,
+    /** Los horarios de grupo de un circuito creativo o especial; los publican los guías. */
+    groupSessions: (circuitId: string) => `/api/circuits/${id(circuitId)}/group-sessions`,
   },
   events: {
     list: '/api/events',

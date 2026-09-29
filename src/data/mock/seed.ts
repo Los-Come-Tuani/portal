@@ -1,6 +1,7 @@
 import { addDays, toLocalDateTime, type ISODate } from '@/lib/dates'
 import { formatDayMonth } from '@/lib/format'
-import { cityLocation, type Coupon, type EventItem } from '../models'
+import { deriveCircuit } from '@/lib/circuits'
+import { cityLocation, type Circuit, type Coupon, type EventItem, type Stop } from '../models'
 import { catalog } from './catalog'
 import type { MockDatabase } from './db'
 import { generateRedemptions, seedActivations, seedCampaigns, seedPayments } from './generators/activity'
@@ -8,7 +9,7 @@ import { seedAdmissions, seedPlaceRequests } from './generators/admissions'
 import { seedPeople } from './generators/people'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 6
+export const SCHEMA_VERSION = 7
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -28,6 +29,23 @@ const APP_EVENT_ORGANIZERS: Record<string, { organizerId: string | null; feature
   'hipica-granada': { organizerId: 'org-alcaldia-granada', featured: false },
   'festival-poesia': { organizerId: 'org-alcaldia-granada', featured: false },
   torovenado: { organizerId: 'org-alcaldia-masaya', featured: false },
+}
+
+function seedKplanCircuits(today: ISODate, stops: Stop[]): Circuit[] {
+  return catalog.portalCircuits.map(({ seasonFromDays, seasonToDays, ...seed }) => ({
+    ...seed,
+    ...deriveCircuit({
+      stops: seed.stopIds.map((id) => stops.find((stop) => stop.id === id) as Stop),
+      travelMode: seed.travelMode,
+      legMinutes: seed.legMinutes,
+      kind: 'kplan',
+      bonusBadges: seed.bonusBadges ?? 0,
+      city: seed.city,
+    }),
+    ...(seasonFromDays !== undefined && seasonToDays !== undefined
+      ? { availableFrom: addDays(today, seasonFromDays), availableUntil: addDays(today, seasonToDays) }
+      : {}),
+  }))
 }
 
 export function seedDatabase(today: ISODate): MockDatabase {
@@ -89,8 +107,8 @@ export function seedDatabase(today: ISODate): MockDatabase {
     placeRequests,
     organizations: admissions.organizations,
     stops: admissions.stops,
-    circuits: structuredClone(catalog.circuits),
-    groupSessions: structuredClone(catalog.groupSessions),
+    circuits: [...structuredClone(catalog.circuits), ...seedKplanCircuits(today, admissions.stops)],
+    groupSessions: [...structuredClone(catalog.groupSessions), ...structuredClone(catalog.portalGroupSessions)],
     profiles: catalog.profiles.map((profile) => ({ ...structuredClone(profile), updatedAt: now })),
     posts: catalog.posts.map(({ daysAgo, ...post }) => ({
       ...post,
