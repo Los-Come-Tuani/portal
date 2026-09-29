@@ -6,6 +6,7 @@ import { stopInputSchema } from '../../schemas/stop.schema'
 import type { MockDatabase } from '../db'
 import { fail, parseBody, requireUser, route } from '../http'
 import { findOwnStop, isAdmin, ownStopIds } from '../services/access'
+import { isClaimed } from '../services/ownership'
 
 function emptyProfile(stopId: string): PlaceProfile {
   return {
@@ -32,7 +33,7 @@ export const placeRoutes = [
       const city = query.get('city')
       const owned = new Set(db.organizations.flatMap((item) => item.stopIds))
       return db.stops
-        .filter((stop) => !stop.draft && !owned.has(stop.id) && (!city || stop.city === city))
+        .filter((stop) => !stop.draft && !owned.has(stop.id) && !isClaimed(db, stop.id) && (!city || stop.city === city))
         .sort((a, b) => a.name.localeCompare(b.name, 'es'))
     },
     { isPublic: true },

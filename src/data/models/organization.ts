@@ -32,4 +32,5 @@ export interface Organization {
   joinedAt: ISODate
 }
 
-export type OrganizationInput = Omit<Organization, 'id' | 'joinedAt'>
+/** Sus lugares no van aquí: se asignan y se quitan uno por uno. */
+export type OrganizationInput = Omit<Organization, 'id' | 'joinedAt' | 'stopIds'>

@@ -1,20 +1,8 @@
 import { endpoints } from '../../api/endpoints'
-import { organizationInputSchema } from '../../schemas/admin.schema'
-import type { MockDatabase } from '../db'
+import { assignStopsSchema, organizationInputSchema } from '../../schemas/admin.schema'
 import { fail, MockHttpError, parseBody, requireUser, route } from '../http'
 import { findOrganization, hasPermission, isAdmin } from '../services/access'
-
-function assertStopsAvailable(db: MockDatabase, stopIds: string[], organizationId: string | null) {
-  for (const stopId of stopIds) {
-    if (!db.stops.some((stop) => stop.id === stopId)) throw fail.invalid(`No existe el lugar ${stopId}`)
-    const owner = db.organizations.find((item) => item.id !== organizationId && item.stopIds.includes(stopId))
-    if (owner) {
-      throw fail.invalid('Revisa los lugares', {
-        stopIds: `${db.stops.find((stop) => stop.id === stopId)?.name} ya es de ${owner.name}`,
-      })
-    }
-  }
-}
+import { assertStopFree } from '../services/ownership'
 
 /** No hay alta directa: una organización entra con una solicitud (postulación o alta asistida). */
 export const organizationRoutes = [
@@ -48,17 +36,40 @@ export const organizationRoutes = [
       const input = parseBody(organizationInputSchema, body)
       if (!hasPermission(db, requireUser(context), ['organizations.manage'])) {
         const fields = ['type', 'name', 'kind', 'city', 'contactName', 'contactEmail', 'contactPhone'] as const
-        const unchanged =
-          fields.every((field) => input[field] === organization[field]) &&
-          [...input.stopIds].sort().join() === [...organization.stopIds].sort().join()
+        const unchanged = fields.every((field) => input[field] === organization[field])
         if (organization.status !== 'pending' || !unchanged) {
           throw new MockHttpError(403, 'Tu rol sólo admite o rechaza organizaciones nuevas')
         }
       }
-      assertStopsAvailable(db, input.stopIds, organization.id)
       Object.assign(organization, input)
       return organization
     },
     { permissions: ['organizations.manage', 'organizations.review'] },
+  ),
+  route(
+    'POST',
+    endpoints.organizations.stops(':id'),
+    ({ db, params, body }) => {
+      const organization = findOrganization(db, params.id)
+      if (organization.status !== 'active') throw fail.conflict('Sólo se le asignan lugares a una organización activa')
+      const { stopIds } = parseBody(assignStopsSchema, body)
+      for (const stopId of stopIds) assertStopFree(db, stopId, { organizationId: organization.id, city: organization.city, field: 'stopIds' })
+      organization.stopIds = [...new Set([...organization.stopIds, ...stopIds])]
+      return organization
+    },
+    { permissions: ['organizations.manage'] },
+  ),
+  route(
+    'DELETE',
+    endpoints.organizations.stop(':id', ':stopId'),
+    ({ db, params }) => {
+      const organization = findOrganization(db, params.id)
+      const stop = db.stops.find((item) => item.id === params.stopId)
+      if (!stop || !organization.stopIds.includes(stop.id)) throw fail.notFound('Ese lugar ya no es de esta organización')
+      if (stop.draft) throw fail.conflict('Un borrador se quita rechazando su pedido o su solicitud')
+      organization.stopIds = organization.stopIds.filter((id) => id !== stop.id)
+      return organization
+    },
+    { permissions: ['organizations.manage'] },
   ),
 ]

@@ -14,10 +14,13 @@ export const endpoints = {
   organizations: {
     list: '/api/organizations',
     detail: (organizationId: string) => `/api/organizations/${id(organizationId)}`,
+    /** POST agrega lugares sin dueño; no se reemplaza la lista entera. */
+    stops: (organizationId: string) => `/api/organizations/${id(organizationId)}/stops`,
+    stop: (organizationId: string, stopId: string) => `/api/organizations/${id(organizationId)}/stops/${id(stopId)}`,
   },
   stops: {
     list: '/api/stops',
-    /** Pública: los lugares de una ciudad que todavía no administra nadie. */
+    /** Pública: los lugares de una ciudad que todavía no administra ni pidió nadie. */
     available: '/api/stops/available',
     detail: (stopId: string) => `/api/stops/${id(stopId)}`,
     profile: (stopId: string) => `/api/stops/${id(stopId)}/profile`,

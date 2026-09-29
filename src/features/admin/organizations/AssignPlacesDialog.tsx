@@ -2,11 +2,10 @@ import { MapPin, Search } from 'lucide-react'
 import { useState } from 'react'
 import { Button, Checkbox, Dialog, EmptyState, Input, SkeletonRows, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
-import { useSaveOrganization } from '@/data/hooks/use-organizations'
+import { useAssignStops } from '@/data/hooks/use-organizations'
 import { useAvailablePlaces } from '@/data/hooks/use-places'
 import type { Organization } from '@/data/models'
 import { plural } from '@/lib/format'
-import { toOrganizationInput } from './input'
 
 /** El equipo le asigna directo a una organización lugares que ya están en la app y no tienen dueño. */
 export function AssignPlacesDialog({ open, organization, onClose }: { open: boolean; organization: Organization; onClose: () => void }) {
@@ -16,7 +15,7 @@ export function AssignPlacesDialog({ open, organization, onClose }: { open: bool
       onClose={onClose}
       size="lg"
       title={`Asignar lugares a ${organization.name}`}
-      description={`Lugares de ${organization.city} que ya están en la app y no administra nadie. Empieza a editarlos y a ver sus llegadas de inmediato.`}
+      description={`Lugares de ${organization.city} que ya están en la app, no administra nadie y nadie ha pedido. Empieza a editarlos y a ver sus llegadas de inmediato.`}
     >
       <AssignForm key={String(open)} organization={organization} onDone={onClose} />
     </Dialog>
@@ -25,7 +24,7 @@ export function AssignPlacesDialog({ open, organization, onClose }: { open: bool
 
 function AssignForm({ organization, onDone }: { organization: Organization; onDone: () => void }) {
   const available = useAvailablePlaces(organization.city)
-  const save = useSaveOrganization()
+  const save = useAssignStops()
   const toast = useToast()
   const [picked, setPicked] = useState<string[]>([])
   const [search, setSearch] = useState('')
@@ -35,7 +34,7 @@ function AssignForm({ organization, onDone }: { organization: Organization; onDo
 
   const assign = () =>
     save.mutate(
-      { id: organization.id, input: toOrganizationInput(organization, { stopIds: [...organization.stopIds, ...picked] }) },
+      { id: organization.id, stopIds: picked },
       {
         onSuccess: () => {
           toast({ title: `Asignaste ${plural(picked.length, 'lugar', 'lugares')} a ${organization.name}` })

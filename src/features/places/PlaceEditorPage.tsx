@@ -155,7 +155,15 @@ export function PlaceEditorPage() {
           <div className="min-w-0">
             <h1 className="text-headline font-bold tracking-tight text-ink">{place.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-small text-muted">
-              {place.draft && <Tag tone="ink">Borrador: se publica al aprobar la solicitud</Tag>}
+              {place.draft && (
+                <Tag tone="ink">
+                  {isAdmin
+                    ? 'Borrador: todavía no está en la app'
+                    : organization?.status === 'active'
+                      ? 'Borrador: se publica al aprobar tu pedido'
+                      : 'Borrador: se publica al aprobar tu solicitud'}
+                </Tag>
+              )}
               <Tag tone="outline">{place.category}</Tag>
               <span>{place.city}</span>
               <span aria-hidden="true">·</span>

@@ -151,7 +151,9 @@ export function StepPlace({ draft, errors, update, mode }: StepProps) {
         <p className="-mt-1 mb-1 text-small text-muted">
           {negocio
             ? `Si ${own} lugar ya aparece, márcalo. Si no, agrégalo abajo como nuevo.`
-            : 'Marca los que administra la alcaldía. El equipo de K\'Plan los confirma antes de asignártelos.'}
+            : mode === 'assisted'
+              ? 'Marca los que administra la alcaldía. Se le asignan cuando otra persona del equipo aprueba la solicitud.'
+              : 'Marca los que administra la alcaldía. El equipo de K\'Plan los confirma antes de asignártelos.'}
         </p>
         {places.isPending ? (
           <SkeletonRows rows={3} />
@@ -324,7 +326,7 @@ export function StepRepresentative({ draft, errors, update, mode }: StepProps) {
   )
 }
 
-export function StepDocuments({ draft, errors, update }: StepProps) {
+export function StepDocuments({ draft, errors, update, mode }: StepProps) {
   const requirements = admissionRequirements(draft.type)
   const setDocument = (type: (typeof requirements)[number]['type'], value: ApplicationDraft['documents'][number] | null) =>
     update({ documents: [...draft.documents.filter((item) => item.type !== type), ...(value ? [value] : [])] })
@@ -346,7 +348,7 @@ export function StepDocuments({ draft, errors, update }: StepProps) {
         ))}
       {optional.length > 0 && (
         <>
-          <h2 className="mt-3 text-body font-semibold text-ink">Si aplican a tu negocio</h2>
+          <h2 className="mt-3 text-body font-semibold text-ink">{mode === 'assisted' ? 'Si aplican al negocio' : 'Si aplican a tu negocio'}</h2>
           <p className="-mt-3 text-small text-muted">No son obligatorios. Si los subes, el equipo los revisa igual que los demás.</p>
           {optional.map((item) => (
             <DocumentUpload

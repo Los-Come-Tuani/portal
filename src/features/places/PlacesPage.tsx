@@ -85,8 +85,12 @@ export function PlacesPage() {
       ) : places.isError ? (
         <ErrorState error={places.error} onRetry={() => void places.refetch()} />
       ) : filtered.length === 0 ? (
-        <EmptyState icon={<MapPin size={20} />} title="No hay lugares con ese filtro">
-          {isAdmin ? 'Prueba con otra ciudad o con otro nombre.' : 'Escríbenos para agregar tu lugar a la app.'}
+        <EmptyState icon={<MapPin size={20} />} title={isAdmin ? 'No hay lugares con ese filtro' : 'Todavía no administras ningún lugar'}>
+          {isAdmin
+            ? 'Prueba con otra ciudad o con otro nombre.'
+            : canRequest
+              ? 'Pídelo con "Agregar un lugar": uno que ya está en la app o uno nuevo.'
+              : 'Se te asignan cuando el equipo aprueba tu solicitud.'}
         </EmptyState>
       ) : (
         <ul className="divide-y divide-divider rounded-kp border border-divider bg-surface">
