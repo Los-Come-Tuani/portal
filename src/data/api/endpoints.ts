@@ -54,10 +54,17 @@ export const endpoints = {
     pay: (statementId: string) => `/api/billing/statements/${id(statementId)}/pay`,
   },
   pricing: '/api/pricing',
+  /** Organizaciones aprobadas que piden administrar otro lugar. */
+  placeRequests: {
+    list: '/api/place-requests',
+    decision: (requestId: string) => `/api/place-requests/${id(requestId)}/decision`,
+  },
   /** Sube un archivo y devuelve su URL; se usa antes de mandar una solicitud. */
   uploads: '/api/uploads',
   organizationApplications: {
     list: '/api/organization-applications',
+    /** El equipo llena la solicitud por la organización. */
+    assisted: '/api/organization-applications/assisted',
     reviewers: '/api/organization-applications/reviewers',
     /** La solicitud de quien entró: negocio o alcaldía en revisión. */
     mine: '/api/organization-applications/mine',

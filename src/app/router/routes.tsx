@@ -109,6 +109,12 @@ export const router = createBrowserRouter([
                     lazy: async () => ({ Component: (await import('@/features/admin/admissions/AdmissionsPage')).AdmissionsPage }),
                   },
                   {
+                    path: 'solicitudes/nueva',
+                    lazy: async () => ({
+                      Component: (await import('@/features/admin/admissions/AssistedApplicationPage')).AssistedApplicationPage,
+                    }),
+                  },
+                  {
                     path: 'solicitudes/:applicationId',
                     lazy: async () => ({ Component: (await import('@/features/admin/admissions/AdmissionPage')).AdmissionPage }),
                   },

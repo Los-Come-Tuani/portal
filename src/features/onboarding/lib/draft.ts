@@ -8,7 +8,10 @@ import {
   applicationRepresentativeSchema,
 } from '@/data/schemas/organization-application.schema'
 
-export type ApplicationDraft = OrganizationApplicationInput & { passwordConfirm: string }
+/** `public`: se postula la organización; `assisted`: el equipo la llena por ella. */
+export type WizardMode = 'public' | 'assisted'
+
+export type ApplicationDraft = OrganizationApplicationInput & { passwordConfirm: string; charge: boolean }
 
 export type FieldErrors = Record<string, string>
 
@@ -28,6 +31,7 @@ export const EMPTY_DRAFT: ApplicationDraft = {
   passwordConfirm: '',
   documents: [],
   accepted: false,
+  charge: true,
 }
 
 export const STEPS = [
@@ -49,16 +53,17 @@ const SCHEMAS: Record<StepKey, z.ZodType> = {
 }
 
 /** Los errores de un paso, con la ruta del campo como llave: `representative.email`. */
-export function validateStep(step: StepKey, draft: ApplicationDraft): FieldErrors {
+export function validateStep(step: StepKey, draft: ApplicationDraft, mode: WizardMode = 'public'): FieldErrors {
   const errors: FieldErrors = {}
-  const result = SCHEMAS[step].safeParse(draft)
+  const schema = step === 'representative' && mode === 'assisted' ? applicationRepresentativeSchema.pick({ representative: true }) : SCHEMAS[step]
+  const result = schema.safeParse(draft)
   if (!result.success) {
     for (const issue of result.error.issues) {
       const key = issue.path.join('.')
       if (!(key in errors)) errors[key] = issue.message
     }
   }
-  if (step === 'representative' && draft.password && draft.password !== draft.passwordConfirm) {
+  if (mode === 'public' && step === 'representative' && draft.password && draft.password !== draft.passwordConfirm) {
     errors.passwordConfirm = 'Las contraseñas no coinciden'
   }
   return errors
@@ -73,33 +78,36 @@ export function stepOfField(field: string): StepKey {
   return 'organization'
 }
 
-const STORAGE_KEY = 'kplan.portal.application-draft'
+const STORAGE_KEYS: Record<WizardMode, string> = {
+  public: 'kplan.portal.application-draft',
+  assisted: 'kplan.portal.assisted-draft',
+}
 
 /** El borrador sobrevive a una recarga; la contraseña nunca se guarda. */
-export function loadDraft(): ApplicationDraft {
+export function loadDraft(mode: WizardMode = 'public'): ApplicationDraft {
   try {
-    const stored = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? 'null') as Partial<ApplicationDraft> | null
+    const stored = JSON.parse(sessionStorage.getItem(STORAGE_KEYS[mode]) ?? 'null') as Partial<ApplicationDraft> | null
     return stored ? { ...EMPTY_DRAFT, ...stored, password: '', passwordConfirm: '' } : EMPTY_DRAFT
   } catch {
     return EMPTY_DRAFT
   }
 }
 
-export function saveDraft(draft: ApplicationDraft): void {
+export function saveDraft(draft: ApplicationDraft, mode: WizardMode = 'public'): void {
   try {
     const { password: _password, passwordConfirm: _confirm, ...rest } = draft
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(rest))
+    sessionStorage.setItem(STORAGE_KEYS[mode], JSON.stringify(rest))
   } catch {
     // Los archivos pueden no caber: se guarda sin ellos.
     try {
       const { password: _password, passwordConfirm: _confirm, documents: _documents, ...rest } = draft
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(rest))
+      sessionStorage.setItem(STORAGE_KEYS[mode], JSON.stringify(rest))
     } catch {
       // Sin espacio: el borrador sólo vive en la página.
     }
   }
 }
 
-export function clearDraft(): void {
-  sessionStorage.removeItem(STORAGE_KEY)
+export function clearDraft(mode: WizardMode = 'public'): void {
+  sessionStorage.removeItem(STORAGE_KEYS[mode])
 }

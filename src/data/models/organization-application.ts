@@ -144,6 +144,13 @@ export interface NewPlace {
   address: string
 }
 
+/** El equipo llenó la solicitud por la organización; `fee` 0 si no se cobra. */
+export interface AssistedOnboarding {
+  byId: string
+  byName: string
+  fee: number
+}
+
 /** Lo que manda un negocio o una alcaldía para entrar a K'Plan. */
 export interface OrganizationApplication {
   id: string
@@ -174,6 +181,8 @@ export interface OrganizationApplication {
   decisionNote: string
   decidedAt: LocalDateTime | null
   history: ReviewEvent[]
+  /** `null`: se postuló sola desde el portal. */
+  assisted: AssistedOnboarding | null
 }
 
 export interface ApplicationDocumentInput {
@@ -197,6 +206,12 @@ export interface OrganizationApplicationInput {
   password: string
   documents: ApplicationDocumentInput[]
   accepted: boolean
+}
+
+/** Lo que llena el equipo en un alta asistida: sin contraseña, le llega una invitación. */
+export type AssistedApplicationInput = Omit<OrganizationApplicationInput, 'password'> & {
+  /** Cobrar la tarifa de alta asistida al aprobarla. */
+  charge: boolean
 }
 
 // ── Reglas ────────────────────────────────────────────────────────────────

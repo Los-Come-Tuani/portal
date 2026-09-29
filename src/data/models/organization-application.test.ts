@@ -30,6 +30,7 @@ function application(
     decisionNote: '',
     decidedAt: null,
     history: [],
+    assisted: null,
     ...overrides,
     documents: Object.entries(documents).map(([type, status]) => ({
       id: type,
