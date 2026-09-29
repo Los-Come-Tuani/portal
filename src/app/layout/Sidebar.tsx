@@ -114,7 +114,7 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
 
   return (
     <div className="flex h-full flex-col">
-      <div className="relative flex h-16 shrink-0 items-center overflow-hidden pr-16 pl-6.75">
+      <div className="relative flex h-16 shrink-0 items-center overflow-hidden pl-6.75">
         <Link
           to={paths.home}
           onClick={onNavigate}
@@ -133,7 +133,7 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
             aria-expanded={!collapsed}
             aria-controls="menu-principal"
             {...hintProps('Extender el menú')}
-            className="absolute top-3 right-4 flex size-10 items-center justify-center rounded-kp text-ink/80 transition-colors duration-150 hover:bg-paper-deep hover:text-ink"
+            className="absolute top-3 right-3.75 flex size-10 items-center justify-center rounded-kp text-ink/80 transition-colors duration-150 hover:bg-paper-deep hover:text-ink"
           >
             {collapsed ? (
               <PanelLeftOpen size={19} strokeWidth={1.75} aria-hidden="true" />
