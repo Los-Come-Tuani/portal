@@ -1,20 +1,22 @@
-import { Medal, TicketPercent } from 'lucide-react'
+import { Handshake, Medal, TicketPercent } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { CHARGE_KIND_LABELS, type ChargeKind, type Statement } from '@/data/models'
 import { formatDayMonth, formatMoney, formatNumber } from '@/lib/format'
 
-const KIND_ORDER: ChargeKind[] = ['coupon_fee', 'badge_activation', 'badge_campaign']
+const KIND_ORDER: ChargeKind[] = ['assisted_onboarding', 'coupon_fee', 'badge_activation', 'badge_campaign']
 
 const KIND_HELP: Record<ChargeKind, string> = {
   coupon_fee: 'Tarifa fija por cada cupón que validaste.',
   badge_activation: 'Cargo mensual por cada lugar con la insignia activada.',
   badge_campaign: 'Insignias extra compradas para una campaña.',
+  assisted_onboarding: "Una sola vez: el equipo de K'Plan preparó tu solicitud y tus documentos.",
 }
 
 const KIND_ICONS: Record<ChargeKind, ReactNode> = {
   coupon_fee: <TicketPercent size={16} aria-hidden="true" />,
   badge_activation: <Medal size={16} aria-hidden="true" />,
   badge_campaign: <Medal size={16} aria-hidden="true" />,
+  assisted_onboarding: <Handshake size={16} aria-hidden="true" />,
 }
 
 /** Cada línea del estado de cuenta, agrupada y explicada: se cobra lo que K'Plan generó. */

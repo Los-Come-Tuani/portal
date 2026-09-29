@@ -33,6 +33,7 @@ export function PricingPage() {
         couponFee: pricing.data.couponFee,
         badgeActivationMonthly: pricing.data.badgeActivationMonthly,
         badgePacks: pricing.data.badgePacks.map((pack) => ({ ...pack })),
+        assistedOnboardingFee: pricing.data.assistedOnboardingFee,
       })
     }
   }, [pricing.data, reset])
@@ -119,13 +120,25 @@ export function PricingPage() {
                       icon={<Trash2 size={16} />}
                       onClick={() => packs.remove(index)}
                       disabled={packs.fields.length === 1}
-                      className="text-danger hover:bg-danger/8 sm:mt-6"
+                      tone="danger"
+                      className="sm:mt-6"
                     />
                   </li>
                 )
               })}
             </ul>
             {errors.badgePacks?.message && <p className="mt-2 text-caption font-medium text-danger">{errors.badgePacks.message}</p>}
+          </Panel>
+
+          <Panel
+            title="Alta asistida"
+            description="Cuando el equipo llena la solicitud por una organización. Se cobra una sola vez, al aprobarla, y sólo si al hacer el alta se marcó cobrarla."
+          >
+            <Field label="Por alta asistida" error={errors.assistedOnboardingFee?.message} className="max-w-56">
+              {(field) => (
+                <Input {...field} type="number" min={0} leading="C$" {...register('assistedOnboardingFee', { valueAsNumber: true })} />
+              )}
+            </Field>
           </Panel>
 
           <p className="text-small text-muted">Última actualización: {formatDateTime(pricing.data.updatedAt)}</p>
