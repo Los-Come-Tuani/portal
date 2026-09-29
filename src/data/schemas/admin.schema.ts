@@ -7,11 +7,14 @@ export const organizationInputSchema = z.object({
   name: z.string().trim().min(3, { error: 'Escribe el nombre' }).max(80),
   kind: z.string().trim().min(3, { error: 'Escribe el tipo: restaurante, museo…' }).max(60),
   city: z.string().trim().min(2, { error: 'Elige la ciudad' }),
-  stopIds: z.array(z.string()),
   status: z.enum(['pending', 'active', 'suspended']),
   contactName: z.string().trim().min(3, { error: 'Escribe el nombre del contacto' }).max(80),
   contactEmail: z.email({ error: 'Escribe un correo válido' }),
   contactPhone: phoneSchema.refine((value) => value !== '', { error: 'Escribe un teléfono' }),
+})
+
+export const assignStopsSchema = z.object({
+  stopIds: z.array(z.string().min(1)).min(1, { error: 'Elige al menos un lugar' }),
 })
 
 export const pricingInputSchema = z.object({

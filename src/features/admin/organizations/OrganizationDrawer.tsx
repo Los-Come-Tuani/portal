@@ -38,7 +38,6 @@ function OrganizationForm({ organization, onDone }: { organization: Organization
       name: organization.name,
       kind: organization.kind,
       city: organization.city,
-      stopIds: [...organization.stopIds],
       status: organization.status,
       contactName: organization.contactName,
       contactEmail: organization.contactEmail,
@@ -48,7 +47,7 @@ function OrganizationForm({ organization, onDone }: { organization: Organization
 
   const submit = handleSubmit((input) =>
     save.mutate(
-      { id: organization.id, input: { ...input, stopIds: organization.stopIds, status: organization.status } },
+      { id: organization.id, input: { ...input, status: organization.status } },
       {
         onSuccess: () => {
           toast({ title: 'Organización actualizada' })

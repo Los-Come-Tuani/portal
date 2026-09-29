@@ -9,7 +9,7 @@ import { useBadgeCampaigns } from '@/data/hooks/use-badges'
 import { useStatements } from '@/data/hooks/use-billing'
 import { useCoupons } from '@/data/hooks/use-coupons'
 import { useEvents } from '@/data/hooks/use-events'
-import { useOrganization, useSaveOrganization } from '@/data/hooks/use-organizations'
+import { useOrganization, useRemoveStop, useSaveOrganization } from '@/data/hooks/use-organizations'
 import { usePlaces } from '@/data/hooks/use-places'
 import {
   ORGANIZATION_STATUS_LABELS,
@@ -50,6 +50,7 @@ export function OrganizationDetailPage() {
   const campaigns = useBadgeCampaigns(organizationId)
   const statements = useStatements(organizationId)
   const save = useSaveOrganization()
+  const remove = useRemoveStop()
   const toast = useToast()
   const canManage = useSession().can('organizations.manage')
   const admissions = useAdmissions()
@@ -246,12 +247,12 @@ export function OrganizationDetailPage() {
         open={removing !== null}
         title={`Quitarle ${removing?.name ?? ''} a ${org.name}`}
         confirmLabel="Quitar"
-        loading={save.isPending}
+        loading={remove.isPending}
         onClose={() => setRemoving(null)}
         onConfirm={() =>
           removing &&
-          save.mutate(
-            { id: org.id, input: toOrganizationInput(org, { stopIds: org.stopIds.filter((id) => id !== removing.id) }) },
+          remove.mutate(
+            { id: org.id, stopId: removing.id },
             {
               onSuccess: () => {
                 toast({ title: `${removing.name} quedó sin dueño` })
