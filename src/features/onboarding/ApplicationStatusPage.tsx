@@ -14,6 +14,7 @@ import {
   documentPages,
   ORGANIZATION_DOCUMENT_INFO,
   ORGANIZATION_TYPE_LABELS,
+  readinessGaps,
   resubmitBlocker,
   type ApplicationDocumentInput,
   type OrganizationApplication,
@@ -287,6 +288,11 @@ function YourPlaces({ application, organizationId }: { application: Organization
               <p className="text-small text-muted">
                 {approved ? 'Publicado en la app.' : 'Nadie lo ve todavía: se publica cuando te aprueben. Ve completando su ficha.'}
               </p>
+              {application.newPlaceReadiness && readinessGaps(application.newPlaceReadiness).length > 0 && (
+                <p className="mt-1 text-small font-medium text-danger">
+                  Para aprobarte, le falta {readinessGaps(application.newPlaceReadiness).join(' y ')}.
+                </p>
+              )}
             </div>
             <div>
               <div className="flex justify-between text-caption text-muted">

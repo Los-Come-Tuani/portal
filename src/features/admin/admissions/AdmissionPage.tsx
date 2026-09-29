@@ -14,6 +14,7 @@ import {
   ADMISSION_STAGE_LABELS,
   ORGANIZATION_DOCUMENT_INFO,
   ORGANIZATION_TYPE_LABELS,
+  readinessGaps,
   type OrganizationApplication,
   type OrganizationDocumentType,
   type Reviewer,
@@ -67,6 +68,7 @@ function AdmissionView({ application, reviewers }: { application: OrganizationAp
     organizations.data?.find((item) => item.id !== application.organizationId && item.stopIds.includes(stopId))
   const conflicts = application.claimedStopIds.filter((stopId) => ownerOf(stopId))
   const accepted = application.documents.filter((document) => document.status === 'accepted').length
+  const placeGaps = application.newPlaceReadiness ? readinessGaps(application.newPlaceReadiness) : []
   const requirements = admissionRequirements(application.type)
 
   const advance = () =>
@@ -169,7 +171,14 @@ function AdmissionView({ application, reviewers }: { application: OrganizationAp
                     </span>{' '}
                     documentos aceptados.
                   </li>
-                  {application.newStopId && <li>Se publica su lugar nuevo.</li>}
+                  {application.newStopId &&
+                    (placeGaps.length > 0 ? (
+                      <li className="text-danger">
+                        A su lugar nuevo le falta {placeGaps.join(' y ')}: lo agrega {who.toLowerCase()} desde la ficha en su portal.
+                      </li>
+                    ) : (
+                      <li>Se publica su lugar nuevo.</li>
+                    ))}
                   {application.assisted && application.assisted.fee > 0 && (
                     <li>
                       Se le cobra el alta asistida: <span className="font-semibold tabular-nums">{formatMoney(application.assisted.fee)}</span> en su
@@ -196,6 +205,13 @@ function AdmissionView({ application, reviewers }: { application: OrganizationAp
               rejectEffect="Su cuenta queda suspendida y no entra al portal. Al intentar entrar, lee tu nota."
               noteHint="Obligatoria si la rechazas. La lee al entrar al portal."
               approvedToast={`${application.name} ya está en K'Plan`}
+              approveBlocker={
+                conflicts.length > 0
+                  ? 'Resuelve los lugares con dueño antes de aprobar.'
+                  : placeGaps.length > 0
+                    ? `Se aprueba cuando su lugar tenga ${placeGaps.join(' y ')}.`
+                    : null
+              }
               onDecide={(input) => action.mutateAsync({ kind: 'decide', input })}
               deciding={pending('decide')}
             />

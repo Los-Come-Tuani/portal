@@ -6,6 +6,7 @@ import {
   admissionBlocker,
   ORGANIZATION_DOCUMENT_INFO,
   ORGANIZATION_DOCUMENT_RULES,
+  readinessGaps,
   resubmitBlocker,
   type AssistedApplicationInput,
   type Organization,
@@ -25,6 +26,7 @@ import type { MockDatabase } from '../db'
 import { fail, parseBody, requireUser, route, type MockContext } from '../http'
 import { hasPermission, toSessionUser } from '../services/access'
 import { assertStopFree, ownerOf } from '../services/ownership'
+import { readinessOf, withNewPlaceReadiness } from '../services/readiness'
 import { claimReview, logReview } from '../services/review'
 
 const REVIEWERS = ['organizations.review', 'organizations.manage'] as const
@@ -48,10 +50,11 @@ function ownApplication(db: MockDatabase, user: User): OrganizationApplication {
 }
 
 /** Lo que ve quien se postuló: sin asignaciones internas ni nombres del equipo. */
-function forApplicant(application: OrganizationApplication): OrganizationApplication {
+function forApplicant(db: MockDatabase, application: OrganizationApplication): OrganizationApplication {
   return {
-    ...application,
+    ...withNewPlaceReadiness(db, application),
     assigneeId: null,
+    assisted: application.assisted && { ...application.assisted, byId: 'equipo', byName: "Equipo K'Plan" },
     documents: application.documents.map((document) => ({ ...document, reviewedBy: null })),
     history: application.history
       .filter((event) => event.kind !== 'assigned')
@@ -70,7 +73,7 @@ function act(handler: (application: OrganizationApplication, actor: User, contex
     const actor = requireUser(context)
     const application = findApplication(context.db, context.params.id)
     handler(application, actor, context)
-    return application
+    return withNewPlaceReadiness(context.db, application)
   }
 }
 
@@ -242,7 +245,7 @@ export const admissionRoutes = [
     },
     { permissions: [...REVIEWERS] },
   ),
-  route('GET', endpoints.organizationApplications.mine, (context) => forApplicant(ownApplication(context.db, requireUser(context)))),
+  route('GET', endpoints.organizationApplications.mine, (context) => forApplicant(context.db, ownApplication(context.db, requireUser(context)))),
   route(
     'GET',
     endpoints.organizationApplications.list,
@@ -251,6 +254,7 @@ export const admissionRoutes = [
       return db.organizationApplications
         .filter((item) => !status || item.status === status)
         .sort((a, b) => a.stageSince.localeCompare(b.stageSince))
+        .map((item) => withNewPlaceReadiness(db, item))
     },
     { permissions: [...REVIEWERS] },
   ),
@@ -267,8 +271,8 @@ export const admissionRoutes = [
   route('GET', endpoints.organizationApplications.detail(':id'), (context) => {
     const user = requireUser(context)
     const application = findApplication(context.db, context.params.id)
-    if (hasPermission(context.db, user, REVIEWERS)) return application
-    if (isOwner(user, application)) return forApplicant(application)
+    if (hasPermission(context.db, user, REVIEWERS)) return withNewPlaceReadiness(context.db, application)
+    if (isOwner(user, application)) return forApplicant(context.db, application)
     throw fail.notFound('No encontramos esa solicitud')
   }),
 
@@ -300,7 +304,7 @@ export const admissionRoutes = [
     }
     const label = lowerFirst(ORGANIZATION_DOCUMENT_INFO[input.type].label)
     logReview(application, { id: null, name: user.name }, 'document_replaced', existing ? `Subió de nuevo: ${label}` : `Subió ${label}`)
-    return forApplicant(application)
+    return forApplicant(context.db, application)
   }),
   route('POST', endpoints.organizationApplications.resubmit(':id'), (context) => {
     const user = requireUser(context)
@@ -312,7 +316,7 @@ export const admissionRoutes = [
     application.stage = 'documents'
     application.stageSince = nowLocalDateTime()
     logReview(application, { id: null, name: user.name }, 'resubmitted', 'Mandó de nuevo la solicitud con las correcciones')
-    return forApplicant(application)
+    return forApplicant(context.db, application)
   }),
 
   // Equipo de K'Plan
@@ -410,6 +414,9 @@ export const admissionRoutes = [
           const stop = db.stops.find((item) => item.id === taken[0])
           throw fail.conflict(`${stop?.name ?? 'Un lugar'} ya lo administra ${ownerOf(db, taken[0])?.name}: resuélvelo antes de aprobar`)
         }
+        const draft = db.stops.find((item) => item.id === application.newStopId && item.draft)
+        const gaps = draft ? readinessGaps(readinessOf(db, draft)) : []
+        if (draft && gaps.length > 0) throw fail.conflict(`Antes de aprobarla, a ${draft.name} le falta ${gaps.join(' y ')}`)
         organization.status = 'active'
         organization.stopIds = [...new Set([...organization.stopIds, ...application.claimedStopIds])]
         for (const stop of db.stops) {
