@@ -103,85 +103,83 @@ export function StaffPage() {
       ) : staff.isError ? (
         <ErrorState error={staff.error} onRetry={() => void staff.refetch()} />
       ) : (
-        <div className="rounded-kp border border-divider bg-surface">
-          <Table caption="Equipo interno">
-            <thead>
-              <tr>
-                <Th>Persona</Th>
-                <Th>Rol</Th>
-                <Th>Puede</Th>
-                <Th>Estado</Th>
-                <Th>Último acceso</Th>
-                <Th>
-                  <span className="sr-only">Acciones</span>
-                </Th>
-              </tr>
-            </thead>
-            <tbody>
-              {ordered.map((person) => {
-                const role = roleOf(person)
-                const isMe = person.id === me.id
-                return (
-                  <Tr key={person.id}>
-                    <Td>
-                      <div className="flex items-center gap-3">
-                        <Avatar name={person.name} size="sm" />
-                        <div className="min-w-0">
-                          <p className="flex items-center gap-2 font-semibold text-ink">
-                            {person.name}
-                            {isMe && <Tag tone="outline">Tú</Tag>}
-                          </p>
-                          <p className="truncate text-caption text-muted">{person.email}</p>
-                        </div>
+        <Table id="equipo" caption="Equipo interno">
+          <thead>
+            <tr>
+              <Th>Persona</Th>
+              <Th>Rol</Th>
+              <Th>Puede</Th>
+              <Th>Estado</Th>
+              <Th>Último acceso</Th>
+              <Th resizable={false}>
+                <span className="sr-only">Acciones</span>
+              </Th>
+            </tr>
+          </thead>
+          <tbody>
+            {ordered.map((person) => {
+              const role = roleOf(person)
+              const isMe = person.id === me.id
+              return (
+                <Tr key={person.id}>
+                  <Td>
+                    <div className="flex items-center gap-3">
+                      <Avatar name={person.name} size="sm" />
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-2 font-semibold text-ink">
+                          {person.name}
+                          {isMe && <Tag tone="outline">Tú</Tag>}
+                        </p>
+                        <p className="truncate text-caption text-muted">{person.email}</p>
                       </div>
-                    </Td>
-                    <Td>
-                      {role ? <Tag tone={role.system ? 'ink' : 'neutral'}>{role.name}</Tag> : <span className="text-small text-danger">Sin rol</span>}
-                    </Td>
-                    <Td className="max-w-80 text-small text-muted">{permissionSummary(role)}</Td>
-                    <Td>
-                      <Tag tone={USER_STATUS_TONES[person.status]}>{USER_STATUS_LABELS[person.status]}</Tag>
-                    </Td>
-                    <Td className="whitespace-nowrap text-muted tabular-nums">
-                      {person.lastSeenAt ? formatDateTime(person.lastSeenAt) : 'Todavía no entra'}
-                    </Td>
-                    <Td align="right">
-                      {!isMe && (
-                        <div className="flex justify-end gap-0.5">
-                          {person.status === 'invited' && (
-                            <IconButton
-                              size="sm"
-                              label={`Reenviar la invitación a ${person.name}`}
-                              icon={<Send size={16} />}
-                              onClick={() =>
-                                resend.mutate(person.id, {
-                                  onSuccess: () => toast({ title: 'Invitación reenviada', description: person.email }),
-                                  onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
-                                })
-                              }
-                            />
-                          )}
-                          <IconButton size="sm" label={`Cambiar el rol de ${person.name}`} icon={<UserCog size={16} />} onClick={() => setChanging(person)} />
-                          {person.status === 'suspended' ? (
-                            <IconButton size="sm" label={`Devolver el acceso a ${person.name}`} icon={<RotateCcw size={16} />} onClick={() => setToggling(person)} />
-                          ) : (
-                            <IconButton
-                              size="sm"
-                              label={`Quitar el acceso a ${person.name}`}
-                              icon={<UserX size={16} />}
-                              onClick={() => setToggling(person)}
-                              tone="danger"
-                            />
-                          )}
-                        </div>
-                      )}
-                    </Td>
-                  </Tr>
-                )
-              })}
-            </tbody>
-          </Table>
-        </div>
+                    </div>
+                  </Td>
+                  <Td>
+                    {role ? <Tag tone={role.system ? 'ink' : 'neutral'}>{role.name}</Tag> : <span className="text-small text-danger">Sin rol</span>}
+                  </Td>
+                  <Td className="max-w-80 text-small text-muted">{permissionSummary(role)}</Td>
+                  <Td>
+                    <Tag tone={USER_STATUS_TONES[person.status]}>{USER_STATUS_LABELS[person.status]}</Tag>
+                  </Td>
+                  <Td className="whitespace-nowrap text-muted tabular-nums">
+                    {person.lastSeenAt ? formatDateTime(person.lastSeenAt) : 'Todavía no entra'}
+                  </Td>
+                  <Td align="right">
+                    {!isMe && (
+                      <div className="flex justify-end gap-0.5">
+                        {person.status === 'invited' && (
+                          <IconButton
+                            size="sm"
+                            label={`Reenviar la invitación a ${person.name}`}
+                            icon={<Send size={16} />}
+                            onClick={() =>
+                              resend.mutate(person.id, {
+                                onSuccess: () => toast({ title: 'Invitación reenviada', description: person.email }),
+                                onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
+                              })
+                            }
+                          />
+                        )}
+                        <IconButton size="sm" label={`Cambiar el rol de ${person.name}`} icon={<UserCog size={16} />} onClick={() => setChanging(person)} />
+                        {person.status === 'suspended' ? (
+                          <IconButton size="sm" label={`Devolver el acceso a ${person.name}`} icon={<RotateCcw size={16} />} onClick={() => setToggling(person)} />
+                        ) : (
+                          <IconButton
+                            size="sm"
+                            label={`Quitar el acceso a ${person.name}`}
+                            icon={<UserX size={16} />}
+                            onClick={() => setToggling(person)}
+                            tone="danger"
+                          />
+                        )}
+                      </div>
+                    )}
+                  </Td>
+                </Tr>
+              )
+            })}
+          </tbody>
+        </Table>
       )}
 
       <InviteSheet open={inviting} roles={roles.data ?? []} onClose={() => setInviting(false)} />

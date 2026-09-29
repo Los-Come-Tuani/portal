@@ -1,4 +1,4 @@
-﻿import { Wallet } from 'lucide-react'
+import { Wallet } from 'lucide-react'
 import { useMemo } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
@@ -75,42 +75,40 @@ export function CollectionsPage() {
             {rows.length === 0 ? (
               <EmptyState icon={<Wallet size={20} />} title="Todavía no hay cobros" />
             ) : (
-              <div className="rounded-kp border border-divider bg-surface">
-                <Table caption="Cobros por organización">
-                  <thead>
-                    <tr>
-                      <Th>Organización</Th>
-                      <Th align="right">Mes en curso</Th>
-                      <Th align="right">Por pagar</Th>
-                      <Th>Último pago</Th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <Tr key={row.organization.id}>
-                        <Td>
-                          <Link to={paths.organization(row.organization.id)} className="font-semibold text-ink hover:underline">
-                            {row.organization.name}
-                          </Link>
-                          <p className="text-caption text-muted">{row.organization.kind}</p>
-                        </Td>
-                        <Td align="right">{formatMoney(row.open)}</Td>
-                        <Td align="right">
-                          {row.due > 0 ? (
-                            <span className="flex flex-col items-end gap-0.5">
-                              <span className="font-semibold text-danger">{formatMoney(row.due)}</span>
-                              <span className="text-caption text-muted">{row.duePeriods.join(', ')}</span>
-                            </span>
-                          ) : (
-                            <Tag tone="confirmed">Al día</Tag>
-                          )}
-                        </Td>
-                        <Td className="whitespace-nowrap text-muted">{row.lastPaid ? formatDateTime(row.lastPaid) : '—'}</Td>
-                      </Tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </div>
+              <Table id="cobros" caption="Cobros por organización">
+                <thead>
+                  <tr>
+                    <Th>Organización</Th>
+                    <Th align="right">Mes en curso</Th>
+                    <Th align="right">Por pagar</Th>
+                    <Th>Último pago</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <Tr key={row.organization.id}>
+                      <Td>
+                        <Link to={paths.organization(row.organization.id)} className="font-semibold text-ink hover:underline">
+                          {row.organization.name}
+                        </Link>
+                        <p className="text-caption text-muted">{row.organization.kind}</p>
+                      </Td>
+                      <Td align="right">{formatMoney(row.open)}</Td>
+                      <Td align="right">
+                        {row.due > 0 ? (
+                          <span className="flex flex-col items-end gap-0.5">
+                            <span className="font-semibold text-danger">{formatMoney(row.due)}</span>
+                            <span className="text-caption text-muted">{row.duePeriods.join(', ')}</span>
+                          </span>
+                        ) : (
+                          <Tag tone="confirmed">Al día</Tag>
+                        )}
+                      </Td>
+                      <Td className="whitespace-nowrap text-muted">{row.lastPaid ? formatDateTime(row.lastPaid) : '—'}</Td>
+                    </Tr>
+                  ))}
+                </tbody>
+              </Table>
             )}
 
             <Panel title={`Este mes, por concepto`}>

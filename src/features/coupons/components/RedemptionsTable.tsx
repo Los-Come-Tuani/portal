@@ -45,47 +45,45 @@ export function RedemptionsTable({ organizationId, coupons, canValidate }: Redem
           Cuando un turista pague un cupón con sus insignias, su código aparece aquí.
         </EmptyState>
       ) : (
-        <div className="rounded-kp border border-divider bg-surface">
-          <Table caption="Canjes de cupones">
-            <thead>
-              <tr>
-                <Th>Código</Th>
-                <Th>Cupón</Th>
-                <Th>Turista</Th>
-                <Th>Lo canjeó</Th>
-                <Th>Estado</Th>
-                <Th align="right">Tarifa K'Plan</Th>
-                {canValidate && <Th className="w-0" />}
-              </tr>
-            </thead>
-            <tbody>
-              {redemptions.data.slice(0, 80).map((redemption) => (
-                <Tr key={redemption.id}>
-                  <Td className="font-mono text-small font-semibold whitespace-nowrap">{redemption.code}</Td>
-                  <Td className="max-w-[16rem] truncate">{titleOf(redemption.couponId)}</Td>
-                  <Td className="whitespace-nowrap">{redemption.touristName}</Td>
-                  <Td className="whitespace-nowrap text-muted">{formatDateTime(redemption.claimedAt)}</Td>
-                  <Td>
-                    <Tag tone={STATUS[redemption.status].tone}>{STATUS[redemption.status].label}</Tag>
-                    {redemption.validatedAt && (
-                      <span className="ml-2 text-caption whitespace-nowrap text-muted">{formatDateTime(redemption.validatedAt)}</span>
+        <Table id="canjes" caption="Canjes de cupones">
+          <thead>
+            <tr>
+              <Th>Código</Th>
+              <Th>Cupón</Th>
+              <Th>Turista</Th>
+              <Th>Lo canjeó</Th>
+              <Th>Estado</Th>
+              <Th align="right">Tarifa K'Plan</Th>
+              {canValidate && <Th className="w-0" />}
+            </tr>
+          </thead>
+          <tbody>
+            {redemptions.data.slice(0, 80).map((redemption) => (
+              <Tr key={redemption.id}>
+                <Td className="font-mono text-small font-semibold whitespace-nowrap">{redemption.code}</Td>
+                <Td className="max-w-[16rem] truncate">{titleOf(redemption.couponId)}</Td>
+                <Td className="whitespace-nowrap">{redemption.touristName}</Td>
+                <Td className="whitespace-nowrap text-muted">{formatDateTime(redemption.claimedAt)}</Td>
+                <Td>
+                  <Tag tone={STATUS[redemption.status].tone}>{STATUS[redemption.status].label}</Tag>
+                  {redemption.validatedAt && (
+                    <span className="ml-2 text-caption whitespace-nowrap text-muted">{formatDateTime(redemption.validatedAt)}</span>
+                  )}
+                </Td>
+                <Td align="right">{redemption.fee > 0 ? formatMoney(redemption.fee) : '—'}</Td>
+                {canValidate && (
+                  <Td className="py-2">
+                    {redemption.status === 'pending' && (
+                      <Button size="sm" variant="secondary" onClick={() => validateCoupon.open(redemption.code)}>
+                        Validar
+                      </Button>
                     )}
                   </Td>
-                  <Td align="right">{redemption.fee > 0 ? formatMoney(redemption.fee) : '—'}</Td>
-                  {canValidate && (
-                    <Td className="py-2">
-                      {redemption.status === 'pending' && (
-                        <Button size="sm" variant="secondary" onClick={() => validateCoupon.open(redemption.code)}>
-                          Validar
-                        </Button>
-                      )}
-                    </Td>
-                  )}
-                </Tr>
-              ))}
-            </tbody>
-          </Table>
-        </div>
+                )}
+              </Tr>
+            ))}
+          </tbody>
+        </Table>
       )}
     </div>
   )
