@@ -22,17 +22,17 @@ Este documento es para el agente que construye el portal en `c:\coding\kplan2\po
 
 ### 2.1 Qué hace el turista
 
-| Función | Qué es |
-|---|---|
-| Descubrir | Home con pestañas (Para ti, circuitos, paradas filtrables por categoría), lugares destacados y eventos próximos, con buscador. |
-| Detalle de circuito | Galería, descripción, paradas en orden, itinerario con la hora de llegada a cada parada según la hora de salida elegida, mapa, reseñas, punto de encuentro, qué incluye, recomendaciones e insignias que contiene. |
-| Mis circuitos | Funcionan como playlists: el turista añade paradas a circuitos o crea los suyos, y elige hora de salida, transporte (a pie o en vehículo) y ritmo (relajado, equilibrado o intenso). Al quitar una parada se le pregunta por qué. |
-| Asistente de itinerarios | "IA" simulada con reglas fijas. Pregunta ciudad, ritmo, transporte, hora e intereses, arma el día y sugiere cambios: ir en vehículo, reordenar, salir más tarde, quitar una parada cerrada o que no cabe, **almorzar en un lugar de Gastronomía** o agregar una parada. |
-| Agendar | Para circuitos privados (del catálogo o propios): fecha, hora de salida, adultos y niños; precio por persona más 20 % de servicio. Opcionalmente publica una propuesta de trabajo para guía y/o traductor. |
-| Guía o traductor | Los guías se postulan a la propuesta (simulado), el turista compara perfiles, contrata y chatea (simulado). |
-| Circuitos creativos | Circuitos oficiales de una alcaldía. No se agendan en privado: el turista se inscribe con su grupo en un **horario de grupo** publicado por un guía certificado, con cupo limitado. Completarlo da 3 insignias extra y la medalla de esa ciudad. |
-| Viaje en curso | Sigue el itinerario: siguiente parada, hora estimada de llegada y atraso. Cada parada se confirma escaneando su QR. Se pueden saltar paradas (con razón) y, al finalizar, se pregunta por las pendientes. |
-| Insignias, medallas y cupones | Escanear el QR de una parada con insignia da una insignia de su categoría (una vez por parada). Las insignias acumuladas suben medallas (bronce, plata, oro) y el saldo se gasta en cupones. |
+| Función                       | Qué es                                                                                                                                                                                                                                                                  |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Descubrir                     | Home con pestañas (Para ti, circuitos, paradas filtrables por categoría), lugares destacados y eventos próximos, con buscador.                                                                                                                                          |
+| Detalle de circuito           | Galería, descripción, paradas en orden, itinerario con la hora de llegada a cada parada según la hora de salida elegida, mapa, reseñas, punto de encuentro, qué incluye, recomendaciones e insignias que contiene.                                                      |
+| Mis circuitos                 | Funcionan como playlists: el turista añade paradas a circuitos o crea los suyos, y elige hora de salida, transporte (a pie o en vehículo) y ritmo (relajado, equilibrado o intenso). Al quitar una parada se le pregunta por qué.                                       |
+| Asistente de itinerarios      | "IA" simulada con reglas fijas. Pregunta ciudad, ritmo, transporte, hora e intereses, arma el día y sugiere cambios: ir en vehículo, reordenar, salir más tarde, quitar una parada cerrada o que no cabe, **almorzar en un lugar de Gastronomía** o agregar una parada. |
+| Agendar                       | Para circuitos privados (del catálogo o propios): fecha, hora de salida, adultos y niños; precio por persona más 20 % de servicio. Opcionalmente publica una propuesta de trabajo para guía y/o traductor.                                                              |
+| Guía o traductor              | Los guías se postulan a la propuesta (simulado), el turista compara perfiles, contrata y chatea (simulado).                                                                                                                                                             |
+| Circuitos creativos           | Circuitos oficiales de una alcaldía. No se agendan en privado: el turista se inscribe con su grupo en un **horario de grupo** publicado por un guía certificado, con cupo limitado. Completarlo da 3 insignias extra y la medalla de esa ciudad.                        |
+| Viaje en curso                | Sigue el itinerario: siguiente parada, hora estimada de llegada y atraso. Cada parada se confirma escaneando su QR. Se pueden saltar paradas (con razón) y, al finalizar, se pregunta por las pendientes.                                                               |
+| Insignias, medallas y cupones | Escanear el QR de una parada con insignia da una insignia de su categoría (una vez por parada). Las insignias acumuladas suben medallas (bronce, plata, oro) y el saldo se gasta en cupones.                                                                            |
 
 ### 2.2 Estado técnico
 
@@ -47,12 +47,12 @@ Este documento es para el agente que construye el portal en `c:\coding\kplan2\po
 
 La app no tiene el concepto de "dueño" de una parada o de un circuito: el portal lo agrega.
 
-| Rol | Ejemplos | Alcance | Qué maneja |
-|---|---|---|---|
-| Alcaldía | Alcaldía de León, de Masaya, de Estelí (aparecen como `organizer` en los datos) | Su ciudad (`city`) | Paradas públicas de su ciudad, **circuitos creativos**, eventos de su ciudad, horarios de grupo de sus circuitos creativos y la analítica de toda la ciudad |
-| Negocio | Restaurante, museo, tabacalera, finca cafetalera, mercado | Sus paradas | La ficha de su lugar (sobre todo el **horario**), su QR, la analítica de su lugar y (propuesta) cupones propios |
-| Startup (propuesta de interpretación) | Operador turístico o emprendimiento | Sus circuitos | Circuitos privados del catálogo (con precio por persona), sus reservas y su analítica |
-| Admin K'Plan (propuesta) | Equipo de K'Plan | Todo | Aprobar organizaciones y paradas nuevas, cupones de K'Plan, lugares destacados y analítica global |
+| Rol                                   | Ejemplos                                                                        | Alcance            | Qué maneja                                                                                                                                                  |
+| ------------------------------------- | ------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Alcaldía                              | Alcaldía de León, de Masaya, de Estelí (aparecen como `organizer` en los datos) | Su ciudad (`city`) | Paradas públicas de su ciudad, **circuitos creativos**, eventos de su ciudad, horarios de grupo de sus circuitos creativos y la analítica de toda la ciudad |
+| Negocio                               | Restaurante, museo, tabacalera, finca cafetalera, mercado                       | Sus paradas        | La ficha de su lugar (sobre todo el **horario**), su QR, la analítica de su lugar y (propuesta) cupones propios                                             |
+| Startup (propuesta de interpretación) | Operador turístico o emprendimiento                                             | Sus circuitos      | Circuitos privados del catálogo (con precio por persona), sus reservas y su analítica                                                                       |
+| Admin K'Plan (propuesta)              | Equipo de K'Plan                                                                | Todo               | Aprobar organizaciones y paradas nuevas, cupones de K'Plan, lugares destacados y analítica global                                                           |
 
 Cómo encaja con los datos actuales:
 
@@ -65,23 +65,23 @@ Cómo encaja con los datos actuales:
 
 ## 4. Glosario
 
-| Término | Qué es |
-|---|---|
-| Parada (`Stop`) | Un lugar concreto que se visita: catedral, mercado, mirador, restaurante. Vive aparte de los circuitos porque una misma parada puede estar en varios. |
-| Circuito (`Circuit`) | Recorrido ordenado de paradas **de una misma ciudad**, con horas de salida, precio por adulto y por niño, punto de encuentro, qué incluye, etc. Es privado: cada grupo agenda el suyo. |
-| Circuito creativo | Circuito oficial creado por una alcaldía (`isCreativeCircuit: true`). Sus paradas no se cambian y se hace en grupo, inscribiéndose en un horario de grupo. Da 3 insignias extra y la medalla de la ciudad. |
-| Horario de grupo (`CircuitGroupSession`) | Fecha y hora en que un guía certificado hace un circuito creativo, con cupo (`capacity`), inscritos (`joinedCount`), si incluye transporte y una nota del guía. |
-| Circuito propio | Circuito armado por el turista (en la app, `CircuitCollection` con `isUserCreated`). No tiene precio por persona: sólo paga al guía si contrata uno. Su id empieza con `user-circuit-`. |
-| Itinerario | La hora de llegada y de salida en cada parada, calculada con la hora de salida, el tiempo sugerido de cada parada, los traslados, el ritmo y el transporte. |
-| Ritmo | Relajado, equilibrado o intenso: cambia el tiempo en cada parada y cuánto puede durar el día. |
-| Insignia | Se gana al escanear el QR de una parada con `hasBadge: true`, en la categoría de esa parada. Una vez por parada. |
-| Medalla | Nivel (bronce, plata, oro) según las insignias acumuladas, por categoría y general. |
-| Medalla de ciudad | Se gana al completar un circuito creativo de esa ciudad (QR en todas sus paradas). |
-| Cupón | Beneficio que se canjea con insignias del saldo. |
-| Propuesta de trabajo (`GuideRequest`) | Lo que publica el turista al agendar si quiere guía y/o traductor. Los guías se postulan (`GuideApplication`) y él elige a quién contratar. |
-| Evento de visita (`VisitEvent`) | Lo que la app registra para el portal: visita planeada, check-in con QR o parada dejada con su razón. |
-| Evento (`EventItem`) | Actividad con fecha en una ciudad: fiestas, ferias, festivales. |
-| Lugar destacado (`Place`) | Tarjeta simple del home: nombre, ubicación e imagen. |
+| Término                                  | Qué es                                                                                                                                                                                                     |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Parada (`Stop`)                          | Un lugar concreto que se visita: catedral, mercado, mirador, restaurante. Vive aparte de los circuitos porque una misma parada puede estar en varios.                                                      |
+| Circuito (`Circuit`)                     | Recorrido ordenado de paradas **de una misma ciudad**, con horas de salida, precio por adulto y por niño, punto de encuentro, qué incluye, etc. Es privado: cada grupo agenda el suyo.                     |
+| Circuito creativo                        | Circuito oficial creado por una alcaldía (`isCreativeCircuit: true`). Sus paradas no se cambian y se hace en grupo, inscribiéndose en un horario de grupo. Da 3 insignias extra y la medalla de la ciudad. |
+| Horario de grupo (`CircuitGroupSession`) | Fecha y hora en que un guía certificado hace un circuito creativo, con cupo (`capacity`), inscritos (`joinedCount`), si incluye transporte y una nota del guía.                                            |
+| Circuito propio                          | Circuito armado por el turista (en la app, `CircuitCollection` con `isUserCreated`). No tiene precio por persona: sólo paga al guía si contrata uno. Su id empieza con `user-circuit-`.                    |
+| Itinerario                               | La hora de llegada y de salida en cada parada, calculada con la hora de salida, el tiempo sugerido de cada parada, los traslados, el ritmo y el transporte.                                                |
+| Ritmo                                    | Relajado, equilibrado o intenso: cambia el tiempo en cada parada y cuánto puede durar el día.                                                                                                              |
+| Insignia                                 | Se gana al escanear el QR de una parada con `hasBadge: true`, en la categoría de esa parada. Una vez por parada.                                                                                           |
+| Medalla                                  | Nivel (bronce, plata, oro) según las insignias acumuladas, por categoría y general.                                                                                                                        |
+| Medalla de ciudad                        | Se gana al completar un circuito creativo de esa ciudad (QR en todas sus paradas).                                                                                                                         |
+| Cupón                                    | Beneficio que se canjea con insignias del saldo.                                                                                                                                                           |
+| Propuesta de trabajo (`GuideRequest`)    | Lo que publica el turista al agendar si quiere guía y/o traductor. Los guías se postulan (`GuideApplication`) y él elige a quién contratar.                                                                |
+| Evento de visita (`VisitEvent`)          | Lo que la app registra para el portal: visita planeada, check-in con QR o parada dejada con su razón.                                                                                                      |
+| Evento (`EventItem`)                     | Actividad con fecha en una ciudad: fiestas, ferias, festivales.                                                                                                                                            |
+| Lugar destacado (`Place`)                | Tarjeta simple del home: nombre, ubicación e imagen.                                                                                                                                                       |
 
 ---
 
@@ -327,13 +327,13 @@ interface Booking {
 
 Si un valor no cumple el formato, la app no falla: lo ignora en silencio. Por eso el portal tiene que validarlos.
 
-| Dato | Formato | Ejemplos | Si viene mal |
-|---|---|---|---|
-| Horas (`opensAt`, `closesAt`, `startTimes`, `startTime`) | `h:mm a.m.` o `h:mm p.m.` | `"8:30 a.m."`, `"12:00 p.m."`, `"3:00 p.m."` | El horario de la parada se descarta y se trata como si nunca cerrara; una hora de salida se toma como medianoche |
-| Duración de una parada (`duration`) | `N min`, `N h` o `N h M min` | `"30 min"`, `"1 h 30 min"` | Se usan 30 minutos |
-| Fecha de un evento (`date`) | `YYYY-MM-DD` | `"2026-12-07"` | Se usa la fecha de hoy |
-| Coordenadas | `{ "latitude": …, "longitude": … }` | `{ "latitude": 11.9299, "longitude": -85.9561 }` | Quedan en 0,0 |
-| IDs | slug en minúsculas, kebab-case, ASCII | `granada-catedral` | Evitar tildes: el mock tiene `gritería-2026` |
+| Dato                                                     | Formato                               | Ejemplos                                         | Si viene mal                                                                                                     |
+| -------------------------------------------------------- | ------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Horas (`opensAt`, `closesAt`, `startTimes`, `startTime`) | `h:mm a.m.` o `h:mm p.m.`             | `"8:30 a.m."`, `"12:00 p.m."`, `"3:00 p.m."`     | El horario de la parada se descarta y se trata como si nunca cerrara; una hora de salida se toma como medianoche |
+| Duración de una parada (`duration`)                      | `N min`, `N h` o `N h M min`          | `"30 min"`, `"1 h 30 min"`                       | Se usan 30 minutos                                                                                               |
+| Fecha de un evento (`date`)                              | `YYYY-MM-DD`                          | `"2026-12-07"`                                   | Se usa la fecha de hoy                                                                                           |
+| Coordenadas                                              | `{ "latitude": …, "longitude": … }`   | `{ "latitude": 11.9299, "longitude": -85.9561 }` | Quedan en 0,0                                                                                                    |
+| IDs                                                      | slug en minúsculas, kebab-case, ASCII | `granada-catedral`                               | Evitar tildes: el mock tiene `gritería-2026`                                                                     |
 
 - La app lee las horas con la expresión `^(\d{1,2}):(\d{2})\s*([ap])\.?\s*m\.?$` sobre el texto en minúsculas. El portal debe escribir siempre la forma canónica: `8:30 a.m.`.
 - `opensAt` y `closesAt` van juntos o no van. `closesAt` debe ser posterior a `opensAt`: el modelo no soporta cerrar pasada la medianoche, ni horarios distintos por día de la semana.
@@ -343,15 +343,15 @@ Si un valor no cumple el formato, la app no falla: lo ignora en silencio. Por es
 
 Mismos textos que la app (`lib/src/core/utils/formatters.dart`), para que el portal y la app se lean igual:
 
-| Qué | Formato |
-|---|---|
-| Dinero | `C$ 250` (sin decimales) |
-| Hora | `8:30 a.m.`, `2:05 p.m.` |
-| Franja | `8:30 – 9:00 a.m.`; si cruza el mediodía, `11:40 a.m. – 12:10 p.m.` |
-| Duración | `4 h 20 min`, `45 min`, `3 h` |
-| Fecha | `Sábado 26 sep`, `16 nov 2026`, `16 nov` (meses abreviados en minúscula) |
-| Distancia | `800 m`, `2.2 km` |
-| Personas | `1 persona`, `4 personas` |
+| Qué       | Formato                                                                  |
+| --------- | ------------------------------------------------------------------------ |
+| Dinero    | `C$ 250` (sin decimales)                                                 |
+| Hora      | `8:30 a.m.`, `2:05 p.m.`                                                 |
+| Franja    | `8:30 – 9:00 a.m.`; si cruza el mediodía, `11:40 a.m. – 12:10 p.m.`      |
+| Duración  | `4 h 20 min`, `45 min`, `3 h`                                            |
+| Fecha     | `Sábado 26 sep`, `16 nov 2026`, `16 nov` (meses abreviados en minúscula) |
+| Distancia | `800 m`, `2.2 km`                                                        |
+| Personas  | `1 persona`, `4 personas`                                                |
 
 ---
 
@@ -386,11 +386,11 @@ Fuente: `mobile/lib/src/core/utils/itinerary_planner.dart`. No usa un servicio d
   - `legMinutes` fija el traslado a mano, tal cual y sin redondear; con 0 se muestra "Sin traslado".
 - Tiempo en cada parada: la `duration` de la parada (30 min si no se entiende) por el factor del ritmo, redondeado a múltiplos de 5 (mínimo 5), más la holgura.
 
-| Ritmo | Factor | Holgura por parada | Día máximo |
-|---|---|---|---|
-| Relajado | 1.25 | 10 min | 6 h |
-| Equilibrado | 1 | 0 | 8 h |
-| Intenso | 0.85 | 0 | 10 h |
+| Ritmo       | Factor | Holgura por parada | Día máximo |
+| ----------- | ------ | ------------------ | ---------- |
+| Relajado    | 1.25   | 10 min             | 6 h        |
+| Equilibrado | 1      | 0                  | 8 h        |
+| Intenso     | 0.85   | 0                  | 10 h       |
 
 - Avisos: un tramo a pie de más de 2 km; llegar cuando ya cerró, salir después del cierre o llegar antes de que abra; terminar el día después de las 6:30 p.m.
 - Valores de referencia del test de la app (`mobile/test/itinerary_planner_test.dart`), que el port debe reproducir:
@@ -450,21 +450,21 @@ Es lo que la app junta para el portal (`lib/src/data/models/visit_event.dart` y 
 
 Las fechas vienen sin zona horaria: son hora local de Nicaragua. `recordedAt` es cuándo se registró el evento (por ejemplo, el día que se hizo la reserva), no la hora de la visita.
 
-| `reason` | Texto que ve el turista |
-|---|---|
-| `closed` | Estaba cerrado |
-| `too_far` | Muy lejos o sin transporte |
-| `no_time` | Falta de tiempo |
-| `too_expensive` | Muy caro |
-| `not_interested` | No me interesó |
-| `weather` | Por el clima |
-| `other` | Otro motivo |
+| `reason`         | Texto que ve el turista    |
+| ---------------- | -------------------------- |
+| `closed`         | Estaba cerrado             |
+| `too_far`        | Muy lejos o sin transporte |
+| `no_time`        | Falta de tiempo            |
+| `too_expensive`  | Muy caro                   |
+| `not_interested` | No me interesó             |
+| `weather`        | Por el clima               |
+| `other`          | Otro motivo                |
 
-| `stage` | Cuándo pasa |
-|---|---|
-| `planning` | Al armar o ajustar su circuito: la quitó él, o aceptó la sugerencia del asistente de quitarla |
-| `trip` | Durante el viaje, con "Saltar" |
-| `trip_ended` | Al finalizar el viaje con la parada todavía pendiente (responder es opcional) |
+| `stage`      | Cuándo pasa                                                                                   |
+| ------------ | --------------------------------------------------------------------------------------------- |
+| `planning`   | Al armar o ajustar su circuito: la quitó él, o aceptó la sugerencia del asistente de quitarla |
+| `trip`       | Durante el viaje, con "Saltar"                                                                |
+| `trip_ended` | Al finalizar el viaje con la parada todavía pendiente (responder es opcional)                 |
 
 ### 9.2 Métricas
 
@@ -500,15 +500,15 @@ Como los eventos sólo existen en el teléfono, el portal necesita generarlos pa
 
 Copiar los JSON de `c:\coding\kplan2\mobile\assets\mock\` al portal. Las imágenes son de `picsum.photos` (placeholders).
 
-| Archivo | Contenido |
-|---|---|
-| `stops.json` | 34 paradas en 6 ciudades (Granada 6, Rivas/Ometepe 8, León 5, Matagalpa 7, Masaya 4, Estelí 4). 15 dan insignia y 12 no tienen horario |
-| `circuits.json` | 6 circuitos: 3 privados (`granada-historias-sabores`, `isla-de-ometepe`, `ruta-del-cafe`) y 3 creativos de alcaldías (`leon-colonial`, `masaya-artesanias-volcan`, `esteli-murales-tabaco`) |
-| `circuit_groups.json` | 8 horarios de grupo de los circuitos creativos |
-| `guides.json` | 8 personas: 5 guías, 1 que es guía y traductor, 2 traductores |
-| `events.json` | 4 eventos: La Gritería, Hípica de Granada, Festival de Poesía y El Torovenado |
-| `places.json` | 5 lugares destacados |
-| `coupons.json` | 5 cupones de K'Plan |
+| Archivo               | Contenido                                                                                                                                                                                   |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stops.json`          | 34 paradas en 6 ciudades (Granada 6, Rivas/Ometepe 8, León 5, Matagalpa 7, Masaya 4, Estelí 4). 15 dan insignia y 12 no tienen horario                                                      |
+| `circuits.json`       | 6 circuitos: 3 privados (`granada-historias-sabores`, `isla-de-ometepe`, `ruta-del-cafe`) y 3 creativos de alcaldías (`leon-colonial`, `masaya-artesanias-volcan`, `esteli-murales-tabaco`) |
+| `circuit_groups.json` | 8 horarios de grupo de los circuitos creativos                                                                                                                                              |
+| `guides.json`         | 8 personas: 5 guías, 1 que es guía y traductor, 2 traductores                                                                                                                               |
+| `events.json`         | 4 eventos: La Gritería, Hípica de Granada, Festival de Poesía y El Torovenado                                                                                                               |
+| `places.json`         | 5 lugares destacados                                                                                                                                                                        |
+| `coupons.json`        | 5 cupones de K'Plan                                                                                                                                                                         |
 
 (Propuesta) Archivos nuevos que el portal necesita:
 
@@ -530,14 +530,14 @@ Copiar los JSON de `c:\coding\kplan2\mobile\assets\mock\` al portal. Las imágen
 
 Cuentas demo sugeridas (cualquier contraseña, igual que el login demo de la app; el correo decide el rol):
 
-| Correo | Rol | Organización |
-|---|---|---|
-| `admin@kplan.demo` | Admin K'Plan | — |
-| `leon@kplan.demo` | Alcaldía | Alcaldía de León |
-| `masaya@kplan.demo` | Alcaldía | Alcaldía de Masaya |
-| `tabacalera@kplan.demo` | Negocio | Tabacalera artesanal (1 parada) |
-| `finca@kplan.demo` | Negocio | Finca cafetalera (varias paradas) |
-| `rutacafe@kplan.demo` | Startup | Ruta del Café Tours |
+| Correo                  | Rol          | Organización                      |
+| ----------------------- | ------------ | --------------------------------- |
+| `admin@kplan.demo`      | Admin K'Plan | —                                 |
+| `leon@kplan.demo`       | Alcaldía     | Alcaldía de León                  |
+| `masaya@kplan.demo`     | Alcaldía     | Alcaldía de Masaya                |
+| `tabacalera@kplan.demo` | Negocio      | Tabacalera artesanal (1 parada)   |
+| `finca@kplan.demo`      | Negocio      | Finca cafetalera (varias paradas) |
+| `rutacafe@kplan.demo`   | Startup      | Ruta del Café Tours               |
 
 ---
 
@@ -680,23 +680,23 @@ Cada una trae un valor por defecto para no bloquear el trabajo.
 
 Rutas relativas a `c:\coding\kplan2\mobile\`. Son de sólo lectura para el agente del portal.
 
-| Tema | Archivos |
-|---|---|
-| Modelos y parseo del JSON | `lib/src/data/models/*.dart` |
-| Datos mock | `assets/mock/*.json` |
-| Eventos de visita | `lib/src/data/models/visit_event.dart`, `lib/src/data/datasources/repository/visit_log_repository.dart`, `test/visit_log_repository_test.dart` |
+| Tema                          | Archivos                                                                                                                                                                                                                                                                                                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Modelos y parseo del JSON     | `lib/src/data/models/*.dart`                                                                                                                                                                                                                                                                                                                                              |
+| Datos mock                    | `assets/mock/*.json`                                                                                                                                                                                                                                                                                                                                                      |
+| Eventos de visita             | `lib/src/data/models/visit_event.dart`, `lib/src/data/datasources/repository/visit_log_repository.dart`, `test/visit_log_repository_test.dart`                                                                                                                                                                                                                            |
 | Dónde se registra cada evento | `lib/src/ui/booking/viewmodels/booking_viewmodel.dart`, `lib/src/ui/group_slots/viewmodels/group_slots_viewmodel.dart`, `lib/src/ui/stop_detail/viewmodels/stop_detail_viewmodel.dart`, `lib/src/ui/core/trip_actions.dart`, `lib/src/ui/my_circuit/viewmodels/my_circuit_viewmodel.dart`, `lib/src/ui/itinerary_assistant/viewmodels/itinerary_assistant_viewmodel.dart` |
-| Planificador de itinerarios | `lib/src/core/utils/itinerary_planner.dart`, `test/itinerary_planner_test.dart` |
-| Reglas del asistente | `lib/src/core/utils/itinerary_advisor.dart` |
-| Horas, duraciones y formatos | `lib/src/core/utils/time_parser.dart`, `lib/src/core/utils/formatters.dart` |
-| QR | `lib/src/core/utils/qr_codes.dart`, `lib/src/ui/stop_detail/view/qr_generator_view.dart` |
-| Insignias y medallas | `lib/src/core/utils/medal_tiers.dart`, `lib/src/data/datasources/repository/badges_repository.dart` |
-| Reserva y precios | `lib/src/ui/booking/viewmodels/booking_viewmodel.dart` |
-| Guía o traductor | `lib/src/data/models/guide_request.dart`, `lib/src/data/datasources/repository/guide_request_repository.dart` |
-| Horarios de grupo | `lib/src/data/models/circuit_group_session.dart`, `lib/src/data/datasources/repository/group_session_repository.dart` |
-| Tema visual | `lib/src/core/theme/app_colors.dart`, `app_text_styles.dart`, `app_theme.dart` |
-| API y sesión | `lib/src/data/datasources/remote/api_client.dart`, `api_routes.dart`, `lib/src/data/datasources/repository/auth_repository.dart` |
-| Logos | `assets/images/logo/*.svg` |
+| Planificador de itinerarios   | `lib/src/core/utils/itinerary_planner.dart`, `test/itinerary_planner_test.dart`                                                                                                                                                                                                                                                                                           |
+| Reglas del asistente          | `lib/src/core/utils/itinerary_advisor.dart`                                                                                                                                                                                                                                                                                                                               |
+| Horas, duraciones y formatos  | `lib/src/core/utils/time_parser.dart`, `lib/src/core/utils/formatters.dart`                                                                                                                                                                                                                                                                                               |
+| QR                            | `lib/src/core/utils/qr_codes.dart`, `lib/src/ui/stop_detail/view/qr_generator_view.dart`                                                                                                                                                                                                                                                                                  |
+| Insignias y medallas          | `lib/src/core/utils/medal_tiers.dart`, `lib/src/data/datasources/repository/badges_repository.dart`                                                                                                                                                                                                                                                                       |
+| Reserva y precios             | `lib/src/ui/booking/viewmodels/booking_viewmodel.dart`                                                                                                                                                                                                                                                                                                                    |
+| Guía o traductor              | `lib/src/data/models/guide_request.dart`, `lib/src/data/datasources/repository/guide_request_repository.dart`                                                                                                                                                                                                                                                             |
+| Horarios de grupo             | `lib/src/data/models/circuit_group_session.dart`, `lib/src/data/datasources/repository/group_session_repository.dart`                                                                                                                                                                                                                                                     |
+| Tema visual                   | `lib/src/core/theme/app_colors.dart`, `app_text_styles.dart`, `app_theme.dart`                                                                                                                                                                                                                                                                                            |
+| API y sesión                  | `lib/src/data/datasources/remote/api_client.dart`, `api_routes.dart`, `lib/src/data/datasources/repository/auth_repository.dart`                                                                                                                                                                                                                                          |
+| Logos                         | `assets/images/logo/*.svg`                                                                                                                                                                                                                                                                                                                                                |
 
 ---
 
