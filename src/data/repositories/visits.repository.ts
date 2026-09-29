@@ -1,6 +1,6 @@
 import { endpoints } from '../api/endpoints'
 import { http } from '../api/http-client'
-import type { Circuit, VisitEvent } from '../models'
+import type { VisitEvent } from '../models'
 
 export interface VisitFilters {
   stopIds?: string[]
@@ -10,7 +10,6 @@ export interface VisitFilters {
 
 export const visitsRepository = {
   listEvents: (filters: VisitFilters) => http.get<VisitEvent[]>(endpoints.visitEvents, { query: { ...filters } }),
-  listCircuits: () => http.get<Circuit[]>(endpoints.circuits.list),
 }
 
 export const demoRepository = {

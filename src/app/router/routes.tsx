@@ -150,6 +150,19 @@ export const router = createBrowserRouter([
                 ],
               },
               {
+                element: <RequirePermission anyOf={['circuits.manage']} />,
+                children: [
+                  {
+                    path: 'circuitos',
+                    lazy: async () => ({ Component: (await import('@/features/circuits/CircuitsPage')).CircuitsPage }),
+                  },
+                  {
+                    path: 'circuitos/:circuitId',
+                    lazy: async () => ({ Component: (await import('@/features/circuits/CircuitEditorPage')).CircuitEditorPage }),
+                  },
+                ],
+              },
+              {
                 element: <RequirePermission anyOf={['users.manage']} />,
                 children: [
                   {

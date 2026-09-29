@@ -77,6 +77,7 @@ export function navigationFor({ role, organization, can }: Session): NavEntry[] 
       can('guides.review', 'guides.decide') && link(paths.guides, 'Guías y traductores', BadgeCheck, { count: 'pendingGuides' }),
       group('contenido', 'Contenido', Layers, [
         can('places.manage') && { to: paths.places, label: 'Lugares' },
+        can('circuits.manage') && { to: paths.circuits, label: 'Circuitos' },
         can('content.moderate') && { to: paths.coupons, label: 'Cupones' },
         can('content.moderate') && { to: paths.events, label: 'Eventos' },
         can('content.moderate') && { to: paths.badges, label: 'Insignias' },

@@ -13,8 +13,14 @@ export const imageUrlSchema = z.url({ error: 'Pega una dirección que empiece co
 
 /** Nicaragua, con las islas del Caribe. */
 export const latLngSchema = z.object({
-  latitude: z.number({ error: 'Marca el punto en el mapa' }).min(10.7).max(15.1),
-  longitude: z.number({ error: 'Marca el punto en el mapa' }).min(-87.7).max(-82.5),
+  latitude: z
+    .number({ error: 'Marca el punto en el mapa' })
+    .min(10.7, { error: 'Marca el punto en el mapa, dentro de Nicaragua' })
+    .max(15.1, { error: 'Marca el punto en el mapa, dentro de Nicaragua' }),
+  longitude: z
+    .number({ error: 'Marca el punto en el mapa' })
+    .min(-87.7, { error: 'Marca el punto en el mapa, dentro de Nicaragua' })
+    .max(-82.5, { error: 'Marca el punto en el mapa, dentro de Nicaragua' }),
 })
 
 export const optionalEmailSchema = z.union([z.literal(''), z.email({ error: 'Escribe un correo válido' })])

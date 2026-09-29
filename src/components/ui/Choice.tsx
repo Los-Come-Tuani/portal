@@ -63,6 +63,10 @@ interface SegmentedControlProps<T extends string | number> {
   label: string
   size?: 'sm' | 'md'
   className?: string
+  /** Dentro de un Field con `group`: lo nombra la etiqueta visible y se anuncian su ayuda y su error. */
+  labelledBy?: string
+  describedBy?: string
+  invalid?: boolean
 }
 
 /** Grupo de opciones excluyentes (Día · Semana · Mes, ×2 · ×3 · ×5). */
@@ -73,6 +77,9 @@ export function SegmentedControl<T extends string | number>({
   label,
   size = 'md',
   className,
+  labelledBy,
+  describedBy,
+  invalid,
 }: SegmentedControlProps<T>) {
   const move = (direction: 1 | -1) => {
     const index = options.findIndex((option) => option.value === value)
@@ -83,8 +90,11 @@ export function SegmentedControl<T extends string | number>({
   return (
     <div
       role="radiogroup"
-      aria-label={label}
-      className={cn('inline-flex rounded-kp border border-outline bg-field p-0.5', className)}
+      aria-label={labelledBy ? undefined : label}
+      aria-labelledby={labelledBy}
+      aria-describedby={describedBy}
+      aria-invalid={invalid || undefined}
+      className={cn('inline-flex rounded-kp border bg-field p-0.5', invalid ? 'border-danger/60' : 'border-outline', className)}
       onKeyDown={(event) => {
         if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
           event.preventDefault()

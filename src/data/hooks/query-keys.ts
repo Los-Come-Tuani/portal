@@ -22,7 +22,12 @@ export const queryKeys = {
     profile: (stopId: string) => ['places', 'profile', stopId] as const,
     posts: (stopId: string | undefined) => ['places', 'posts', stopId ?? 'all'] as const,
   },
-  circuits: ['circuits'] as const,
+  circuits: {
+    all: ['circuits'] as const,
+    list: ['circuits', 'list'] as const,
+    detail: (circuitId: string) => ['circuits', 'detail', circuitId] as const,
+    sessions: (circuitId: string) => ['circuits', 'sessions', circuitId] as const,
+  },
   events: {
     all: ['events'] as const,
     list: (filters: EventFilters) => ['events', 'list', filters] as const,

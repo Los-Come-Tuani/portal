@@ -33,6 +33,8 @@ import admissionsJson from './json/organization_applications.json'
 import appGuidesJson from './json/guides.json'
 import organizationsJson from './json/organizations.json'
 import profilesJson from './json/place_profiles.json'
+import portalCircuitGroupsJson from './json/portal_circuit_groups.json'
+import portalCircuitsJson from './json/portal_circuits.json'
 import portalCouponsJson from './json/portal_coupons.json'
 import portalEventsJson from './json/portal_events.json'
 import portalStopsJson from './json/portal_stops.json'
@@ -60,6 +62,12 @@ export interface PortalEventSeed {
   coordinates: LatLng
   featured?: boolean
 }
+
+/** Los especiales de K'Plan de la demo: lo calculado se arma al sembrar y la temporada va en días desde hoy. */
+export type PortalCircuitSeed = Omit<
+  Circuit,
+  'duration' | 'durationShort' | 'badges' | 'badgesNote' | 'availableFrom' | 'availableUntil'
+> & { seasonFromDays?: number; seasonToDays?: number }
 
 export type PortalCouponSeed = Omit<Coupon, 'validUntil' | 'createdAt'> & { validDays: number; daysAgo: number }
 export type PostSeed = Omit<Post, 'publishedAt'> & { daysAgo: number }
@@ -145,6 +153,8 @@ export const catalog = {
   stops: [...stopsJson, ...portalStopsJson] as Stop[],
   circuits: circuitsJson as Circuit[],
   groupSessions: groupSessionsJson as CircuitGroupSession[],
+  portalCircuits: portalCircuitsJson as PortalCircuitSeed[],
+  portalGroupSessions: portalCircuitGroupsJson as CircuitGroupSession[],
   appEvents: appEventsJson as AppEvent[],
   appCoupons: appCouponsJson as AppCoupon[],
   organizations: organizationsJson as Organization[],

@@ -11,6 +11,7 @@ export const PERMISSIONS = [
   'guides.review',
   'guides.decide',
   'places.manage',
+  'circuits.manage',
   'content.moderate',
   'users.manage',
   'staff.manage',
@@ -71,6 +72,11 @@ export const PERMISSION_GROUPS: { label: string; permissions: PermissionInfo[] }
     label: 'Contenido',
     permissions: [
       { id: 'places.manage', label: 'Editar lugares', description: 'Edita la ficha de cualquier parada de la app.' },
+      {
+        id: 'circuits.manage',
+        label: 'Circuitos',
+        description: "Crea y edita los circuitos de la app, incluidos los especiales de K'Plan y sus insignias extra.",
+      },
       {
         id: 'content.moderate',
         label: 'Moderar contenido',

@@ -1,0 +1,35 @@
+[
+  {
+    "id": "group-kplan-masaya-1",
+    "circuitId": "kplan-masaya-mascaras-y-lava",
+    "daysFromNow": 2,
+    "startTime": "12:30 p.m.",
+    "capacity": 14,
+    "joinedCount": 11,
+    "guideId": "guide-oscar",
+    "transportIncluded": true,
+    "note": "Salgo con el grupo en microbús desde el mercado. Si llueve, cambiamos el orden y dejamos el volcán para el final."
+  },
+  {
+    "id": "group-kplan-masaya-2",
+    "circuitId": "kplan-masaya-mascaras-y-lava",
+    "daysFromNow": 5,
+    "startTime": "12:30 p.m.",
+    "capacity": 14,
+    "joinedCount": 4,
+    "guideId": "guide-valeria",
+    "transportIncluded": true,
+    "note": "Hablo español e inglés. Nos quedamos un rato más en Monimbó para ver bailar a los Agüizotes."
+  },
+  {
+    "id": "group-kplan-masaya-3",
+    "circuitId": "kplan-masaya-mascaras-y-lava",
+    "daysFromNow": 9,
+    "startTime": "12:30 p.m.",
+    "capacity": 10,
+    "joinedCount": 10,
+    "guideId": "guide-marlene",
+    "transportIncluded": false,
+    "note": "Grupo pequeño; cada quien llega en su vehículo al volcán."
+  }
+]
