@@ -1,38 +1,10 @@
-import 'maplibre-gl/dist/maplibre-gl.css'
-import * as maplibregl from 'maplibre-gl'
-import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { useEffect, useRef } from 'react'
 import type { LatLng } from '@/data/models'
-
-// MapLibre busca su worker junto a su propio archivo, y eso se rompe al empaquetar.
-maplibregl.setWorkerUrl(workerUrl)
+import { maplibregl, paintLikeTheApp, roundCoordinate as round, STYLE_URL } from './map-theme'
 
 interface MapPickerProps {
   value: LatLng
   onChange: (value: LatLng) => void
-}
-
-/** OpenFreeMap, el mismo proveedor que usa la app: gratis y sin llave. */
-const STYLE_URL = 'https://tiles.openfreemap.org/styles/positron'
-
-function token(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-}
-
-function round(value: number): number {
-  return Math.round(value * 1e5) / 1e5
-}
-
-/** Tiñe el mapa con los colores de papel de la app (map_style.dart). */
-function paintLikeTheApp(map: maplibregl.Map) {
-  const land = token('--color-map-land')
-  const water = token('--color-map-water')
-  const park = token('--color-map-park')
-  for (const layer of map.getStyle().layers ?? []) {
-    if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', land)
-    else if (layer.type === 'fill' && /water/.test(layer.id)) map.setPaintProperty(layer.id, 'fill-color', water)
-    else if (layer.type === 'fill' && /park|wood|grass|landcover/.test(layer.id)) map.setPaintProperty(layer.id, 'fill-color', park)
-  }
 }
 
 export default function MapPicker({ value, onChange }: MapPickerProps) {
