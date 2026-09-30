@@ -1,6 +1,6 @@
 import { cn } from '@/lib/cn'
 
-/* Trazos de mobile/assets/images/logo (ImagoTipoClaro.svg), en currentColor. */
+/* Maestro: DiseñoMarca/Logos/SVGs/Imagotipos/ImagotipoFinalVersion.svg, en currentColor. */
 
 const LION_CHEEK =
   'M61.267 128.679L60.8095 108.341L51.3101 98.4677L49.676 98.9065C49.676 98.9065 47.1486 101.342 47.1486 108.648C47.1486 115.954 49.8398 130.942 58.9575 129.316C59.8703 129.153 61.2453 128.679 61.2453 128.679H61.267Z'
@@ -16,7 +16,7 @@ const WORDMARK = [
   'M231.272 162.624L228.712 167.744H193V163.776L204.392 154.816V76.096L193 68.16V64.192L214.888 56H219.752V158.144L231.272 162.624ZM272.232 167.744H250.6L226.536 133.952L250.472 113.856L238.184 104.896L240.744 99.776H271.336V103.744L241.64 128.704L263.272 158.144L274.792 162.624L272.232 167.744Z',
 ]
 
-/** El león de K'Plan (isologo). */
+/** Símbolo de K'Plan: pin y máscara del caballo del Güegüense. */
 export function Isologo({ className, title }: { className?: string; title?: string }) {
   return (
     <svg
@@ -33,7 +33,7 @@ export function Isologo({ className, title }: { className?: string; title?: stri
   )
 }
 
-/** León y palabra K'Plan (imagotipo). */
+/** Símbolo y palabra K'Plan (imagotipo). */
 export function Logo({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 537 223" fill="currentColor" role="img" aria-label="K'Plan" className={cn('shrink-0', className)}>

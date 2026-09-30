@@ -26,8 +26,8 @@ interface StageTrackProps {
 /** Las etapas de una verificación: dónde está, cuánto lleva ahí y qué falta para avanzar. */
 export function StageTrack({ steps, waitingMinutes, waitingLabel, blocker, actions }: StageTrackProps) {
   return (
-    <section aria-label="Etapas de la verificación" className="rounded-kp border border-divider bg-surface">
-      <ol className={cn('grid gap-4 p-5 sm:gap-0', steps.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3')}>
+    <section aria-label="Etapas de la verificación" className="rounded-panel border border-divider bg-surface">
+      <ol className={cn('grid gap-5 p-5 sm:p-6 sm:gap-0', steps.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3')}>
         {steps.map((step, index) => {
           const last = index === steps.length - 1
           return (
@@ -35,7 +35,7 @@ export function StageTrack({ steps, waitingMinutes, waitingLabel, blocker, actio
               <div className="flex items-center sm:gap-3">
                 <span
                   className={cn(
-                    'flex size-7 shrink-0 items-center justify-center rounded-full text-small font-semibold tabular-nums',
+                    'flex size-8 shrink-0 items-center justify-center rounded-full text-small font-semibold tabular-nums',
                     step.state === 'done' && 'bg-confirmed text-white',
                     (step.state === 'current' || step.state === 'waiting') && 'bg-ink text-canvas',
                     step.state === 'upcoming' && 'border border-outline text-muted',
@@ -73,7 +73,7 @@ export function StageTrack({ steps, waitingMinutes, waitingLabel, blocker, actio
         })}
       </ol>
       {actions && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-divider px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-divider bg-canvas/40 px-5 py-4">
           <p className="text-small text-muted">
             {blocker ? (
               <>

@@ -1,0 +1,241 @@
+{
+  "checkedAt": "2026-09-30T05:47:30.412Z",
+  "baselineCommit": "ae0c5d4f3bf1119b637e67544321a5de23266d16",
+  "baselineFiles": 282,
+  "unchangedFiles": 236,
+  "frozenFiles": 132,
+  "frozenIntact": true,
+  "checks": [
+    {
+      "file": "src/app/layout/AppShell.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/app/layout/DemoMenu.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/app/layout/Sidebar.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/app/layout/Topbar.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/brand/Logo.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/Choice.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/Dialog.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/Field.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/IconButton.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/Input.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/Menu.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/PageHeader.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/Panel.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/SaveBar.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/States.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/Table.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/Tabs.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/Toast.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/components/ui/styles.ts",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/admin/admissions/AdmissionsPage.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/admin/collections/CollectionsPage.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/admin/guides/GuideApplicationsPage.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/admin/staff/RolesPage.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/arrivals/Agenda.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/arrivals/components/AgendaSummary.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/arrivals/components/AgendaToolbar.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/arrivals/components/DayPanel.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/arrivals/components/MonthCalendar.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/arrivals/components/WeekGrid.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/auth/LoginPage.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/circuits/CircuitEditorPage.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/circuits/CircuitsPage.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/circuits/components/CircuitForm.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/circuits/components/StartTimesField.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/circuits/components/StopsEditor.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/events/EventsPage.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/onboarding/components/ApplicationWizard.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/onboarding/components/DocumentUpload.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/places/PlaceEditorPage.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/places/PlacesPage.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/places/components/AppPreview.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/places/components/ImageListField.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/places/components/StopForm.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/features/verification/components/StageTrack.tsx",
+      "scope": "TypeScript identical excluding static className attributes and normalizing style string values; all other syntax retained",
+      "pass": true
+    },
+    {
+      "file": "src/styles/base.css",
+      "scope": "CSS presentation",
+      "pass": true
+    },
+    {
+      "file": "src/styles/theme.css",
+      "scope": "CSS presentation",
+      "pass": true
+    }
+  ],
+  "pass": true
+}

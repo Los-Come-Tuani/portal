@@ -93,7 +93,7 @@ export function PlacesPage() {
               : 'Se te asignan cuando el equipo aprueba tu solicitud.'}
         </EmptyState>
       ) : (
-        <ul className="divide-y divide-divider rounded-kp border border-divider bg-surface">
+        <ul className="divide-y divide-divider overflow-hidden rounded-panel border border-divider bg-surface">
           {filtered.map((stop) => {
             const score = completeness(stop)
             const issues = placeIssues(stop)
@@ -101,9 +101,9 @@ export function PlacesPage() {
               <li key={stop.id}>
                 <Link
                   to={paths.place(stop.id)}
-                  className="group grid items-center gap-4 px-4 py-3.5 transition-colors duration-150 hover:bg-canvas sm:grid-cols-[4.5rem_minmax(0,1fr)_10rem_auto]"
+                  className="group grid grid-cols-[3.5rem_minmax(0,1fr)] items-center gap-4 px-4 py-5 transition-colors duration-150 hover:bg-canvas sm:grid-cols-[4.5rem_minmax(0,1fr)_10rem_auto]"
                 >
-                  <img src={stop.images[0]} alt="" loading="lazy" className="hidden size-[4.5rem] rounded-sm bg-placeholder object-cover sm:block" />
+                  <img src={stop.images[0]} alt="" loading="lazy" className="size-14 rounded-kp bg-placeholder object-cover sm:size-[4.5rem]" />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-body font-semibold text-ink">{stop.name}</p>
@@ -120,7 +120,7 @@ export function PlacesPage() {
                     </p>
                     {issues[0] && <p className="mt-1 truncate text-caption text-muted">{issues[0].message}</p>}
                   </div>
-                  <div>
+                  <div className="col-span-2 sm:col-span-1">
                     <div className="flex justify-between text-caption text-muted">
                       <span>Ficha</span>
                       <span className="font-semibold text-ink tabular-nums">{formatPercent(score)}</span>

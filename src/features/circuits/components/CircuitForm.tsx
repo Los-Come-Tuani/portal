@@ -97,7 +97,7 @@ export function CircuitForm({ draft, errors, update, stops, alcaldias, flaggedTi
                   <span
                     className={cn(
                       'flex size-9 shrink-0 items-center justify-center rounded-full',
-                      selected ? (option.value === 'kplan' ? 'bg-brand text-white' : 'bg-ink text-canvas') : 'bg-paper text-ink',
+                      selected ? (option.value === 'kplan' ? 'bg-action text-on-action' : 'bg-ink text-canvas') : 'bg-paper text-ink',
                     )}
                     aria-hidden="true"
                   >

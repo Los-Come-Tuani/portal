@@ -46,9 +46,9 @@ export function ImageListField({ value, onChange, error, max = 8 }: ImageListFie
     <fieldset className="flex flex-col gap-3">
       <legend className="text-small font-medium text-ink">Fotos</legend>
       {value.length > 0 && (
-        <ol className="grid gap-2 sm:grid-cols-2">
+        <ol className="grid grid-cols-[minmax(0,1fr)] gap-2 sm:grid-cols-2">
           {value.map((url, index) => (
-            <li key={url} className="flex items-center gap-3 rounded-kp border border-divider bg-surface p-2">
+            <li key={url} className="flex min-w-0 items-center gap-3 rounded-kp border border-divider bg-surface p-2">
               {broken.has(url) ? (
                 <span className="flex size-16 shrink-0 items-center justify-center rounded-sm bg-placeholder text-muted">
                   <ImageOff size={18} aria-label="No se pudo cargar" />
@@ -91,7 +91,7 @@ export function ImageListField({ value, onChange, error, max = 8 }: ImageListFie
       )}
 
       {value.length < max && (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Input
             type="url"
             inputMode="url"
@@ -109,7 +109,7 @@ export function ImageListField({ value, onChange, error, max = 8 }: ImageListFie
                 add()
               }
             }}
-            className="flex-1"
+            className="min-w-0 flex-1"
           />
           <Button variant="secondary" icon={<Plus size={16} />} onClick={add}>
             Agregar

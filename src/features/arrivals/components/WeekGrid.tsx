@@ -153,7 +153,7 @@ export function WeekGrid({
   const gutter = 'sticky z-10 bg-surface'
 
   return (
-    <div ref={scrollerRef} className="overflow-x-auto rounded-kp border border-divider bg-surface">
+    <div ref={scrollerRef} className="min-w-0 overflow-x-auto rounded-panel border border-divider bg-surface">
       <table
         ref={tableRef}
         role="grid"

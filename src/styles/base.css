@@ -1,3 +1,10 @@
+/* Identidad visible al contraer el lateral; sólo responde al estado accesible existente. */
+@media (min-width: 64rem) {
+  .kplan-shell:has(aside button[aria-controls="menu-principal"][aria-expanded="false"]) .kplan-topbar-brand {
+    display: flex;
+  }
+}
+
 @layer base {
   html {
     background-color: var(--color-canvas);
@@ -24,13 +31,13 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-ink);
-    outline-offset: 2px;
+    outline: 2px solid var(--color-focus);
+    outline-offset: 5px;
   }
 
   input,
   textarea {
-    caret-color: var(--color-brand);
+    caret-color: var(--color-action);
   }
 
   ::placeholder {
@@ -44,6 +51,12 @@
     cursor: pointer;
   }
 
+  /* También cubre controles locales; MapLibre conserva su geometría nativa. */
+  button:where(:not(.maplibregl-ctrl button)) {
+    min-block-size: 2.75rem;
+    min-inline-size: 2.75rem;
+  }
+
   a {
     text-underline-offset: 3px;
   }
@@ -52,6 +65,26 @@
   h2,
   h3 {
     text-wrap: balance;
+  }
+
+  /* Los contenedores de datos pueden desplazar internamente sin ensanchar la página. */
+  fieldset {
+    min-inline-size: 0;
+  }
+
+  input,
+  select,
+  textarea {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  @media (max-width: 639px) {
+    input,
+    select,
+    textarea {
+      font-size: 1rem;
+    }
   }
 
   /* Al imprimir, sólo sale lo marcado con .print-area (el cartel QR). */

@@ -126,7 +126,7 @@ export function PlaceEditorPage() {
   if (stop.isError) return <ErrorState error={stop.error} onRetry={() => void stop.refetch()} />
   if (!stop.data || !stopDraft?.images) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex min-w-0 flex-col gap-6">
         <Skeleton className="h-10 w-80" />
         <Skeleton className="h-11 w-full" />
         <Skeleton className="h-[32rem]" />
@@ -140,8 +140,8 @@ export function PlaceEditorPage() {
   const showPreview = section !== 'qr'
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-6">
+      <header className="flex min-w-0 flex-col gap-3 border-b border-divider pb-6">
         {multiplePlaces && (
           <Link
             to={paths.places}
@@ -207,7 +207,7 @@ export function PlaceEditorPage() {
 
       <Tabs label="Secciones del lugar" value={section} onChange={setSection} items={SECTIONS} />
 
-      <div className={showPreview ? 'grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_20.5rem]' : ''}>
+      <div className={showPreview ? 'grid grid-cols-[minmax(0,1fr)] items-start gap-8 xl:grid-cols-[minmax(0,1fr)_20.5rem]' : ''}>
         <Panel className="min-w-0">
           {section === 'ficha' && <StopForm form={stopForm} />}
           {section === 'ofrecemos' && (profile.data ? <OfferingsForm form={profileForm} /> : <Skeleton className="h-64" />)}

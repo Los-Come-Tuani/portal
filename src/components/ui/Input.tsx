@@ -13,16 +13,16 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export function Input({ className, leading, trailing, ref, ...props }: InputProps) {
   if (!leading && !trailing) {
-    return <input ref={ref} className={cn(fieldClasses, 'h-10', className)} {...props} />
+    return <input ref={ref} className={cn(fieldClasses, 'h-12', className)} {...props} />
   }
   return (
-    <div className={cn('relative flex items-center', className)}>
+    <div className={cn('relative flex min-w-0 max-w-full items-center', className)}>
       {leading && (
         <span className="pointer-events-none absolute left-3 text-body font-medium text-muted">{leading}</span>
       )}
       <input
         ref={ref}
-        className={cn(fieldClasses, 'h-10 tabular-nums', leading ? 'pl-10' : '', trailing ? 'pr-24' : '')}
+        className={cn(fieldClasses, 'h-12 tabular-nums', leading ? 'pl-10' : '', trailing ? 'pr-24' : '')}
         {...props}
       />
       {trailing && <span className="pointer-events-none absolute right-3 text-small text-muted">{trailing}</span>}
@@ -44,8 +44,8 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 
 export function Select({ className, children, ref, ...props }: SelectProps) {
   return (
-    <div className={cn('relative', className)}>
-      <select ref={ref} className={cn(fieldClasses, 'h-10 cursor-pointer appearance-none pr-9')} {...props}>
+    <div className={cn('relative min-w-0 max-w-full', className)}>
+      <select ref={ref} className={cn(fieldClasses, 'h-12 cursor-pointer appearance-none pr-9')} {...props}>
         {children}
       </select>
       <ChevronDown

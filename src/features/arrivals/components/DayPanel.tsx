@@ -28,10 +28,10 @@ export function DayPanel({ date, hour, groups, today, circuits, placeNames, onCl
   return (
     <aside
       aria-label={`Grupos del ${formatWeekdayDate(date)}`}
-      className="flex flex-col rounded-kp border border-divider bg-surface xl:sticky xl:top-24 xl:max-h-[calc(100dvh-7.5rem)]"
+      className="flex min-w-0 flex-col rounded-panel border border-divider bg-surface xl:sticky xl:top-24 xl:max-h-[calc(100dvh-7.5rem)]"
     >
-      <header className="border-b border-divider px-5 pt-4 pb-3.5">
-        <div className="flex items-center gap-2">
+      <header className="rounded-t-panel border-b border-divider bg-canvas/45 px-5 py-5">
+        <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-title font-semibold text-ink">{formatWeekdayDate(date)}</h2>
           {date === today && <Tag tone="brand">Hoy</Tag>}
         </div>
@@ -46,13 +46,13 @@ export function DayPanel({ date, hour, groups, today, circuits, placeNames, onCl
           )}
         </p>
         {hour !== null && (
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <Tag tone="ink">{formatTimeRange(hour, hour + 60)}</Tag>
             <span className="text-caption text-muted">{formatPeople(presentPeople)} en el lugar</span>
             <button
               type="button"
               onClick={onClearHour}
-              className="ml-auto inline-flex items-center gap-1 rounded-sm text-caption font-semibold text-ink hover:underline"
+              className="ml-auto inline-flex min-h-11 items-center gap-1 rounded-sm text-caption font-semibold text-ink hover:underline"
             >
               <X size={13} aria-hidden="true" />
               Todo el día
@@ -79,13 +79,13 @@ export function DayPanel({ date, hour, groups, today, circuits, placeNames, onCl
       ) : (
         <ol className="flex-1 divide-y divide-divider overflow-y-auto">
           {shown.map((group) => (
-            <li key={group.key} className="flex items-start gap-3 px-5 py-3">
+            <li key={group.key} className="flex items-start gap-3 px-5 py-4">
               <div className="w-[4.75rem] shrink-0 tabular-nums">
                 <p className="text-small font-semibold text-ink">{formatTime(group.arrival)}</p>
                 <p className="text-caption text-muted">a {formatTime(group.departure)}</p>
               </div>
               <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-wrap items-start justify-between gap-2">
                   <p className="flex items-center gap-1.5 text-small font-semibold text-ink">
                     <Users size={14} aria-hidden="true" className="text-muted" />
                     {formatPeople(group.groupSize)}

@@ -9,8 +9,8 @@ interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'typ
 
 export function Checkbox({ label, description, className, ref, ...props }: CheckboxProps) {
   return (
-    <label className={cn('flex cursor-pointer items-start gap-3 text-body', className)}>
-      <input ref={ref} type="checkbox" className="mt-0.5 size-4 shrink-0 cursor-pointer accent-ink" {...props} />
+    <label className={cn('flex min-h-11 cursor-pointer items-start gap-3 py-2 text-body', className)}>
+      <input ref={ref} type="checkbox" className="mt-0.5 size-5 shrink-0 cursor-pointer accent-ink" {...props} />
       <span className="flex flex-col">
         <span className="text-ink">{label}</span>
         {description && <span className="text-caption text-muted">{description}</span>}
@@ -41,13 +41,13 @@ export function Switch({ checked, onChange, label, description, disabled }: Swit
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200',
-          checked ? 'bg-ink' : 'bg-outline',
+          'relative inline-flex h-11 w-11 shrink-0 items-center rounded-kp before:absolute before:inset-x-0 before:top-2.5 before:h-6 before:rounded-full before:transition-colors before:duration-200',
+          checked ? 'before:bg-ink' : 'before:bg-field-outline',
         )}
       >
         <span
           className={cn(
-            'inline-block size-5 rounded-full bg-white shadow-raise transition-transform duration-200 ease-out-expo',
+            'relative inline-block size-5 rounded-full bg-white shadow-raise transition-transform duration-200 ease-out-expo',
             checked ? 'translate-x-[22px]' : 'translate-x-0.5',
           )}
         />
@@ -94,7 +94,7 @@ export function SegmentedControl<T extends string | number>({
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
       aria-invalid={invalid || undefined}
-      className={cn('inline-flex rounded-kp border bg-field p-0.5', invalid ? 'border-danger/60' : 'border-outline', className)}
+      className={cn('inline-flex min-w-0 max-w-full flex-wrap gap-0.5 rounded-kp border bg-surface p-1', invalid ? 'border-danger/60' : 'border-outline', className)}
       onKeyDown={(event) => {
         if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
           event.preventDefault()
@@ -117,8 +117,8 @@ export function SegmentedControl<T extends string | number>({
             title={option.description}
             onClick={() => onChange(option.value)}
             className={cn(
-              'rounded-[8px] font-medium whitespace-nowrap transition-colors duration-150',
-              size === 'sm' ? 'h-7 px-2.5 text-caption' : 'h-8 px-3.5 text-small',
+              'min-w-11 max-w-full grow shrink-0 rounded-sm font-medium transition-colors duration-150 focus-visible:-outline-offset-2',
+              size === 'sm' ? 'min-h-11 px-3 py-2 text-small' : 'min-h-11 px-4 py-2 text-body',
               selected ? 'bg-ink text-canvas' : 'text-muted hover:text-ink',
             )}
           >

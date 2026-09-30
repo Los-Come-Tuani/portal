@@ -21,7 +21,7 @@ const TINTS = ['bg-surface', 'bg-planned/8', 'bg-planned/16', 'bg-planned/28', '
 
 export function MonthCalendar({ month, weeks, days, maxDay, today, selectedDate, events, campaigns, onSelect }: MonthCalendarProps) {
   return (
-    <div className="overflow-x-auto rounded-kp border border-divider bg-surface">
+    <div className="min-w-0 overflow-x-auto rounded-panel border border-divider bg-surface">
       <table className="w-full min-w-[40rem] table-fixed border-separate border-spacing-0" aria-label="Personas por día del mes">
         <thead>
           <tr>
@@ -65,7 +65,7 @@ export function MonthCalendar({ month, weeks, days, maxDay, today, selectedDate,
                       <span
                         className={cn(
                           'flex size-7 items-center justify-center rounded-full text-small font-semibold tabular-nums',
-                          date === today ? 'bg-brand text-on-brand' : 'text-ink',
+                          date === today ? 'bg-action text-on-action' : 'text-ink',
                         )}
                       >
                         {Number(date.slice(8))}

@@ -31,7 +31,7 @@ export function Tabs<T extends string>({ value, onChange, items, label, classNam
       ref={listRef}
       role="tablist"
       aria-label={label}
-      className={cn('flex gap-1 overflow-x-auto border-b border-divider', className)}
+      className={cn('flex min-w-0 max-w-full gap-1 overflow-x-auto border-b border-divider', className)}
     >
       {items.map((item, index) => {
         const selected = item.value === value
@@ -50,8 +50,8 @@ export function Tabs<T extends string>({ value, onChange, items, label, classNam
               if (event.key === 'ArrowLeft') focusTab(index - 1)
             }}
             className={cn(
-              'relative -mb-px flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-body font-medium whitespace-nowrap transition-colors duration-150',
-              selected ? 'border-ink text-ink' : 'border-transparent text-muted hover:text-ink',
+              'relative -mb-px flex min-h-12 shrink-0 items-center gap-2 border-b-2 px-3 text-body font-medium whitespace-nowrap transition-colors duration-150 focus-visible:-outline-offset-4',
+              selected ? 'border-action text-action' : 'border-transparent text-muted hover:text-ink',
             )}
           >
             {item.label}
@@ -59,7 +59,7 @@ export function Tabs<T extends string>({ value, onChange, items, label, classNam
               <span
                 className={cn(
                   'rounded-sm px-1.5 text-caption tabular-nums',
-                  selected ? 'bg-ink text-canvas' : 'bg-paper text-muted',
+                  selected ? 'bg-action text-on-action' : 'bg-paper text-muted',
                 )}
               >
                 {item.count}

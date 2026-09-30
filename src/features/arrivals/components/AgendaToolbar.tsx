@@ -52,8 +52,8 @@ export function AgendaToolbar({ state, placeOptions }: AgendaToolbarProps) {
         : monthKey(state.date) === monthKey(state.today)
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-      <div className="flex items-center gap-3">
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-6 gap-y-4 border-b border-divider pb-5">
+      <div className="flex min-w-0 flex-wrap items-center gap-3">
         <h1 className="text-headline font-bold tracking-tight text-ink">
           <span className="sr-only">Agenda: </span>
           {agendaTitle(state.view, state.date)}
@@ -80,7 +80,7 @@ export function AgendaToolbar({ state, placeOptions }: AgendaToolbarProps) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex max-w-full flex-wrap items-center gap-2">
         {placeOptions.length > 1 && (
           <Select
             aria-label="Lugar"

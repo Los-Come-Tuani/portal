@@ -157,7 +157,7 @@ export function ApplicationWizard({ mode }: { mode: WizardMode }) {
                 onClick={() => goTo(index)}
                 aria-current={current ? 'step' : undefined}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-kp px-2 py-2 text-left text-body transition-colors duration-150',
+                  'flex min-h-12 w-full items-center gap-3 rounded-kp px-3 py-3 text-left text-body transition-colors duration-150',
                   reachable && !current && (assisted ? 'hover:bg-canvas' : 'hover:bg-paper-deep'),
                   current ? 'font-semibold text-ink' : reachable ? 'text-ink' : 'text-muted',
                 )}
@@ -201,7 +201,7 @@ export function ApplicationWizard({ mode }: { mode: WizardMode }) {
       </Heading>
       <p className="mt-1.5 max-w-[60ch] text-body text-muted">{COPY[mode][key].description}</p>
 
-      <details className="group mt-5 rounded-kp border border-divider bg-paper lg:hidden">
+      <details className="group mt-5 rounded-panel border border-divider bg-surface lg:hidden">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-small font-semibold text-ink">
           Qué documentos {assisted ? 'se necesitan' : 'vas a necesitar'}
           <ChevronDown size={16} className="text-muted transition-transform duration-200 ease-out-expo group-open:rotate-180" aria-hidden="true" />
@@ -247,7 +247,7 @@ export function ApplicationWizard({ mode }: { mode: WizardMode }) {
     return (
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="min-w-0 max-w-2xl">{form}</div>
-        <aside className="hidden rounded-kp border border-divider bg-surface p-5 lg:sticky lg:top-24 lg:flex lg:flex-col lg:gap-8">
+        <aside className="hidden rounded-panel border border-divider bg-surface p-6 lg:sticky lg:top-24 lg:flex lg:flex-col lg:gap-8">
           {stepList}
           <ApplyGuide type={draft.type} assisted />
         </aside>
@@ -257,8 +257,8 @@ export function ApplicationWizard({ mode }: { mode: WizardMode }) {
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[minmax(0,1fr)_24rem]">
-      <div className="flex flex-col px-5 pt-6 pb-16 sm:px-10">
-        <header className="flex items-center justify-between gap-4">
+      <div className="flex min-w-0 flex-col px-5 pt-6 pb-16 sm:px-10 lg:bg-surface">
+        <header className="flex flex-wrap items-center justify-between gap-4">
           <Link to={paths.login} aria-label="K'Plan, volver a la entrada">
             <Logo className="h-9 text-ink" />
           </Link>
@@ -269,9 +269,9 @@ export function ApplicationWizard({ mode }: { mode: WizardMode }) {
             </Link>
           </p>
         </header>
-        <main className="mx-auto w-full max-w-2xl pt-10">{form}</main>
+        <main className="mx-auto w-full min-w-0 max-w-2xl pt-10">{form}</main>
       </div>
-      <aside className="relative hidden bg-paper lg:block">
+      <aside className="relative hidden border-l border-divider bg-canvas lg:block">
         <div className="sticky top-0 flex max-h-dvh flex-col gap-8 overflow-y-auto px-10 pt-24 pb-10">
           {stepList}
           <ApplyGuide type={draft.type} />

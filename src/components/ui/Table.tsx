@@ -168,7 +168,7 @@ export function Table({ children, caption, id, className, maxHeight = 'screen', 
   const total = widths?.reduce((sum, width) => sum + width, 0) ?? 0
 
   return (
-    <div className={cn('relative rounded-kp border border-divider bg-surface', className)}>
+    <div className={cn('relative min-w-0 max-w-full rounded-panel border border-divider bg-surface', className)}>
       <div
         ref={regionRef}
         role="region"
@@ -176,7 +176,7 @@ export function Table({ children, caption, id, className, maxHeight = 'screen', 
         tabIndex={0}
         style={{ '--table-top': `${top}px` } as CSSProperties}
         className={cn(
-          'overflow-auto rounded-kp focus-visible:outline-offset-0',
+          'overflow-auto rounded-panel focus-visible:-outline-offset-2',
           maxHeight === 'screen' && 'lg:max-h-[max(22rem,calc(100dvh-var(--table-top)-2.5rem))]',
         )}
       >
@@ -201,7 +201,7 @@ export function Table({ children, caption, id, className, maxHeight = 'screen', 
       {more && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-px right-px w-12 rounded-r-kp bg-linear-to-l from-surface to-transparent"
+          className="pointer-events-none absolute inset-y-px right-px w-12 rounded-r-panel bg-linear-to-l from-surface to-transparent"
         />
       )}
     </div>
@@ -225,7 +225,7 @@ export function Th({
       scope="col"
       aria-labelledby={withHandle ? labelId : undefined}
       className={cn(
-        'sticky top-0 z-10 overflow-hidden border-b border-divider bg-surface px-4 py-2.5 text-caption font-semibold tracking-label text-ellipsis whitespace-nowrap text-muted uppercase',
+        'sticky top-0 z-10 overflow-hidden border-b border-divider bg-canvas px-4 py-3 text-small font-semibold text-ellipsis whitespace-nowrap text-ink',
         align === 'right' && 'text-right',
         align === 'center' && 'text-center',
         className,
@@ -251,11 +251,11 @@ export function Th({
           onFocus={(event) => setWidth(table.widthOf(event.currentTarget) ?? event.currentTarget.parentElement?.getBoundingClientRect().width)}
           onDoubleClick={table.reset}
           onClick={(event) => event.stopPropagation()}
-          className="group/handle absolute top-0 right-0 flex h-full w-3 cursor-col-resize touch-none justify-end focus-visible:outline-none"
+          className="group/handle absolute top-0 right-0 flex h-full w-3 cursor-col-resize touch-none justify-end focus-visible:-outline-offset-2"
         >
           <span
             aria-hidden="true"
-            className="my-2 mr-1 w-0.5 rounded-full bg-divider transition-colors duration-150 group-hover/handle:bg-ink/40 group-focus-visible/handle:bg-ink"
+            className="my-2 mr-1 w-0.5 rounded-full bg-divider transition-colors duration-150 group-hover/handle:bg-ink/40 group-focus-visible/handle:bg-action"
           />
         </span>
       )}
@@ -267,7 +267,7 @@ export function Td({ className, align = 'left', ...props }: TdHTMLAttributes<HTM
   return (
     <td
       className={cn(
-        'overflow-hidden border-b border-divider px-4 py-3 align-middle text-ellipsis',
+        'overflow-hidden border-b border-divider px-4 py-4 align-middle text-ellipsis',
         align === 'right' && 'text-right tabular-nums',
         align === 'center' && 'text-center',
         className,
@@ -280,7 +280,7 @@ export function Td({ className, align = 'left', ...props }: TdHTMLAttributes<HTM
 export function Tr({ className, interactive, ...props }: HTMLAttributes<HTMLTableRowElement> & { interactive?: boolean }) {
   return (
     <tr
-      className={cn('transition-colors duration-150 last:[&>td]:border-b-0', interactive && 'cursor-pointer hover:bg-canvas', className)}
+      className={cn('transition-colors duration-150 last:[&>td]:border-b-0', interactive && 'cursor-pointer hover:bg-canvas/60 focus-within:bg-canvas/60', className)}
       {...props}
     />
   )

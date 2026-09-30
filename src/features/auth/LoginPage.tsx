@@ -59,10 +59,10 @@ export function LoginPage() {
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)]">
-      <section className="flex flex-col px-6 pt-8 sm:px-12">
+      <section className="flex min-w-0 flex-col px-6 pt-8 sm:px-12 lg:bg-surface">
         <Logo className="h-10 self-start text-ink" />
 
-        <div className="my-auto w-full max-w-sm py-12">
+        <div className="my-auto w-full max-w-sm py-10 sm:py-12">
           <h1 className="text-headline font-bold tracking-tight">Entra a tu portal</h1>
           <p className="mt-2 text-body text-muted">Para negocios, alcaldías y el equipo de K'Plan.</p>
 
@@ -88,13 +88,13 @@ export function LoginPage() {
             <button
               type="button"
               onClick={() => void forgotPassword()}
-              className="self-start text-small font-semibold text-ink underline decoration-outline underline-offset-4 hover:decoration-ink"
+              className="min-h-11 self-start text-small font-semibold text-ink underline decoration-outline underline-offset-4 hover:decoration-ink"
             >
               ¿Olvidaste tu contraseña?
             </button>
           </form>
 
-          <div className="mt-8 flex items-center justify-between gap-4 rounded-kp border border-divider bg-surface px-4 py-3">
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-panel border border-divider bg-canvas px-4 py-4">
             <p className="text-small text-muted">
               <span className="block font-semibold text-ink">¿Tu negocio o alcaldía todavía no está en K'Plan?</span>
               Postúlate con tus documentos y entra mientras lo revisamos.
@@ -138,8 +138,8 @@ export function LoginPage() {
         <img src={loginArt} alt="" className="-mx-6 mt-auto w-[calc(100%+3rem)] max-w-none sm:-mx-12 sm:w-[calc(100%+6rem)] lg:hidden" />
       </section>
 
-      <aside className="relative hidden flex-col overflow-hidden bg-paper lg:sticky lg:top-0 lg:flex lg:h-dvh">
-        <div className="max-w-2xl px-16 pt-24">
+      <aside className="relative hidden flex-col overflow-hidden bg-canvas lg:sticky lg:top-0 lg:flex lg:h-dvh">
+        <div className="max-w-2xl px-10 pt-16 xl:px-16 xl:pt-24">
           <p className="text-display font-bold tracking-tight text-ink">
             Los turistas ya armaron su día. Tú sabes a qué hora llegan.
           </p>

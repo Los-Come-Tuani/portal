@@ -73,7 +73,7 @@ export function AgendaSummary({ view, date, today, groups, loading, scopeLabel, 
   const [busiestHour] = [...byHour.entries()].sort((a, b) => b[1] - a[1])
 
   return (
-    <p className="max-w-[84ch] text-lead text-muted">
+    <p className="max-w-[72ch] text-lead text-muted">
       {scope} {allPast ? 'hubo' : 'hay'} <Strong>{formatPeople(people)}</Strong> en{' '}
       {plural(inView.length, 'grupo', 'grupos')} con visita planeada a {scopeLabel}.
       {duePeople > 0 && (

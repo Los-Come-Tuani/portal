@@ -94,7 +94,7 @@ export function StopsEditor({ city, stops, value, legMinutes, onChange, error }:
             const leg = legMinutes?.[stopId]
             const previous = index > 0 ? byId.get(value[index - 1]) : undefined
             return (
-              <li key={stopId} className="flex items-start gap-3 py-2.5 pr-2 pl-3">
+              <li key={stopId} className="flex min-w-0 flex-wrap items-start gap-3 py-3 pr-2 pl-3 sm:flex-nowrap">
                 <span className="mt-1.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-ink text-caption font-bold text-canvas tabular-nums">
                   {index + 1}
                 </span>
@@ -134,7 +134,7 @@ export function StopsEditor({ city, stops, value, legMinutes, onChange, error }:
                               inputMode="numeric"
                               value={String(leg)}
                               onChange={(event) => setLeg(stopId, Math.max(0, Math.round(Number(event.target.value) || 0)))}
-                              className="h-8! tabular-nums"
+                              className="h-12! tabular-nums"
                             />
                           </span>
                           <span className="text-muted">min</span>
@@ -146,7 +146,7 @@ export function StopsEditor({ city, stops, value, legMinutes, onChange, error }:
                     </div>
                   )}
                 </div>
-                <div className="flex shrink-0">
+                <div className="ml-auto flex shrink-0">
                   <IconButton
                     id={moverId(stopId, -1)}
                     size="sm"

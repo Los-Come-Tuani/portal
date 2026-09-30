@@ -106,7 +106,7 @@ export function Agenda({ state }: { state: AgendaState }) {
       {data.visits.isError ? (
         <ErrorState error={data.visits.error} onRetry={() => void data.visits.refetch()} />
       ) : (
-        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="min-w-0">
             {loading ? (
               <Skeleton className="h-[34rem]" />

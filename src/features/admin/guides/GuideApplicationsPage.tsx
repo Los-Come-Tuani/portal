@@ -86,7 +86,7 @@ export function GuideApplicationsPage() {
       />
 
       {applications.isSuccess && (
-        <p className="max-w-[84ch] text-lead text-muted">
+        <p className="max-w-[72ch] text-lead text-muted">
           {inReview.length === 0 ? (
             'No hay solicitudes en revisión.'
           ) : (

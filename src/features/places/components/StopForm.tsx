@@ -9,7 +9,7 @@ const MapPicker = lazy(() => import('./MapPicker'))
 
 export function FormSection({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-5 border-t border-divider pt-6 first:border-t-0 first:pt-0">
+    <section className="flex min-w-0 flex-col gap-5 border-t border-divider pt-6 first:border-t-0 first:pt-0">
       <div>
         <h3 className="text-lead font-semibold text-ink">{title}</h3>
         {description && <p className="mt-0.5 max-w-[64ch] text-small text-muted">{description}</p>}
@@ -38,7 +38,7 @@ export function StopForm({ form }: { form: UseFormReturn<StopInput> }) {
         <Field label="Nombre del lugar" error={errors.name?.message}>
           {(field) => <Input {...field} {...register('name')} />}
         </Field>
-        <div className="grid gap-5 sm:grid-cols-[14rem_1fr]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 sm:grid-cols-[14rem_minmax(0,1fr)]">
           <Field label="Categoría" error={errors.category?.message} hint="La app filtra y reparte medallas por categoría.">
             {(field) => (
               <Select {...field} {...register('category')}>

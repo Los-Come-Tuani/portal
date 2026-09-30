@@ -16,10 +16,10 @@ export function IconButton({ label, icon, size = 'md', tone = 'default', classNa
       aria-label={label}
       title={label}
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-kp transition-colors duration-150',
+        'inline-flex shrink-0 items-center justify-center rounded-kp transition-colors duration-150 [&>.lucide]:size-5 [&>.lucide]:stroke-2',
         'disabled:pointer-events-none disabled:opacity-40',
         tone === 'danger' ? 'text-danger hover:bg-danger/8' : 'text-ink hover:bg-ink/6',
-        size === 'sm' ? 'size-8' : 'size-10',
+        size === 'sm' ? 'size-11' : 'size-12',
         className,
       )}
       {...props}

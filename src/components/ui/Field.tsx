@@ -41,7 +41,7 @@ export function Field({ label, hint, error, optional, className, children, group
   const labelClass = 'flex items-baseline justify-between gap-2 text-small font-medium text-ink'
 
   return (
-    <div className={cn('flex flex-col gap-1.5', className)}>
+    <div className={cn('flex min-w-0 flex-col gap-2', className)}>
       {group ? (
         <span id={labelId} className={labelClass}>
           {labelContent}

@@ -65,13 +65,13 @@ export function CollectionsPage() {
         <ErrorState error={statements.error} onRetry={() => void statements.refetch()} />
       ) : (
         <>
-          <p className="max-w-[80ch] text-lead text-muted">
+          <p className="max-w-[72ch] text-lead text-muted">
             Por cobrar: <strong className="font-semibold text-ink">{formatMoney(totals.due)}</strong> de{' '}
             {plural(totals.debtors, 'organización', 'organizaciones')}. En {month}, hasta hoy, se generaron{' '}
             <strong className="font-semibold text-ink">{formatMoney(totals.open)}</strong>.
           </p>
 
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
             {rows.length === 0 ? (
               <EmptyState icon={<Wallet size={20} />} title="Todavía no hay cobros" />
             ) : (

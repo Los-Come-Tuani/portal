@@ -143,9 +143,9 @@ export function EventsPage() {
           {section === 'proximos' && 'Un evento le da al turista una razón para agregarte a su día.'}
         </EmptyState>
       ) : (
-        <ul className="divide-y divide-divider rounded-kp border border-divider bg-surface">
+        <ul className="min-w-0 divide-y divide-divider rounded-panel border border-divider bg-surface">
           {shown.map((event) => (
-            <li key={event.id} className={cn('flex flex-wrap items-center gap-4 p-4 sm:flex-nowrap', event.status === 'hidden' && 'bg-canvas/60')}>
+            <li key={event.id} className={cn('grid min-w-0 grid-cols-[3.5rem_minmax(0,1fr)] items-center gap-4 p-4 sm:flex sm:flex-nowrap', event.status === 'hidden' && 'bg-canvas/60')}>
               <DateBlock date={event.date} past={event.date < today} />
               <img src={event.image} alt="" loading="lazy" className="hidden size-16 shrink-0 rounded-sm bg-placeholder object-cover md:block" />
               <div className="min-w-0 flex-1">
@@ -174,7 +174,7 @@ export function EventsPage() {
                 </p>
                 {isAdmin && <p className="mt-0.5 text-caption text-hint">Organiza: {organizerName(event)}</p>}
               </div>
-              <div className="flex shrink-0">
+              <div className="col-span-full flex shrink-0 justify-end">
                 {isAdmin && (
                   <>
                     <IconButton

@@ -61,7 +61,7 @@ export function StartTimesField({ value, onChange, flagged, error }: StartTimesF
           })}
         </ul>
       )}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Input
           type="time"
           step={900}

@@ -31,9 +31,9 @@ export function SaveBar({
 
   if (!visible) return null
   return (
-    <div className="sticky bottom-4 z-20 mt-6 flex animate-rise flex-wrap items-center justify-between gap-3 rounded-kp bg-ink px-5 py-3 text-canvas shadow-pop">
+    <div className="sticky bottom-4 z-20 mt-6 flex animate-rise flex-wrap items-center justify-between gap-3 rounded-panel bg-ink px-4 py-4 sm:px-6 text-canvas shadow-pop">
       <p className="text-body font-medium">{message}</p>
-      <div className="flex items-center gap-2">
+      <div className="flex max-w-full flex-wrap items-center gap-2">
         <Button variant="ghost" onClick={onDiscard} disabled={saving} className="text-canvas hover:bg-canvas/10">
           {discardLabel}
         </Button>

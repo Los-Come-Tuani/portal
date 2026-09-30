@@ -50,7 +50,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               type="button"
               aria-label="Cerrar aviso"
               onClick={() => dismiss(toast.id)}
-              className="-mr-1 rounded-sm p-0.5 text-canvas/70 hover:text-canvas"
+              className="-mr-2 -mt-1 flex size-11 shrink-0 items-center justify-center rounded-sm text-canvas/90 hover:bg-canvas/10 hover:text-canvas"
             >
               <X size={16} />
             </button>

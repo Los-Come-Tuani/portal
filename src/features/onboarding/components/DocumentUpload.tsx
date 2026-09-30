@@ -158,7 +158,7 @@ function PageSlot({
         <label
           htmlFor={inputId}
           title={`Cambiar ${label.toLowerCase()}`}
-          className="inline-flex size-8 cursor-pointer items-center justify-center rounded-kp text-ink transition-colors duration-150 hover:bg-ink/6 focus-within:outline-2 focus-within:outline-ink"
+          className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-kp text-ink transition-colors duration-150 hover:bg-ink/6 focus-within:outline-2 focus-within:outline-focus"
         >
           {upload.isPending ? <Spinner size={16} /> : <RefreshCw size={15} aria-hidden="true" />}
           <span className="sr-only">Cambiar {label.toLowerCase()}</span>

@@ -59,7 +59,7 @@ export function CircuitsPage() {
       />
 
       {circuits.isSuccess && all.length > 0 && (
-        <p className="max-w-[84ch] text-lead text-muted">
+        <p className="max-w-[72ch] text-lead text-muted">
           La app tiene <strong className="font-semibold text-ink">{plural(live.length, 'circuito', 'circuitos')}</strong>:{' '}
           <strong className="font-semibold text-ink">{plural(liveCount('kplan'), "especial de K'Plan", "especiales de K'Plan")}</strong>,{' '}
           {liveCount('creative')} {liveCount('creative') === 1 ? 'creativo' : 'creativos'} de alcaldías y {liveCount('private')}{' '}

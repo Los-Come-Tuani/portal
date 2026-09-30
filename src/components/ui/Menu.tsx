@@ -69,7 +69,7 @@ export function MenuItem({
       role="menuitem"
       onClick={onSelect}
       className={cn(
-        'flex w-full items-center gap-2.5 rounded-sm px-2.5 py-2 text-left text-body transition-colors duration-150 focus-visible:outline-offset-0',
+        'flex min-h-11 w-full items-center gap-2.5 rounded-sm px-2.5 py-2 text-left text-body transition-colors duration-150 focus-visible:outline-offset-0',
         tone === 'danger' ? 'text-danger hover:bg-danger/8' : 'text-ink hover:bg-canvas',
       )}
     >

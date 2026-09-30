@@ -28,7 +28,7 @@ function ScrollHint({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 max-w-full flex-col gap-2">
       {more && (
         <p className="flex items-center justify-end gap-1.5 text-small text-muted">
           Hay más roles a la derecha
@@ -36,7 +36,7 @@ function ScrollHint({ children }: { children: ReactNode }) {
         </p>
       )}
       <div className="relative">
-        <div ref={ref} className="overflow-x-auto rounded-kp border border-divider bg-surface">
+        <div ref={ref} className="relative min-w-0 max-w-full overflow-x-auto rounded-panel border border-divider bg-surface">
           {children}
         </div>
         {more && (
@@ -79,7 +79,7 @@ export function RolesPage() {
       />
 
       {roles.isSuccess && staff.isSuccess && (
-        <p className="max-w-[84ch] text-lead text-muted">
+        <p className="max-w-[72ch] text-lead text-muted">
           <strong className="font-semibold text-ink">{plural(all.length, 'rol', 'roles')}</strong> para{' '}
           <strong className="font-semibold text-ink">{plural(staff.data.filter((user) => user.status !== 'suspended').length, 'persona', 'personas')}</strong>.
           Cada columna es un rol: toca su nombre para cambiarle los permisos.
@@ -98,12 +98,12 @@ export function RolesPage() {
               <tr>
                 <th
                   scope="col"
-                  className="sticky left-0 z-10 min-w-60 border-b border-divider bg-surface px-5 py-3 align-bottom text-caption font-semibold tracking-label text-muted uppercase"
+                  className="sticky left-0 z-10 min-w-48 border-b border-divider bg-canvas px-5 py-4 align-bottom text-small font-semibold text-ink"
                 >
                   Permiso
                 </th>
                 {all.map((role) => (
-                  <th key={role.id} scope="col" className="w-28 min-w-28 border-b border-l border-divider px-3 py-3 align-bottom font-normal">
+                  <th key={role.id} scope="col" className="w-28 min-w-28 border-b border-l border-divider bg-canvas px-3 py-4 align-bottom font-normal">
                     {role.system ? (
                       <span className="flex flex-col gap-0.5">
                         <span className="flex items-center gap-1.5 text-small font-semibold text-ink">
@@ -119,7 +119,7 @@ export function RolesPage() {
                         type="button"
                         onClick={() => setEditing(role)}
                         aria-label={`Editar el rol ${role.name}`}
-                        className="group -mx-2 -my-1.5 flex flex-col gap-0.5 rounded-sm px-2 py-1.5 text-left transition-colors duration-150 hover:bg-canvas"
+                        className="group -mx-2 -my-1.5 flex min-h-11 flex-col gap-0.5 rounded-sm px-2 py-1.5 text-left transition-colors duration-150 hover:bg-canvas"
                       >
                         <span className="flex items-center gap-1.5 text-small font-semibold text-ink">
                           {role.name}

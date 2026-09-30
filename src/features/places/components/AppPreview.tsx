@@ -97,7 +97,7 @@ export function AppPreview({ stop, profile, hasBadge, rating, reviewsCount, late
             </div>
             <span
               className={cn(
-                'absolute bottom-3 left-3 rounded-sm px-2 py-0.5 text-[10px] font-semibold text-white',
+                'absolute bottom-3 left-3 rounded-sm px-2 py-0.5 text-[10px] font-semibold text-white [&.bg-brand]:bg-action [&.bg-chip-city]:text-ink [&.bg-chip-nature]:text-ink',
                 chipColor(stop.category ?? ''),
               )}
             >
@@ -126,7 +126,7 @@ export function AppPreview({ stop, profile, hasBadge, rating, reviewsCount, late
               <div className="mt-3 flex gap-2 rounded-kp border border-divider bg-surface p-2.5">
                 <Lightbulb size={13} className="mt-0.5 shrink-0 text-brand" />
                 <div>
-                  <p className="text-[11px] font-bold text-brand">Recomendaciones</p>
+                  <p className="text-[11px] font-bold text-action">Recomendaciones</p>
                   <p className="text-[10px] leading-snug text-muted">{stop.tip}</p>
                 </div>
               </div>
@@ -138,14 +138,14 @@ export function AppPreview({ stop, profile, hasBadge, rating, reviewsCount, late
                   <Medal size={15} className="shrink-0 text-brand" />
                   Esta parada otorga una insignia de {stop.category}
                 </p>
-                <p className="mt-2 flex h-8 items-center justify-center gap-1.5 rounded-kp border border-brand text-[10px] font-semibold text-brand">
+                <p className="mt-2 flex h-8 items-center justify-center gap-1.5 rounded-kp border border-action text-[10px] font-semibold text-action">
                   <QrCode size={12} />
                   Escanear código QR
                 </p>
               </div>
             )}
 
-            <p className="mt-4 flex h-10 items-center justify-center gap-2 rounded-kp bg-brand text-[11px] font-semibold tracking-label text-on-brand uppercase">
+            <p className="mt-4 flex h-10 items-center justify-center gap-2 rounded-kp bg-action text-[11px] font-semibold text-on-action">
               <ListPlus size={14} />
               Añadir a un circuito
             </p>

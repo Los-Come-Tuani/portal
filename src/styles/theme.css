@@ -1,13 +1,16 @@
 /*
- * Colores de K'Plan: espejo de mobile/lib/src/core/theme/app_colors.dart.
- * Un color se cambia sólo en este bloque (y en la app). Los componentes usan
- * los nombres semánticos de @theme, nunca un valor.
+ * K’plan · perfil operativo. Referencia: DESIGN_SYSTEM.md de la raíz del proyecto.
+ * Los primitivos conservan identidad; acción, foco y superficies expresan uso.
+ * Los componentes consumen los alias semánticos de @theme.
  */
 :root {
   /* Paleta base */
   --kp-primary-60: #1e2022;
   --kp-primary-30: #d95d39;
   --kp-primary-10: #f8f4e6;
+  --kp-action: #b74728;
+  --kp-action-hover: #983a20;
+  --kp-field-outline: #858e8b;
   --kp-accent-green: #2d6a4f;
   --kp-accent-blue: #2f6690;
 
@@ -18,7 +21,7 @@
   --kp-hint-text: #9a9484;
   --kp-error: #b3261e;
   --kp-secondary-text: #5c5c5c;
-  --kp-field-fill: #fdfbf3;
+  --kp-field-fill: #ffffff;
 
   /* Contenido */
   --kp-chip-city: #2b8fd1;
@@ -61,8 +64,13 @@
   --color-outline: var(--kp-outline);
   --color-divider: var(--kp-divider);
   --color-brand: var(--kp-primary-30);
-  --color-brand-strong: color-mix(in oklab, var(--kp-primary-30) 78%, var(--kp-primary-60));
+  --color-brand-strong: var(--kp-action-hover);
   --color-on-brand: var(--kp-white);
+  --color-action: var(--kp-action);
+  --color-action-hover: var(--kp-action-hover);
+  --color-on-action: var(--kp-white);
+  --color-focus: var(--kp-action);
+  --color-field-outline: var(--kp-field-outline);
   --color-planned: var(--kp-accent-blue);
   --color-confirmed: var(--kp-accent-green);
   --color-badge: var(--kp-medal-gold);
@@ -106,6 +114,7 @@
   --radius-*: initial;
   --radius-sm: 6px;
   --radius-kp: 10px;
+  --radius-panel: 12px;
   --radius-lg: 16px;
 
   --shadow-*: initial;

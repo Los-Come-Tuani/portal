@@ -14,9 +14,9 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
   const validateCoupon = useValidateCoupon()
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-divider bg-canvas px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 flex min-h-18 items-center gap-1 border-b border-divider bg-surface px-3 sm:gap-3 sm:px-6 lg:px-8">
       <IconButton label="Abrir menú" icon={<MenuIcon size={20} />} onClick={onOpenNav} className="-ml-2 lg:hidden" />
-      <Link to={paths.home} className="lg:hidden" aria-label="K'Plan, ir al inicio">
+      <Link to={paths.home} className="kplan-topbar-brand flex min-h-11 min-w-11 shrink-0 items-center lg:hidden" aria-label="K'Plan, ir al inicio">
         <Isologo className="h-8 text-ink" />
       </Link>
 
@@ -41,7 +41,7 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
         )}
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-1 sm:gap-2">
         <DemoMenu />
         {role === 'negocio' && organization?.status === 'active' && (
           <Button icon={<ScanLine size={16} />} onClick={() => validateCoupon.open()}>

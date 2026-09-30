@@ -70,7 +70,7 @@ export function Dialog({
     >
       {open && (
         <div className={cn('flex flex-col', sheet ? 'h-full' : 'max-h-[calc(100dvh-2rem)]')}>
-          <header className="flex items-start justify-between gap-4 border-b border-divider px-6 py-5">
+          <header className="flex items-start justify-between gap-4 border-b border-divider px-4 py-5 sm:px-6">
             <div className="min-w-0">
               <h2 id={titleId} className="text-title font-semibold">
                 {title}
@@ -83,9 +83,9 @@ export function Dialog({
             </div>
             <IconButton label="Cerrar" icon={<X size={18} />} size="sm" onClick={onClose} className="-mt-1 -mr-2" />
           </header>
-          <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
+          <div className="min-w-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">{children}</div>
           {footer && (
-            <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-divider bg-canvas/50 px-6 py-4">
+            <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-divider bg-canvas/50 px-4 py-4 sm:px-6">
               {footer}
             </footer>
           )}

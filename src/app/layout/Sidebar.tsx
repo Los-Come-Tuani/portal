@@ -33,8 +33,8 @@ interface HintProps {
 }
 
 const ITEM =
-  'group/item relative flex h-10 w-full items-center gap-3 rounded-kp pr-3 pl-3.75 text-left text-body font-medium transition-colors duration-150'
-const IDLE = 'text-ink/80 hover:bg-paper-deep hover:text-ink'
+  'group/item relative flex h-11 w-full items-center gap-3 rounded-kp pr-3 pl-3.75 text-left text-body font-medium transition-colors duration-150'
+const IDLE = 'text-ink/80 hover:bg-canvas hover:text-ink'
 const ACTIVE = 'bg-ink text-canvas'
 
 function isActive(pathname: string, item: { to: string; end?: boolean }): boolean {
@@ -114,14 +114,14 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
 
   return (
     <div className="flex h-full flex-col">
-      <div className="relative flex h-16 shrink-0 items-center overflow-hidden pl-6.75">
+      <div className="relative flex h-18 shrink-0 items-center overflow-hidden pl-6.75">
         <Link
           to={paths.home}
           onClick={onNavigate}
           aria-label="K'Plan, ir al inicio"
           tabIndex={collapsed ? -1 : undefined}
           aria-hidden={collapsed || undefined}
-          className={cn('shrink-0 transition-opacity duration-150', collapsed && 'pointer-events-none opacity-0')}
+          className={cn('flex min-h-11 shrink-0 items-center transition-opacity duration-150', collapsed && 'pointer-events-none opacity-0')}
         >
           <Logo className="h-9 text-ink" />
         </Link>
@@ -133,7 +133,7 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
             aria-expanded={!collapsed}
             aria-controls="menu-principal"
             {...hintProps('Extender el menú')}
-            className="absolute top-3 right-3.75 flex size-10 items-center justify-center rounded-kp text-ink/80 transition-colors duration-150 hover:bg-paper-deep hover:text-ink"
+            className="absolute top-3.5 right-3.5 flex size-11 items-center justify-center rounded-kp text-ink/80 transition-colors duration-150 hover:bg-canvas hover:text-ink [&>.lucide]:size-5 [&>.lucide]:stroke-2"
           >
             {collapsed ? (
               <PanelLeftOpen size={19} strokeWidth={1.75} aria-hidden="true" />
@@ -145,7 +145,7 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
       </div>
 
       <nav id="menu-principal" aria-label="Principal" className="flex-1 overflow-x-hidden overflow-y-auto px-3 pt-2 pb-4">
-        <ul className="flex flex-col gap-0.5">
+        <ul className="flex flex-col gap-1">
           {entries.map((entry) =>
             entry.kind === 'link' ? (
               <li key={entry.to}>
@@ -183,7 +183,7 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
         </ul>
       </nav>
 
-      <div className="border-t border-outline/60 p-3">
+      <div className="border-t border-divider p-3">
         <Menu
           side="top"
           align="start"
@@ -194,7 +194,7 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
               {...props}
               aria-label={collapsed ? `Tu cuenta: ${session.user.name}` : undefined}
               {...hintProps(session.user.name)}
-              className="flex w-full items-center gap-3 overflow-hidden rounded-kp p-1.5 text-left transition-colors duration-150 hover:bg-paper-deep"
+              className="flex w-full items-center gap-3 overflow-hidden rounded-kp p-1.5 text-left transition-colors duration-150 hover:bg-canvas"
             >
               <Avatar name={session.user.name} />
               <span className={cn('min-w-0 flex-1 transition-opacity duration-150', collapsed && 'opacity-0')}>
@@ -252,10 +252,10 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
           role="group"
           aria-label={floating.group.label}
           style={{ top: floating.top }}
-          className="fixed left-20 z-50 min-w-52 animate-rise rounded-kp border border-divider bg-surface p-1.5 shadow-pop"
+          className="fixed bottom-3 left-20 z-50 max-h-max min-w-52 animate-rise overflow-y-auto rounded-panel border border-divider bg-surface p-1.5 shadow-pop"
         >
           <p className="px-2.5 pt-1 pb-1.5 text-small font-semibold text-ink">{floating.group.label}</p>
-          <ul className="flex flex-col gap-0.5">
+          <ul className="flex flex-col gap-1">
             {floating.group.children.map((child) => (
               <li key={child.to}>
                 <NavLink
@@ -267,7 +267,7 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
                   }}
                   className={({ isActive: active }) =>
                     cn(
-                      'flex h-9 items-center justify-between gap-3 rounded-sm px-2.5 text-body transition-colors duration-150 focus-visible:outline-offset-0',
+                      'flex min-h-11 items-center justify-between gap-3 rounded-sm px-2.5 text-body transition-colors duration-150 focus-visible:-outline-offset-2',
                       active ? ACTIVE : 'text-ink hover:bg-canvas',
                     )
                   }
@@ -326,7 +326,7 @@ function SidebarLink({
     >
       {({ isActive: active }) => (
         <>
-          <Icon size={18} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
+          <Icon size={18} strokeWidth={1.75} className="size-5 shrink-0 stroke-2" aria-hidden="true" />
           <span className={cn('min-w-0 flex-1 truncate transition-opacity duration-150', collapsed && 'opacity-0')}>{label}</span>
           {count > 0 &&
             (collapsed ? (
@@ -379,9 +379,9 @@ function SidebarGroup({
         aria-controls={collapsed ? (flyoutOpen ? `submenu-${group.id}` : undefined) : listId}
         aria-label={collapsed ? (pending > 0 ? `${label}, ${pending} pendientes` : label) : undefined}
         {...(flyoutOpen ? {} : hint)}
-        className={cn(ITEM, highlight ? ACTIVE : activeInside ? 'text-ink hover:bg-paper-deep' : IDLE, flyoutOpen && !highlight && 'bg-paper-deep')}
+        className={cn(ITEM, highlight ? ACTIVE : activeInside ? 'text-ink hover:bg-canvas' : IDLE, flyoutOpen && !highlight && 'bg-paper-deep')}
       >
-        <Icon size={18} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
+        <Icon size={18} strokeWidth={1.75} className="size-5 shrink-0 stroke-2" aria-hidden="true" />
         <span className={cn('min-w-0 flex-1 truncate transition-opacity duration-150', collapsed && 'opacity-0')}>{label}</span>
         {pending > 0 &&
           (collapsed ? (
@@ -426,8 +426,8 @@ function SubLink({ child, count, onNavigate }: { child: NavChild; count: number;
       onClick={onNavigate}
       className={({ isActive: active }) =>
         cn(
-          'ml-2 flex h-9 items-center justify-between gap-2 rounded-kp px-3 text-body transition-colors duration-150',
-          active ? cn(ACTIVE, 'font-medium') : 'text-ink/75 hover:bg-paper-deep hover:text-ink',
+          'ml-2 flex min-h-11 items-center justify-between gap-2 rounded-kp px-3 text-body transition-colors duration-150',
+          active ? cn(ACTIVE, 'font-medium') : 'text-ink/75 hover:bg-canvas hover:text-ink',
         )
       }
     >

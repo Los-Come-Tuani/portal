@@ -15,8 +15,8 @@ interface EmptyStateProps {
 /** Un estado vacío que enseña qué hacer, no sólo "no hay nada". */
 export function EmptyState({ icon, title, children, action, className }: EmptyStateProps) {
   return (
-    <div className={cn('flex flex-col items-center px-6 py-12 text-center', className)}>
-      <span className="flex size-12 items-center justify-center rounded-full bg-paper text-ink" aria-hidden="true">
+    <div className={cn('flex min-w-0 flex-col items-center rounded-panel border border-dashed border-outline bg-surface px-6 py-12 text-center', className)}>
+      <span className="flex size-12 items-center justify-center rounded-kp bg-brand/10 text-brand-strong" aria-hidden="true">
         {icon}
       </span>
       <h3 className="mt-4 text-lead font-semibold text-ink">{title}</h3>
@@ -28,7 +28,7 @@ export function EmptyState({ icon, title, children, action, className }: EmptySt
 
 export function ErrorState({ error, onRetry, className }: { error: unknown; onRetry?: () => void; className?: string }) {
   return (
-    <div role="alert" className={cn('flex flex-col items-center px-6 py-12 text-center', className)}>
+    <div role="alert" className={cn('flex min-w-0 flex-col items-center rounded-panel border border-dashed border-outline bg-surface px-6 py-12 text-center', className)}>
       <span className="flex size-12 items-center justify-center rounded-full bg-danger/10 text-danger" aria-hidden="true">
         <CircleAlert size={22} />
       </span>
