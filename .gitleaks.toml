@@ -1,0 +1,10 @@
+title = "kplan-portal"
+
+[extend]
+  useDefault = true
+
+# `docs/design/baseline-hashes.json` guarda SHA-256 de archivos (lo genera la
+# herramienta de diseño) y el detector de llaves genéricas los confunde con secretos.
+[[allowlists]]
+  description = "Hashes de archivos del baseline de diseño"
+  paths       = ['''docs/design/baseline-hashes\.json''']

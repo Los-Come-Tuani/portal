@@ -12,6 +12,26 @@ dist
 dist-ssr
 *.local
 
+# Variables de entorno: solo se versionan las plantillas sin secretos.
+# Todo `VITE_*` termina dentro del bundle, así que aquí solo van valores públicos
+# (URL del API, Client ID de Google), nunca claves ni tokens.
+.env
+.env.*
+!.env.example
+!.env.development
+!.env.production
+!.env.demo
+
+# Llaves y credenciales (Google, Firebase, certificados). Nunca se versionan.
+*.key
+*.p12
+*.pem
+*.pfx
+*-firebase-adminsdk-*.json
+*service-account*.json
+client_secret*.json
+secrets/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
