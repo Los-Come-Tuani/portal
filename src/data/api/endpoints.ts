@@ -1,15 +1,36 @@
 /**
  * El contrato con la API: todas las rutas en un solo lugar. El backend de
- * demo (src/data/mock) implementa exactamente estas mismas rutas, así que
- * conectar la API real es sólo configurar VITE_API_URL.
+ * demo (src/data/mock) implementa estas mismas rutas.
+ *
+ * - `auth` son las rutas reales del API (docs/autenticacion.md del repo del API): sin
+ *   prefijo `/api` y con barra final. La sesión viaja en cookies `HttpOnly`.
+ * - El resto (`/api/...`) es el checklist de lo que falta: el API todavía no publica esos
+ *   recursos y cada sección se alinea con el API cuando su fase llega (F3 en adelante).
  */
 const id = (value: string) => encodeURIComponent(value)
 
 export const endpoints = {
   auth: {
-    login: '/api/auth/login',
-    me: '/api/auth/me',
-    forgotPassword: '/api/auth/forgot-password',
+    /** `GET`: devuelve el token CSRF en la cabecera `x-csrftoken`. */
+    csrf: '/auth/csrf/',
+    login: '/auth/web/login/',
+    /** Segundo paso del inicio de sesión cuando la cuenta tiene 2FA. */
+    twoFactor: '/auth/web/two-factor/',
+    refresh: '/auth/web/refresh/',
+    logout: '/auth/web/logout/',
+    /** La persona de la sesión. */
+    profile: '/auth/profile/',
+    passwordForgot: '/auth/password-forgot/',
+    passwordReset: '/auth/password-reset/',
+    passwordChange: '/auth/password-change/',
+    /** Cierra la sesión en todos los dispositivos. */
+    sessionRevoke: '/auth/session-revoke/',
+    /** `GET`: estado del 2FA de quien está dentro. */
+    twoFactorStatus: '/auth/two-factor/',
+    twoFactorSetup: '/auth/two-factor-setup/',
+    twoFactorConfirm: '/auth/two-factor-confirm/',
+    twoFactorRecovery: '/auth/two-factor-recovery/',
+    twoFactorDisable: '/auth/two-factor-disable/',
   },
   organizations: {
     list: '/api/organizations',

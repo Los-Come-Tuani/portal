@@ -56,10 +56,12 @@ export interface User {
 export interface SessionUser extends User {
   permissions: Permission[]
   staffRoleName: string | null
+  /** El segundo factor de la cuenta: si ya lo activó y si su rol lo exige. */
+  twoFactor: { enabled: boolean; required: boolean }
 }
 
+/** Abrir una sesión: la API la guarda en cookies, así que solo devuelve a la persona. */
 export interface AuthResponse {
-  token: string
   user: SessionUser
 }
 

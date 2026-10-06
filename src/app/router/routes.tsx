@@ -20,6 +20,10 @@ export const router = createBrowserRouter([
     HydrateFallback: SessionLoader,
     children: [
       { path: paths.login, lazy: async () => ({ Component: (await import('@/features/auth/LoginPage')).LoginPage }) },
+      {
+        path: paths.resetPassword,
+        lazy: async () => ({ Component: (await import('@/features/auth/ResetPasswordPage')).ResetPasswordPage }),
+      },
       { path: paths.apply, lazy: async () => ({ Component: (await import('@/features/onboarding/ApplyPage')).ApplyPage }) },
     ],
   },
@@ -31,6 +35,11 @@ export const router = createBrowserRouter([
       {
         element: <AppShell />,
         children: [
+          // La seguridad de la cuenta es de todos los roles, también de una organización en revisión.
+          {
+            path: 'seguridad',
+            lazy: async () => ({ Component: (await import('@/features/security/SecurityPage')).SecurityPage }),
+          },
           {
             element: <RequireAgenda />,
             children: [

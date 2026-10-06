@@ -1,6 +1,8 @@
 import type { Organization, Permission, SessionUser, Stop, User } from '../../models'
+import type { ApiSessionUser } from '../../schemas/session.schema'
 import type { MockDatabase } from '../db'
 import { fail } from '../http'
+import { demoTwoFactor } from './demo-two-factor'
 
 export function isAdmin(user: User): boolean {
   return user.role === 'admin'
@@ -26,6 +28,31 @@ export function toSessionUser(db: MockDatabase, user: User): SessionUser {
     ...user,
     permissions: permissionsOf(db, user),
     staffRoleName: db.staffRoles.find((role) => role.id === user.staffRoleId)?.name ?? null,
+    twoFactor: { enabled: demoTwoFactor.get(user.id).enabled, required: false },
+  }
+}
+
+/** La persona de la sesión con la forma que entrega el API real (`GET /auth/profile/`). */
+export function toApiSessionUser(db: MockDatabase, user: User): ApiSessionUser {
+  const roleIndex = db.staffRoles.findIndex((role) => role.id === user.staffRoleId)
+  const [firstName = '', ...rest] = user.name.split(' ')
+  return {
+    id: user.id,
+    email: user.email,
+    first_name: firstName,
+    last_name: rest.join(' '),
+    name: user.name,
+    username: null,
+    birth_date: null,
+    nationality: 'NI',
+    status: user.status === 'suspended' ? 'suspended' : 'active',
+    verified: true,
+    role: user.role === 'guia' ? (user.serviceRole === 'translator' ? 'traductor' : 'guia') : user.role,
+    groups: roleIndex < 0 ? [] : [{ id: roleIndex + 1, name: db.staffRoles[roleIndex].name }],
+    permissions: permissionsOf(db, user),
+    organization_id: user.organizationId,
+    two_factor: { enabled: demoTwoFactor.get(user.id).enabled, required: false },
+    created_at: `${user.createdAt}T12:00:00Z`,
   }
 }
 

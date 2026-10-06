@@ -57,6 +57,9 @@ export const queryKeys = {
     detail: (userId: string) => ['users', 'detail', userId] as const,
   },
   staffRoles: ['staff-roles'] as const,
+  security: {
+    twoFactor: ['security', 'two-factor'] as const,
+  },
   placeRequests: {
     all: ['place-requests'] as const,
     list: (filters: PlaceRequestFilters) => ['place-requests', 'list', filters] as const,

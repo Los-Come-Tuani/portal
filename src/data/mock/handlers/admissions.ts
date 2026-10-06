@@ -25,6 +25,7 @@ import {
 import type { MockDatabase } from '../db'
 import { fail, parseBody, requireUser, route, type MockContext } from '../http'
 import { hasPermission, toSessionUser } from '../services/access'
+import { demoSession } from '../services/demo-session'
 import { assertStopFree, ownerOf } from '../services/ownership'
 import { readinessOf, withNewPlaceReadiness } from '../services/readiness'
 import { claimReview, logReview } from '../services/review'
@@ -229,7 +230,9 @@ export const admissionRoutes = [
       const issues = parseApplication(body)
       if (issues.length > 0) invalid(issues)
       const { user } = createApplication(db, body as OrganizationApplicationInput)
-      return { token: `demo.${user.id}`, user: toSessionUser(db, user) }
+      // Quien se postula queda con la sesión abierta, como con las cookies de la API real.
+      demoSession.open(user.id)
+      return { user: toSessionUser(db, user) }
     },
     { isPublic: true },
   ),

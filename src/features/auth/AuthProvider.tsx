@@ -1,18 +1,24 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { sessionToken } from '@/data/api/session-token'
-import type { AuthResponse, LoginInput, Organization, SessionUser, User } from '@/data/models'
+import { ApiError } from '@/data/api/errors'
+import { sessionMarker } from '@/data/api/session-marker'
+import { isPortalRole, type AuthResponse, type LoginInput, type Organization, type SessionUser } from '@/data/models'
 import { authRepository } from '@/data/repositories/auth.repository'
 import { organizationsRepository } from '@/data/repositories/organizations.repository'
-import { AuthContext, type AuthStatus } from './auth-context'
+import { NOT_PORTAL_MESSAGE } from '@/data/schemas/session.schema'
+import { AuthContext, type AuthStatus, type LoginOutcome } from './auth-context'
 
-async function loadOrganization(user: User): Promise<Organization | null> {
+/** Cuánto se espera a que la API confirme el cierre de sesión antes de salir de todos modos. */
+const LOGOUT_PATIENCE_MS = 2500
+
+async function loadOrganization(user: SessionUser): Promise<Organization | null> {
   return user.organizationId ? organizationsRepository.get(user.organizationId) : null
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
-  const [status, setStatus] = useState<AuthStatus>(() => (sessionToken.get() ? 'loading' : 'anonymous'))
+  // Las cookies de sesión son HttpOnly: solo se recuerda que hubo un inicio de sesión.
+  const [status, setStatus] = useState<AuthStatus>(() => (sessionMarker.isSet() ? 'loading' : 'anonymous'))
   const [user, setUser] = useState<SessionUser | null>(null)
   const [organization, setOrganization] = useState<Organization | null>(null)
 
@@ -23,21 +29,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('anonymous')
   }, [queryClient])
 
+  /** Deja a la persona dentro. Un rol que no entra al portal se cierra aquí mismo. */
+  const openSession = useCallback(async (next: SessionUser) => {
+    if (!isPortalRole(next.role)) {
+      await authRepository.logout().catch(() => undefined)
+      sessionMarker.clear()
+      throw new ApiError(403, NOT_PORTAL_MESSAGE)
+    }
+    const org = await loadOrganization(next)
+    sessionMarker.set()
+    setUser(next)
+    setOrganization(org)
+    setStatus('authenticated')
+  }, [])
+
   useEffect(() => {
     if (status !== 'loading') return
     let cancelled = false
     authRepository
-      .me()
+      .profile()
       .then(async (me) => {
+        if (!isPortalRole(me.role)) throw new ApiError(403, NOT_PORTAL_MESSAGE)
         const org = await loadOrganization(me)
         if (cancelled) return
         setUser(me)
         setOrganization(org)
         setStatus('authenticated')
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (cancelled) return
-        sessionToken.clear()
+        // Solo un rechazo de la API borra el recuerdo de la sesión: sin conexión o con un
+        // error del servidor, al recargar se vuelve a intentar.
+        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) sessionMarker.clear()
         setStatus('anonymous')
       })
     return () => {
@@ -45,29 +68,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [status])
 
-  useEffect(() => sessionToken.onExpired(clear), [clear])
-
-  const acceptSession = useCallback(async (response: AuthResponse) => {
-    sessionToken.set(response.token)
-    const org = await loadOrganization(response.user)
-    setUser(response.user)
-    setOrganization(org)
-    setStatus('authenticated')
-  }, [])
+  useEffect(() => sessionMarker.onExpired(clear), [clear])
 
   const login = useCallback(
-    async (input: LoginInput) => acceptSession(await authRepository.login(input)),
-    [acceptSession],
+    async (input: LoginInput): Promise<LoginOutcome> => {
+      const result = await authRepository.login(input)
+      if (result.status === 'two-factor') return 'two-factor'
+      await openSession(result.user)
+      return 'authenticated'
+    },
+    [openSession],
   )
 
-  const logout = useCallback(() => {
-    sessionToken.clear()
+  const verifyTwoFactor = useCallback(
+    async (code: string) => openSession(await authRepository.verifyTwoFactor(code)),
+    [openSession],
+  )
+
+  const acceptSession = useCallback(async (response: AuthResponse) => openSession(response.user), [openSession])
+
+  const refreshUser = useCallback(async () => {
+    setUser(await authRepository.profile())
+  }, [])
+
+  const endSession = useCallback(() => {
+    sessionMarker.clear()
     clear()
   }, [clear])
 
+  const logout = useCallback(() => {
+    // Primero se le avisa a la API, que es quien borra las cookies de sesión; si tarda
+    // demasiado o no hay conexión, se sale igual de este navegador.
+    const closing = authRepository.logout().catch(() => undefined)
+    const patience = new Promise<void>((resolve) => window.setTimeout(resolve, LOGOUT_PATIENCE_MS))
+    void Promise.race([closing, patience]).then(endSession)
+  }, [endSession])
+
   const value = useMemo(
-    () => ({ status, user, organization, login, acceptSession, logout }),
-    [status, user, organization, login, acceptSession, logout],
+    () => ({ status, user, organization, login, verifyTwoFactor, acceptSession, refreshUser, logout, endSession }),
+    [status, user, organization, login, verifyTwoFactor, acceptSession, refreshUser, logout, endSession],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

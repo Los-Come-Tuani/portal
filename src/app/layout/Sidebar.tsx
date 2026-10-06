@@ -1,6 +1,6 @@
-import { ChevronDown, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { ChevronDown, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen, ShieldCheck } from 'lucide-react'
 import { useEffect, useId, useRef, useState, type FocusEvent, type MouseEvent } from 'react'
-import { Link, matchPath, NavLink, useLocation } from 'react-router'
+import { Link, matchPath, NavLink, useLocation, useNavigate } from 'react-router'
 import { Logo } from '@/components/brand/Logo'
 import { Avatar, Menu, MenuItem } from '@/components/ui'
 import { useGuideApplications } from '@/data/hooks/use-guides'
@@ -56,6 +56,7 @@ function usePendingCounts(): Record<NavCount, number> {
 export function SidebarContent({ preferences, collapsible = false, onNavigate }: SidebarContentProps) {
   const session = useSession()
   const { logout } = useAuth()
+  const navigate = useNavigate()
   const { pathname } = useLocation()
   const counts = usePendingCounts()
   const entries = navigationFor(session)
@@ -222,6 +223,16 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
                     : ROLE_LABELS[session.role]}
                 </p>
               </div>
+              <MenuItem
+                icon={<ShieldCheck size={16} />}
+                onSelect={() => {
+                  close()
+                  navigate(paths.security)
+                  onNavigate?.()
+                }}
+              >
+                Seguridad
+              </MenuItem>
               <MenuItem
                 icon={<LogOut size={16} />}
                 onSelect={() => {

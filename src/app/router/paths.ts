@@ -1,6 +1,8 @@
 /** Todas las rutas del portal en un solo lugar. */
 export const paths = {
   login: '/entrar',
+  resetPassword: '/restablecer',
+  security: '/seguridad',
   apply: '/postular',
   application: '/solicitud',
   admissions: '/solicitudes',

@@ -53,6 +53,30 @@ pantalla → hook (src/data/hooks) → repositorio (src/data/repositories) → c
 - **API real** (`VITE_API_URL`): `.env.development` apunta a `http://localhost:8080`. En producción la URL no vive en el repo: se define como variable de entorno al construir, y `npm run build` falla si falta, si no es `https` o si el modo demo está activo. El backend de demo ni siquiera se descarga.
 - **Variables**: ver `.env.example`. Todo `VITE_*` termina dentro del bundle del navegador, así que solo van valores públicos, nunca claves ni tokens. Los valores propios van en `.env.development.local`, que no se versiona.
 - **El contrato con el backend** es `endpoints.ts` (las rutas) más `src/data/models` (el formato JSON, el mismo que lee la app). El cliente acepta respuestas planas o envueltas en `data` / `Data`.
+- **Qué funciona con el API real hoy**: el acceso y la seguridad de la cuenta (entrar, 2FA, recuperar y cambiar la contraseña, cerrar sesiones). Las demás pantallas piden `/api/organizations`, `/api/stops`, etc., que el API todavía no publica (llegan por fases): ahí responden 404. Para trabajar la interfaz completa usa `npm run dev:demo`. Cuando una fase del dominio llega al API, se alinean su sección de `endpoints.ts`, su repositorio y su handler de demo.
+
+## Sesión y seguridad
+
+La sesión vive en cookies `HttpOnly` que pone el API (`/auth/web/*`): el JavaScript del portal **nunca** ve ni guarda un token, así que un XSS no puede robarlo. El cliente HTTP (`src/data/api/http-client.ts`) se ocupa de lo demás:
+
+- Todas las peticiones van con `credentials: 'include'`. Cada `POST`, `PATCH` o `DELETE` lleva el token CSRF en `X-CSRFToken`: se pide una vez a `GET /auth/csrf/` y se guarda solo en memoria. Si el API lo rechaza, se pide uno nuevo y se reintenta una vez.
+- Si una petición con sesión recibe `401`, el acceso venció: se renueva la sesión con `POST /auth/web/refresh/` y se reintenta la petición. El `refresh` es de un solo uso, así que la renovación es **una sola aunque fallen varias peticiones a la vez**. Si el API la rechaza, la sesión termina y se vuelve a `/entrar`. Un corte de red no cierra la sesión.
+- Al abrir el portal, `AuthProvider` pregunta `GET /auth/profile/` solo si antes hubo un inicio de sesión (`kplan.portal.session` en `localStorage` es una bandera, no un token).
+- **Entrar** (`/entrar`): correo y contraseña; si la cuenta tiene 2FA, un segundo paso pide el código de 6 dígitos de la app de autenticación o un código de recuperación. Tras cinco intentos fallidos el API bloquea el acceso quince minutos (`429` con `Retry-After`) y el portal dice cuánto esperar.
+- **Recuperar la contraseña** (`/restablecer`): el API manda un código de 6 dígitos al correo (vence en 15 minutos); con él se escribe la contraseña nueva. Responde igual exista o no la cuenta.
+- **Seguridad** (`/seguridad`, desde el menú del usuario; la ven todos los roles): activar el 2FA (QR, clave y código de confirmación), ver y regenerar los códigos de recuperación (se muestran **una sola vez**), desactivarlo, cambiar la contraseña y cerrar sesión en todos los dispositivos. Cambiar la contraseña o cerrar todas las sesiones termina también la sesión de este navegador.
+- El usuario del API (`role`: `admin`, `alcaldia`, `institucion`, `negocio`, `guia`, `traductor`, `turista`) se traduce al del portal en `src/data/schemas/session.schema.ts`. Hoy `institucion` se trata como alcaldía y guías, traductores y turistas no entran (el portal es para negocios, alcaldías y el equipo). Los permisos del equipo son los del catálogo de `src/data/models/access.ts`; cualquier otro código se ignora.
+- En modo demo el backend simulado imita lo mismo (sesión, 2FA, recuperación) y el código que sirve siempre es `123456`.
+
+### Probar contra el API de verdad
+
+Con el API local corriendo (`just run` en el repo del API) y una cuenta de desarrollo:
+
+```bash
+KPLAN_API_URL=http://localhost:8080 KPLAN_TEST_EMAIL=correo@ejemplo.com KPLAN_TEST_PASSWORD=... npx vitest run src/data/api/api.integration.test.ts
+```
+
+Comprueba CORS, cookies, CSRF, la renovación de la sesión y el 2FA completo con códigos reales. Activa y desactiva el 2FA de esa cuenta: no la uses con una cuenta real. Sin esas variables, las pruebas se saltan.
 
 ## Estructura
 
@@ -87,5 +111,5 @@ Todos los colores viven en un solo bloque de `src/styles/theme.css`, espejo de `
 - `npm run build:demo`: build en modo demo, solo para publicar una demo a propósito.
 - `npm run typecheck`: sólo verifica los tipos.
 - `npm run lint`: revisa el código con Oxlint.
-- `npm run test`: corre las pruebas (formatos, horas, planificador de itinerarios y agenda).
+- `npm run test`: corre las pruebas (formatos, horas, planificador de itinerarios, agenda, cliente HTTP con CSRF y renovación de sesión, y el usuario del API). Las de integración con el API se saltan sin `KPLAN_API_URL`.
 - `npm run preview`: sirve localmente el build de producción.

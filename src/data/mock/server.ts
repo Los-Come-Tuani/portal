@@ -1,13 +1,14 @@
 /**
  * Backend de demo: responde las mismas rutas que tendrá la API (ver
  * src/data/api/endpoints.ts) con los datos de src/data/mock/json, guardando
- * los cambios en localStorage. Se usa cuando VITE_API_URL está vacía.
+ * los cambios en localStorage. Solo se usa con VITE_USE_MOCKS=true
+ * (`npm run dev:demo`).
  */
 import { env } from '@/config/env'
 import type { TransportRequest, TransportResponse } from '../api/http-client'
 import { getDatabase, saveDatabase } from './db'
 import { admissionRoutes } from './handlers/admissions'
-import { authRoutes, userFromToken } from './handlers/auth'
+import { authRoutes, userFromSession } from './handlers/auth'
 import { uploadRoutes } from './handlers/uploads'
 import { badgeRoutes } from './handlers/badges'
 import { billingRoutes } from './handlers/billing'
@@ -61,7 +62,7 @@ export async function handleMockRequest(request: TransportRequest): Promise<Tran
 
     try {
       const db = getDatabase()
-      const user = userFromToken(db, request.token)
+      const user = userFromSession(db)
       if (!candidate.isPublic && !user) throw new MockHttpError(401, 'Sesión expirada, vuelve a iniciar sesión')
       if (candidate.roles && (!user || !candidate.roles.includes(user.role))) {
         throw new MockHttpError(403, 'No tienes permiso para hacer esto')
