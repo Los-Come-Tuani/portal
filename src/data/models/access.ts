@@ -181,7 +181,21 @@ export interface StaffRole {
   permissions: Permission[]
   /** El rol de super admin: tiene todo y no se edita ni se borra. */
   system: boolean
+  /** Quien lo tenga tiene que activar la verificación en dos pasos. */
+  requiresTwoFactor: boolean
+  /** Cuántas personas del equipo lo tienen. */
+  members: number
   createdAt: ISODate
 }
 
-export type StaffRoleInput = Pick<StaffRole, 'name' | 'description' | 'permissions'>
+export type StaffRoleInput = Pick<StaffRole, 'name' | 'description' | 'permissions' | 'requiresTwoFactor'>
+
+/** Una persona del equipo de K'Plan, con su rol del equipo (`null` en un superusuario sin rol). */
+export interface StaffMember {
+  id: string
+  name: string
+  email: string
+  role: { id: string; name: string } | null
+  status: 'active' | 'suspended' | 'invited'
+  createdAt: ISODate
+}

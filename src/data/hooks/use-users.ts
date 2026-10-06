@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { StaffInviteInput, StaffRoleInput, UserUpdate } from '../models'
-import { staffRolesRepository, usersRepository, type UserFilters } from '../repositories/users.repository'
+import { staffRepository, staffRolesRepository, usersRepository, type UserFilters } from '../repositories/users.repository'
 import { queryKeys } from './query-keys'
+
+// ── Todas las cuentas (solo demo) ─────────────────────────────────────────
 
 export function useUsers(filters: UserFilters = {}, enabled = true) {
   return useQuery({
@@ -26,11 +28,39 @@ export function useSendPasswordReset() {
   return useMutation({ mutationFn: (userId: string) => usersRepository.sendPasswordReset(userId) })
 }
 
-export function useInviteStaff() {
+// ── El equipo de K'Plan ───────────────────────────────────────────────────
+
+export function useStaffMembers(enabled = true) {
+  return useQuery({ queryKey: queryKeys.staffMembers, queryFn: staffRepository.members, enabled })
+}
+
+/** Invitar, cambiar el rol o el acceso cambia también cuántas personas tiene cada rol. */
+function useRefreshTeam() {
   const queryClient = useQueryClient()
+  return () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.staffMembers })
+    queryClient.invalidateQueries({ queryKey: queryKeys.staffRoles })
+  }
+}
+
+export function useInviteStaff() {
+  const refresh = useRefreshTeam()
+  return useMutation({ mutationFn: (input: StaffInviteInput) => staffRepository.invite(input), onSuccess: refresh })
+}
+
+export function useSetStaffRole() {
+  const refresh = useRefreshTeam()
   return useMutation({
-    mutationFn: (input: StaffInviteInput) => usersRepository.inviteStaff(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.users.all }),
+    mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) => staffRepository.setRole(userId, roleId),
+    onSuccess: refresh,
+  })
+}
+
+export function useSetStaffStatus() {
+  const refresh = useRefreshTeam()
+  return useMutation({
+    mutationFn: ({ userId, status }: { userId: string; status: 'active' | 'suspended' }) => staffRepository.setStatus(userId, status),
+    onSuccess: refresh,
   })
 }
 
@@ -39,18 +69,15 @@ export function useStaffRoles(enabled = true) {
 }
 
 export function useSaveStaffRole() {
-  const queryClient = useQueryClient()
+  const refresh = useRefreshTeam()
   return useMutation({
     mutationFn: ({ id, input }: { id?: string; input: StaffRoleInput }) =>
       id ? staffRolesRepository.update(id, input) : staffRolesRepository.create(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.staffRoles }),
+    onSuccess: refresh,
   })
 }
 
 export function useDeleteStaffRole() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (roleId: string) => staffRolesRepository.remove(roleId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.staffRoles }),
-  })
+  const refresh = useRefreshTeam()
+  return useMutation({ mutationFn: (roleId: string) => staffRolesRepository.remove(roleId), onSuccess: refresh })
 }

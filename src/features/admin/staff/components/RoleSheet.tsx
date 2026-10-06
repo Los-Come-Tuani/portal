@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { Button, Checkbox, ConfirmDialog, Dialog, Field, Input, useToast } from '@/components/ui'
+import { Button, Checkbox, ConfirmDialog, Dialog, Field, Input, Switch, useToast } from '@/components/ui'
 import { ApiError, errorMessage } from '@/data/api/errors'
 import { useDeleteStaffRole, useSaveStaffRole } from '@/data/hooks/use-users'
 import { isImplied, PERMISSION_GROUPS, type StaffRole, type StaffRoleInput } from '@/data/models'
@@ -49,8 +49,8 @@ function RoleForm({ role, members, onDone }: { role: StaffRole | null; members: 
   } = useForm<StaffRoleInput>({
     resolver: zodResolver(staffRoleInputSchema),
     defaultValues: role
-      ? { name: role.name, description: role.description, permissions: [...role.permissions] }
-      : { name: '', description: '', permissions: [] },
+      ? { name: role.name, description: role.description, permissions: [...role.permissions], requiresTwoFactor: role.requiresTwoFactor }
+      : { name: '', description: '', permissions: [], requiresTwoFactor: true },
   })
 
   const submit = handleSubmit((input) =>
@@ -131,6 +131,19 @@ function RoleForm({ role, members, onDone }: { role: StaffRole | null; members: 
             ))}
             {fieldState.error && <p className="text-caption font-medium text-danger">{fieldState.error.message}</p>}
           </fieldset>
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="requiresTwoFactor"
+        render={({ field }) => (
+          <Switch
+            checked={field.value}
+            onChange={field.onChange}
+            label="Exigir la verificación en dos pasos"
+            description="Quien tenga este rol entra, pero no puede usar el portal hasta activarla. Lo recomendado para el equipo."
+          />
         )}
       />
 

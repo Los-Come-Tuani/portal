@@ -73,6 +73,7 @@ export const queryKeys = {
     detail: (userId: string) => ['users', 'detail', userId] as const,
   },
   staffRoles: ['staff-roles'] as const,
+  staffMembers: ['staff-members'] as const,
   security: {
     twoFactor: ['security', 'two-factor'] as const,
   },

@@ -2,7 +2,7 @@ import { ArrowRight, Check, Lock, Pencil, Plus, Users } from 'lucide-react'
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { paths } from '@/app/router/paths'
 import { Button, ButtonLink, ErrorState, PageHeader, SkeletonRows } from '@/components/ui'
-import { useStaffRoles, useUsers } from '@/data/hooks/use-users'
+import { useStaffMembers, useStaffRoles } from '@/data/hooks/use-users'
 import { PERMISSION_GROUPS, type StaffRole } from '@/data/models'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { plural } from '@/lib/format'
@@ -53,12 +53,11 @@ function ScrollHint({ children }: { children: ReactNode }) {
 export function RolesPage() {
   useDocumentTitle('Roles y permisos')
   const roles = useStaffRoles()
-  const staff = useUsers({ role: 'admin' })
+  const staff = useStaffMembers()
   const [editing, setEditing] = useState<StaffRole | 'nuevo' | null>(null)
 
   const all = roles.data ?? []
-  const membersOf = (role: StaffRole) =>
-    (staff.data ?? []).filter((user) => user.staffRoleId === role.id && user.status !== 'suspended').length
+  const membersOf = (role: StaffRole) => role.members
   const current = editing === 'nuevo' ? null : editing
 
   return (
@@ -81,7 +80,7 @@ export function RolesPage() {
       {roles.isSuccess && staff.isSuccess && (
         <p className="max-w-[72ch] text-lead text-muted">
           <strong className="font-semibold text-ink">{plural(all.length, 'rol', 'roles')}</strong> para{' '}
-          <strong className="font-semibold text-ink">{plural(staff.data.filter((user) => user.status !== 'suspended').length, 'persona', 'personas')}</strong>.
+          <strong className="font-semibold text-ink">{plural(staff.data.filter((member) => member.status !== 'suspended').length, 'persona', 'personas')}</strong>.
           Cada columna es un rol: toca su nombre para cambiarle los permisos.
         </p>
       )}

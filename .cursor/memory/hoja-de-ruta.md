@@ -91,21 +91,34 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
     `%LOCALAPPDATA%\Temp\kplan-dev\e2e\run-e2e-f3.ps1`, 41 comprobaciones (alta de un comercio con
     mapa y foto, rechazo con motivo, corrección con lo anterior llenado, reenvío, aprobación vista
     sin recargar, institución con PDF, un RUC repetido); y `e2e-f3-demo.mjs` en demo (9).
+- **Hecho: el equipo y los roles contra el API real** (lo que quedaba de F2 en el portal):
+  - **Equipo interno** (`StaffPage`) lee `GET /auth/staff-member/` (ruta nueva del API: el equipo
+    con su rol, y los superusuarios con `role: null`, que el portal muestra como "Superusuario"
+    sin acciones). Invitar y reenviar la invitación son el mismo `POST /auth/staff-invite/`:
+    si responde `sent: false` (espera de 60 s) el aviso dice que use el código del último correo.
+    Cambiar el rol es `POST /auth/user-role/`; quitar o devolver el acceso, `POST
+    /auth/user-status/`, que pide `users.manage` (sin él no se muestran esos botones). La
+    columna "Último acceso" pasó a "En el equipo desde": el API no guarda `last_login`.
+  - **Roles y permisos** (`RolesPage`, `RoleSheet`) contra `/auth/staff-role/` (CRUD); el
+    formulario suma "Exigir la verificación en dos pasos" (`requires_two_factor`, encendido por
+    defecto) y las personas de cada rol salen de `members`.
+  - Datos: `schemas/team-api.schema.ts` (+ prueba; ids de rol enteros en el API y texto en la
+    demo, `roleReference` los devuelve como vinieron), `repositories/users.repository.ts`
+    (`staffRolesRepository`, `staffRepository`), `hooks/use-users.ts`. Demo:
+    `mock/handlers/users.ts` habla el mismo formato (incluida la espera de 60 s entre correos).
+  - Pruebas: 153 unitarias. Navegador: `e2e-f2-team.mjs` (11 comprobaciones: lista, invitar,
+    reenviar dentro del minuto, cambiar el rol, crear un rol sin 2FA, editarlo, nombre repetido,
+    borrarlo, quitar y devolver el acceso), contra el API real y en demo (`E2E_PORTAL`,
+    `E2E_ROLE_A` y `E2E_ROLE_B` cambian el puerto y los nombres de los roles).
 - Comprobaciones: `npm run typecheck && npm run lint && npm test && npm run build:demo`.
 
 ## Qué falta (depende de otras fases)
 
-1. **Equipo, roles y usuarios contra el API real** (parte de F2 que sigue siendo demo).
-   `StaffPage`, `RolesPage`, `InviteSheet`, `ChangeRoleDialog` y `UsersPage` hablan con
-   `/api/users` y `/api/staff-roles` (solo demo). El API ya publica lo necesario bajo `/auth/`:
-   `staff-role/` (CRUD), `staff-permission/` (catálogo), `staff-invite/` (respuesta con `sent`:
-   si es `false` no salió otro correo por la espera de 60 s), `user-role/`, `user-status/` y
-   `user-password-reset/`; ver `api/docs/roles.md`. Falta: alinear `endpoints.ts`, los
-   repositorios y los handlers de demo con esas rutas y traducir snake_case a camelCase; y un
-   endpoint del API para **listar al equipo** (hoy solo existe `/auth/user/` con `group_id`,
-   `status` y `search`; sin filtro por rol del portal). Los roles del API tienen `name`,
-   `description`, `permissions`, `requires_two_factor`, `members` y `system` (el rol de sistema
-   es "Administrador").
+1. **Todos los usuarios** (`UsersPage`, `UserSheet`) sigue en demo (`/api/users`): hace falta
+   un directorio de cuentas en el API con el rol del portal derivado (hoy `/auth/user/` filtra
+   por `group_id`, `status` y `search`, y sus rutas `/auth/user/{id}/groups|permissions/`
+   responden 400). Con eso se mueve también "Mandar código para nueva contraseña"
+   (`POST /auth/user-password-reset/`, que ya existe).
 2. **F4 en adelante** (lugares, circuitos, eventos, cupones, insignias, cobros): el resto de
    `endpoints` (`/api/stops`, `/api/circuits`...) no existe en el API: esas pantallas responden 404
    con el API real y solo se trabajan en demo (`npm run dev:demo`); al llegar cada fase se alinea su

@@ -26,6 +26,18 @@ export const endpoints = {
     passwordChange: '/auth/password-change/',
     /** Una persona invitada al equipo activa su cuenta con el código del correo. */
     staffAccept: '/auth/staff-accept/',
+    /** Los roles del equipo: `GET` y `POST`. */
+    staffRoles: '/auth/staff-role/',
+    /** Un rol del equipo: `GET`, `PUT` y `DELETE`. */
+    staffRole: (roleId: string) => `/auth/staff-role/${id(roleId)}/`,
+    /** Las personas del equipo con su rol. */
+    staffMembers: '/auth/staff-member/',
+    /** Invita a alguien al equipo, o le vuelve a escribir si no ha aceptado. */
+    staffInvite: '/auth/staff-invite/',
+    /** Cambia el rol del equipo de una persona. */
+    userRole: '/auth/user-role/',
+    /** Suspende o reactiva una cuenta. */
+    userStatus: '/auth/user-status/',
     /** Manda un código de seis dígitos al correo: quien se postula verifica así que es suyo. */
     registerCode: '/auth/register-code/',
     /** Comprueba el código sin gastarlo, para avanzar en el formulario. */
@@ -122,15 +134,11 @@ export const endpoints = {
     list: '/api/place-requests',
     decision: (requestId: string) => `/api/place-requests/${id(requestId)}/decision`,
   },
+  /** Todas las cuentas (pantalla "Todos los usuarios"): el API todavía no tiene este directorio. */
   users: {
     list: '/api/users',
     detail: (userId: string) => `/api/users/${id(userId)}`,
     passwordReset: (userId: string) => `/api/users/${id(userId)}/password-reset`,
-    staffInvite: '/api/users/staff',
-  },
-  staffRoles: {
-    list: '/api/staff-roles',
-    detail: (roleId: string) => `/api/staff-roles/${id(roleId)}`,
   },
   guideApplications: {
     list: '/api/guide-applications',

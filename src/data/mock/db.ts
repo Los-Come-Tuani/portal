@@ -28,12 +28,15 @@ export interface Payment {
   paidAt: LocalDateTime
 }
 
+/** Un rol del equipo como lo guarda la demo: cuántas personas lo tienen se cuenta al leerlo. */
+export type MockStaffRole = Omit<StaffRole, 'members' | 'requiresTwoFactor'> & { requiresTwoFactor?: boolean }
+
 /** Todo lo que guarda el backend de demo, persistido en localStorage. */
 export interface MockDatabase {
   version: number
   seededOn: ISODate
   users: User[]
-  staffRoles: StaffRole[]
+  staffRoles: MockStaffRole[]
   guideApplications: GuideApplication[]
   /** El modelo de demo anterior a F3: revisión por documento y alta asistida. */
   organizationApplications: OrganizationApplication[]

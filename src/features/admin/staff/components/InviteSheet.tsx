@@ -37,8 +37,12 @@ function InviteForm({ roles, onDone }: { roles: readonly StaffRole[]; onDone: ()
 
   const submit = handleSubmit((input) =>
     invite.mutate(input, {
-      onSuccess: (user) => {
-        toast({ title: 'Invitación enviada', description: `${user.name} recibió el correo en ${user.email}.` })
+      onSuccess: ({ member, sent }) => {
+        toast(
+          sent
+            ? { title: 'Invitación enviada', description: `${member.name} recibió el correo en ${member.email}.` }
+            : { title: 'Ya tenía una invitación', description: `Le cambiamos el rol; que use el código del último correo que le llegó.` },
+        )
         onDone()
       },
       onError: (error) => {

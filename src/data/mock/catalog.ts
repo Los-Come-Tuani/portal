@@ -159,7 +159,7 @@ export const catalog = {
   appCoupons: appCouponsJson as AppCoupon[],
   organizations: organizationsJson as Organization[],
   users: usersJson as UserSeed[],
-  staffRoles: staffRolesJson as StaffRole[],
+  staffRoles: staffRolesJson as Omit<StaffRole, 'members' | 'requiresTwoFactor'>[],
   appGuides: appGuidesJson as AppGuide[],
   guideApplications: guideApplicationsJson as ApplicationSeed[],
   admissions: admissionsJson as AdmissionSeed[],
