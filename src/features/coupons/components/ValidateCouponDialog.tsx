@@ -25,7 +25,7 @@ export function ValidateCouponDialog({ open, initialCode, onClose }: ValidateCou
   const [step, setStep] = useState<Step>({ name: 'enter' })
   const lookup = useLookupRedemption()
   const validate = useValidateRedemption()
-  const pricing = usePricing()
+  const pricing = usePricing(open)
   const pending = useRedemptions({ organizationId, status: 'pending' }, open && env.useMocks && role === 'negocio')
 
   const search = (event?: FormEvent) => {
