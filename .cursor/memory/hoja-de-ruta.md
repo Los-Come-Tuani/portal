@@ -51,6 +51,28 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
     `%LOCALAPPDATA%\Temp\kplan-dev\e2e\run-e2e-f2.ps1` (19 comprobaciones): un rol que solo ve
     guías es llevado a Seguridad, activa el 2FA, ve solo su módulo, y una invitación se acepta
     con el código del correo y no se puede reutilizar.
+- **Hecho: lado del portal de F3 para quien se postula** (alta, estado y corrección contra el API real):
+  - `/postular` (`ApplyPage` -> `components/ApplicationFlow.tsx`): cinco pasos (qué es, sus datos con
+    el mapa, lo que sube, la cuenta con código por correo, revisión) para las tres clases. Los
+    archivos van con un `PUT` firmado directo al bucket (`src/data/api/upload.ts`) y viajan por su
+    clave. El borrador vive en `sessionStorage` sin contraseña ni código (`lib/flow.ts`).
+  - `/solicitud` (`ApplicationStatusPage`): estado, motivo y nota si la rechazaron, lo que mandó, y
+    pregunta cada 30 s mientras espera; al aprobarla vuelve a pedir la sesión (`refreshUser` ahora
+    también recarga la organización). `/solicitud/corregir` (`CorrectApplicationPage`): el mismo
+    formulario en modo `correct`, con lo anterior ya llenado (`submitted` del API).
+  - Datos: `models/application.ts` (modelo), `schemas/application-api.schema.ts` (formato del API en
+    ambos sentidos), `schemas/application.schema.ts` (reglas del formulario, las mismas del API),
+    `repositories/applications.repository.ts` y `hooks/use-applications.ts`.
+  - La sesión: `apiSessionUserSchema` lee `organization` y `organizationsRepository.ofSession` arma la
+    organización con eso (sin pedir `/api/organizations/{id}`, que el API no publica): sin esto un
+    operador no podía ni entrar con el API real.
+  - Demo: `mock/handlers/applications.ts` habla el mismo formato (catálogos, subida, alta, `mine`,
+    corregir) y guarda los expedientes en `db.applications`; los de demo que ya traían una solicitud
+    se siembran desde el modelo anterior. El menú "Modo demo" hace de equipo: aprueba o rechaza.
+  - Pruebas: 139 unitarias. En el navegador (Edge) contra el API real con un bucket S3 local (moto):
+    `%LOCALAPPDATA%\Temp\kplan-dev\e2e\run-e2e-f3.ps1`, 41 comprobaciones (alta de un comercio con
+    mapa y foto, rechazo con motivo, corrección con lo anterior llenado, reenvío, aprobación vista
+    sin recargar, institución con PDF, un RUC repetido); y `e2e-f3-demo.mjs` en demo (9).
 - Comprobaciones: `npm run typecheck && npm run lint && npm test && npm run build:demo`.
 
 ## Qué falta (depende de otras fases)
@@ -66,25 +88,22 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
    `status` y `search`; sin filtro por rol del portal). Los roles del API tienen `name`,
    `description`, `permissions`, `requires_two_factor`, `members` y `system` (el rol de sistema
    es "Administrador").
-2. **F3 (organizaciones): el API ya está, falta el portal.** Lo que publica el API (guía en
-   `api/docs/organizaciones.md`, memoria en `api/.cursor/memory/hoja-de-ruta.md` sección 7b):
-   - Alta pública: `GET /catalog/city|business-type|institution-type/`, `POST /upload/` (URL
-     firmada: se sube con un `multipart` directo al bucket) y
-     `POST /organization-application/business|institution|municipality/`, que deja la sesión
-     abierta con cookies y devuelve `{ user, application }` (lo que ya espera `acceptSession`).
-   - Estado: `GET /organization-application/mine/` y `POST .../mine/resubmit/` (corregir y
-     reenviar lo rechazado: abre otro expediente).
-   - Cola del equipo: `GET /verification-request/` (bandeja por orden de llegada), `.../{id}/`,
-     `.../reason/` y `POST .../{id}/take|release|approve|reject/`.
-   - La sesión trae `organization` (`{id, kind, name, verified}`).
-   El modelo del portal es más rico que el del API: `Organization` única (negocio o alcaldía,
-   sin institución), revisión por documento, etapas (`advance`, `request-changes`), asignar a un
-   revisor y solicitud asistida con cobro. El API decidió otra cosa (confirmada con el usuario):
-   tres clases de organización, **un solo paso de decisión** (aprobar o rechazar con motivo),
-   corregir = otro expediente, y sin solicitud asistida ni pedir otro lugar. Hay que adaptar las
-   pantallas (`ApplyPage`, `ApplicationStatusPage`, admisiones) y los handlers de demo, no el API.
-   Estados del API: `submitted`, `in_review`, `approved`, `rejected`. Falta además crear el
-   bucket (`api/docs/archivos.md`, con el CORS del portal) para poder subir de verdad.
+2. **F3: la cola del equipo contra el API real** (el lado de quien se postula ya está, ver arriba).
+   `AdmissionsPage`, `AdmissionPage`, el contador de la barra lateral (`useAdmissions`),
+   `AdminPending` y `OrganizationDetailPage` siguen en el **modelo de demo anterior** (revisión por
+   documento, etapas `documents` -> `decision`, asignación, alta asistida con cobro, `OrganizationApplication`
+   en `models/organization-application.ts`) y con el API real responden 404. El API publica otra cosa
+   (confirmada con el usuario): tres clases de organización, **un solo paso de decisión** (tomar,
+   devolver, aprobar o rechazar con motivo), corregir = otro expediente. Hay que escribir las
+   pantallas nuevas contra `GET /verification-request/` (filtros `status`: `open|submitted|in_review|
+   approved|rejected|all`, `kind`, `page`, `page_size`), `.../{id}/` (trae `applicant`, `business|
+   institution|municipality`, `documents` con URL de lectura de 5 min, `resolution` e `history`),
+   `.../reason/` (los motivos) y `POST .../{id}/take|release|approve|reject/`; después retirar el
+   modelo anterior: `ApplicationWizard` (hoy solo lo usa el alta asistida), `ApplySteps`,
+   `DocumentUpload`, `ApplyGuide`, `lib/draft.ts`, `organization-application.*`, `handlers/admissions.ts`
+   y `generators/admissions.ts`. La parte de demo de F3 (`mock/handlers/applications.ts`) ya
+   guarda los expedientes en `db.applications`, con el formato del API: la cola nueva se apoya en eso.
+   Permisos de la cola: `organizations.view` para ver; `organizations.review` o `manage` para actuar.
    El resto de `endpoints` (`/api/stops`, `/api/circuits`...) es de F4 en adelante: responden 404
    con el API real y solo se trabajan en demo (`npm run dev:demo`); al llegar cada fase se alinea
    su sección de `endpoints.ts`, su repositorio y su handler de demo (sin prefijo `/api`, con
