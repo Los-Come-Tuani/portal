@@ -2,6 +2,7 @@
 export const paths = {
   login: '/entrar',
   resetPassword: '/restablecer',
+  invitation: '/invitacion',
   security: '/seguridad',
   apply: '/postular',
   application: '/solicitud',

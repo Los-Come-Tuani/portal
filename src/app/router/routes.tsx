@@ -24,6 +24,10 @@ export const router = createBrowserRouter([
         path: paths.resetPassword,
         lazy: async () => ({ Component: (await import('@/features/auth/ResetPasswordPage')).ResetPasswordPage }),
       },
+      {
+        path: paths.invitation,
+        lazy: async () => ({ Component: (await import('@/features/auth/AcceptInvitationPage')).AcceptInvitationPage }),
+      },
       { path: paths.apply, lazy: async () => ({ Component: (await import('@/features/onboarding/ApplyPage')).ApplyPage }) },
     ],
   },
@@ -51,7 +55,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'lugares',
-            element: <RequirePermission anyOf={['places.manage']} />,
+            element: <RequirePermission anyOf={['places.view']} />,
             children: [
               { index: true, lazy: async () => ({ Component: (await import('@/features/places/PlacesPage')).PlacesPage }) },
               {
@@ -111,7 +115,7 @@ export const router = createBrowserRouter([
             element: <RequireRole roles={['admin']} />,
             children: [
               {
-                element: <RequirePermission anyOf={['organizations.review', 'organizations.manage']} />,
+                element: <RequirePermission anyOf={['organizations.view']} />,
                 children: [
                   {
                     path: 'solicitudes',
@@ -142,7 +146,7 @@ export const router = createBrowserRouter([
                 ],
               },
               {
-                element: <RequirePermission anyOf={['guides.review', 'guides.decide']} />,
+                element: <RequirePermission anyOf={['guides.view']} />,
                 children: [
                   {
                     path: 'guias',
@@ -159,7 +163,7 @@ export const router = createBrowserRouter([
                 ],
               },
               {
-                element: <RequirePermission anyOf={['circuits.manage']} />,
+                element: <RequirePermission anyOf={['circuits.view']} />,
                 children: [
                   {
                     path: 'circuitos',
@@ -172,7 +176,7 @@ export const router = createBrowserRouter([
                 ],
               },
               {
-                element: <RequirePermission anyOf={['users.manage']} />,
+                element: <RequirePermission anyOf={['users.view']} />,
                 children: [
                   {
                     path: 'usuarios',
@@ -194,7 +198,7 @@ export const router = createBrowserRouter([
                 ],
               },
               {
-                element: <RequirePermission anyOf={['billing.manage']} />,
+                element: <RequirePermission anyOf={['billing.view']} />,
                 children: [
                   {
                     path: 'cobros',

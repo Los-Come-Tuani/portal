@@ -5,7 +5,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { Button, Checkbox, ConfirmDialog, Dialog, Field, Input, useToast } from '@/components/ui'
 import { ApiError, errorMessage } from '@/data/api/errors'
 import { useDeleteStaffRole, useSaveStaffRole } from '@/data/hooks/use-users'
-import { PERMISSION_GROUPS, type StaffRole, type StaffRoleInput } from '@/data/models'
+import { isImplied, PERMISSION_GROUPS, type StaffRole, type StaffRoleInput } from '@/data/models'
 import { staffRoleInputSchema } from '@/data/schemas/access.schema'
 import { plural } from '@/lib/format'
 
@@ -106,21 +106,26 @@ function RoleForm({ role, members, onDone }: { role: StaffRole | null; members: 
               <div key={group.label} className="rounded-kp border border-divider bg-surface">
                 <p className="border-b border-divider px-4 py-2.5 text-small font-semibold text-ink">{group.label}</p>
                 <div className="flex flex-col gap-3 px-4 py-3">
-                  {group.permissions.map((permission) => (
-                    <Checkbox
-                      key={permission.id}
-                      label={permission.label}
-                      description={permission.description}
-                      checked={field.value.includes(permission.id)}
-                      onChange={(event) =>
-                        field.onChange(
-                          event.target.checked
-                            ? [...field.value, permission.id]
-                            : field.value.filter((item) => item !== permission.id),
-                        )
-                      }
-                    />
-                  ))}
+                  {group.permissions.map((permission) => {
+                    // Quien puede revisar o administrar un módulo ya lo ve: no hace falta marcarlo.
+                    const included = isImplied(permission.id, field.value)
+                    return (
+                      <Checkbox
+                        key={permission.id}
+                        label={permission.label}
+                        description={included ? `${permission.description} Ya lo incluye otro permiso de este módulo.` : permission.description}
+                        checked={included || field.value.includes(permission.id)}
+                        disabled={included}
+                        onChange={(event) =>
+                          field.onChange(
+                            event.target.checked
+                              ? [...field.value, permission.id]
+                              : field.value.filter((item) => item !== permission.id),
+                          )
+                        }
+                      />
+                    )
+                  })}
                 </div>
               </div>
             ))}

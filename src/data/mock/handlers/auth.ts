@@ -129,6 +129,21 @@ export const authRoutes = [
   ),
   route(
     'POST',
+    endpoints.auth.staffAccept,
+    ({ db, body }) => {
+      const input = parseBody(resetBody, body)
+      const invited = db.users.find(
+        (item) => item.email.toLowerCase() === input.email.trim().toLowerCase() && item.status === 'invited',
+      )
+      // Como el API: un correo sin invitación y un código malo dan la misma respuesta.
+      if (!invited || input.code !== DEMO_CODE) throw new MockHttpError(400, INVALID_CODE, { code: INVALID_CODE })
+      invited.status = 'active'
+      return undefined
+    },
+    { isPublic: true },
+  ),
+  route(
+    'POST',
     endpoints.auth.passwordChange,
     ({ body }) => {
       parseBody(changeBody, body)

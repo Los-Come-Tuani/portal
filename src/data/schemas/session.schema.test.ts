@@ -45,6 +45,14 @@ describe('toSessionUser', () => {
     })
   })
 
+  it('deja pasar los permisos de solo ver que entrega el API', () => {
+    const user = toSessionUser({
+      ...base,
+      permissions: ['guides.decide', 'guides.view', 'users.view', 'apiauth.view_apiuser'],
+    })
+    expect(user.permissions).toEqual(['guides.decide', 'guides.view', 'users.view'])
+  })
+
   it('no da permisos ni rol interno a un negocio, aunque el API los mande', () => {
     const user = toSessionUser({ ...base, role: 'negocio', organization_id: 'org-1' })
     expect(user.role).toBe('negocio')

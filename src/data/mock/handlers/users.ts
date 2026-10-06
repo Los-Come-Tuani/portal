@@ -24,7 +24,7 @@ function findRole(db: MockDatabase, roleId: string): StaffRole {
 /** Quien sólo administra el equipo ve únicamente al equipo. */
 function canSee(context: MockContext, target: User): boolean {
   const user = requireUser(context)
-  return hasPermission(context.db, user, ['users.manage']) || target.role === 'admin'
+  return hasPermission(context.db, user, ['users.view']) || target.role === 'admin'
 }
 
 function activeSuperAdmins(db: MockDatabase): User[] {
@@ -46,7 +46,7 @@ export const userRoutes = [
         .filter((item) => !search || `${item.name} ${item.email}`.toLowerCase().includes(search))
         .sort((a, b) => a.name.localeCompare(b.name, 'es'))
     },
-    { permissions: ['users.manage', 'staff.manage'] },
+    { permissions: ['users.view', 'staff.manage'] },
   ),
   route(
     'GET',
@@ -56,7 +56,7 @@ export const userRoutes = [
       if (!canSee(context, target)) throw fail.notFound('No encontramos a esa persona')
       return target
     },
-    { permissions: ['users.manage', 'staff.manage'] },
+    { permissions: ['users.view', 'staff.manage'] },
   ),
   route(
     'PATCH',

@@ -51,7 +51,7 @@ export function UsersPage() {
   const users = useUsers()
   const organizations = useOrganizations()
   const roles = useStaffRoles()
-  const applications = useGuideApplications({}, can('guides.review', 'guides.decide'))
+  const applications = useGuideApplications({}, can('guides.view'))
   const [params, setParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<'todas' | UserStatus>('todas')

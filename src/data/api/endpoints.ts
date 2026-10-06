@@ -23,6 +23,8 @@ export const endpoints = {
     passwordForgot: '/auth/password-forgot/',
     passwordReset: '/auth/password-reset/',
     passwordChange: '/auth/password-change/',
+    /** Una persona invitada al equipo activa su cuenta con el código del correo. */
+    staffAccept: '/auth/staff-accept/',
     /** Cierra la sesión en todos los dispositivos. */
     sessionRevoke: '/auth/session-revoke/',
     /** `GET`: estado del 2FA de quien está dentro. */

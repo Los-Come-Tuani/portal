@@ -16,10 +16,15 @@ export function SessionLoader() {
 }
 
 export function RequireAuth() {
-  const { status } = useAuth()
+  const { status, user } = useAuth()
   const location = useLocation()
   if (status === 'loading') return <SessionLoader />
   if (status === 'anonymous') return <Navigate to={paths.login} replace state={{ from: location.pathname }} />
+  // Un rol que exige el segundo factor solo puede usar la seguridad de la cuenta hasta activarlo:
+  // el API responde 403 a todo lo demás.
+  if (user?.twoFactor.required && !user.twoFactor.enabled && location.pathname !== paths.security) {
+    return <Navigate to={paths.security} replace />
+  }
   return <Outlet />
 }
 

@@ -11,10 +11,10 @@ import { formatMoney, plural } from '@/lib/format'
 /** Lo que espera una decisión del equipo de K'Plan, según lo que su rol puede hacer. Si no hay nada, no se muestra. */
 export function AdminPending() {
   const { can } = useSession()
-  const pending = useAdmissions({ status: 'in_review' }, can('organizations.review', 'organizations.manage'))
-  const placeRequests = usePlaceRequests({ status: 'pending' }, can('organizations.review', 'organizations.manage'))
-  const guides = useGuideApplications({ status: 'in_review' }, can('guides.review', 'guides.decide'))
-  const statements = useStatements(undefined, can('billing.manage'))
+  const pending = useAdmissions({ status: 'in_review' }, can('organizations.view'))
+  const placeRequests = usePlaceRequests({ status: 'pending' }, can('organizations.view'))
+  const guides = useGuideApplications({ status: 'in_review' }, can('guides.view'))
+  const statements = useStatements(undefined, can('billing.view'))
   const due = (statements.data ?? []).filter((statement) => statement.status === 'due' && statement.total > 0)
   const dueTotal = due.reduce((sum, statement) => sum + statement.total, 0)
   const toDecide = (guides.data ?? []).filter((application) => application.stage === 'decision').length

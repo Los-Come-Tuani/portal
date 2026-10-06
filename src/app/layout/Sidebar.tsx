@@ -43,8 +43,8 @@ function isActive(pathname: string, item: { to: string; end?: boolean }): boolea
 
 function usePendingCounts(): Record<NavCount, number> {
   const { can } = useSession()
-  const guides = useGuideApplications({ status: 'in_review' }, can('guides.review', 'guides.decide'))
-  const reviewsOrganizations = can('organizations.review', 'organizations.manage')
+  const guides = useGuideApplications({ status: 'in_review' }, can('guides.view'))
+  const reviewsOrganizations = can('organizations.view')
   const admissions = useAdmissions({ status: 'in_review' }, reviewsOrganizations)
   const placeRequests = usePlaceRequests({ status: 'pending' }, reviewsOrganizations)
   return {

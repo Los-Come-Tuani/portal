@@ -10,6 +10,7 @@ import { assertStopFree, ownerOf } from '../services/ownership'
 import { readinessOf } from '../services/readiness'
 
 const REVIEWERS = ['organizations.review', 'organizations.manage'] as const
+const VIEWERS = ['organizations.view'] as const
 
 function withReadiness(db: MockDatabase, request: PlaceRequest): PlaceRequest {
   if (request.kind !== 'new' || request.status !== 'pending') return request
@@ -21,7 +22,7 @@ export const placeRequestRoutes = [
   route('GET', endpoints.placeRequests.list, (context) => {
     const user = requireUser(context)
     const status = context.query.get('status')
-    const reviewer = isAdmin(user) && hasPermission(context.db, user, REVIEWERS)
+    const reviewer = isAdmin(user) && hasPermission(context.db, user, VIEWERS)
     if (isAdmin(user) && !reviewer) throw fail.forbidden()
     return context.db.placeRequests
       .filter((item) => reviewer || item.organizationId === user.organizationId)

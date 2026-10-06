@@ -1,4 +1,4 @@
-import type { Organization, Permission, SessionUser, Stop, User } from '../../models'
+import { expandPermissions, type Organization, type Permission, type SessionUser, type Stop, type User } from '../../models'
 import type { ApiSessionUser } from '../../schemas/session.schema'
 import type { MockDatabase } from '../db'
 import { fail } from '../http'
@@ -11,7 +11,7 @@ export function isAdmin(user: User): boolean {
 /** Lo que puede hacer alguien del equipo según su rol interno; nada para los demás. */
 export function permissionsOf(db: MockDatabase, user: User): Permission[] {
   if (!isAdmin(user) || user.status === 'suspended') return []
-  return db.staffRoles.find((role) => role.id === user.staffRoleId)?.permissions ?? []
+  return expandPermissions(db.staffRoles.find((role) => role.id === user.staffRoleId)?.permissions ?? [])
 }
 
 export function hasPermission(db: MockDatabase, user: User, anyOf: readonly Permission[]): boolean {

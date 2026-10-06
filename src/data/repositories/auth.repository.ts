@@ -35,6 +35,9 @@ export const authRepository = {
   /** Cambia la contraseña con el código del correo y cierra todas las sesiones. */
   resetPassword: (input: ResetPasswordInput) => http.post<void>(endpoints.auth.passwordReset, { body: input }),
 
+  /** Activa la cuenta de quien fue invitado al equipo: elige su contraseña con el código del correo. */
+  acceptInvitation: (input: ResetPasswordInput) => http.post<void>(endpoints.auth.staffAccept, { body: input }),
+
   /** También cierra todas las sesiones: hay que volver a entrar. */
   changePassword: ({ currentPassword, password }: ChangePasswordInput) =>
     http.post<void>(endpoints.auth.passwordChange, { body: { current_password: currentPassword, password } }),

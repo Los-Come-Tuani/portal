@@ -12,6 +12,7 @@ import { fail, parseBody, requireUser, route, type MockContext } from '../http'
 import { hasPermission } from '../services/access'
 
 const MANAGERS = ['circuits.manage'] as const
+const VIEWERS = ['circuits.view'] as const
 
 function findCircuit(db: MockDatabase, circuitId: string): Circuit {
   const circuit = db.circuits.find((item) => item.id === circuitId)
@@ -94,13 +95,13 @@ function toCircuit(db: MockDatabase, input: CircuitInput, existing?: Circuit): O
 export const circuitRoutes = [
   route('GET', endpoints.circuits.list, (context: MockContext) => {
     const user = requireUser(context)
-    const manager = hasPermission(context.db, user, MANAGERS)
+    const manager = hasPermission(context.db, user, VIEWERS)
     return context.db.circuits.filter((circuit) => manager || !circuit.draft)
   }),
   route('GET', endpoints.circuits.detail(':id'), (context: MockContext) => {
     const user = requireUser(context)
     const circuit = findCircuit(context.db, context.params.id)
-    if (circuit.draft && !hasPermission(context.db, user, MANAGERS)) throw fail.notFound('No encontramos ese circuito')
+    if (circuit.draft && !hasPermission(context.db, user, VIEWERS)) throw fail.notFound('No encontramos ese circuito')
     return circuit
   }),
   route(

@@ -29,18 +29,43 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
     (`src/data/api/api.integration.test.ts`, ver README). Se verificó además en un navegador
     (Edge, con `playwright-core` desde una carpeta temporal) contra el API real y en demo: entrar,
     recargar, 2FA completo, recuperar contraseña, cerrar sesiones.
+- **Hecho: lado del portal de F2** (el API ya entrega los permisos funcionales y los roles):
+  - `models/access.ts`: los 17 IDs del API, con los de solo ver (`*.view`), etiquetas del
+    catálogo y `IMPLIED_BY` / `isImplied` / `expandPermissions` (quien revisa, decide o
+    administra un módulo ya lo ve). El editor de roles marca como incluido el "ver" que ya da
+    otro permiso.
+  - `navigation.ts`, `routes.tsx`, `Sidebar.tsx`, `AdminPending.tsx`, `UsersPage.tsx`: piden el
+    permiso de ver; los botones de cada pantalla siguen pidiendo el que cambia cosas. Un rol que
+    solo ve guías solo ve "Guías y traductores".
+  - `RequireAuth` (`guards.tsx`): un rol con `twoFactor.required` sin 2FA activo solo puede usar
+    `/seguridad` (la página ya avisa por qué).
+  - `/invitacion` (`AcceptInvitationPage`): correo + código + contraseña ->
+    `POST /auth/staff-accept/`; enlace desde el login. Demo: acepta `123456` para una persona
+    `invited`.
+  - Demo (`mock/`): la sesión se expande como la del API y las rutas de lectura de guías,
+    organizaciones, circuitos y usuarios piden el permiso de ver.
+  - `http-client.ts`: un cuerpo que no es JSON (la página HTML de un 404) ya no se muestra como
+    mensaje de error; sale del código de estado.
+  - Pruebas: 94 unitarias (`access.test.ts`, `navigation.test.ts`, `session.schema.test.ts`,
+    `http-client.test.ts`...). Verificado en el navegador contra el API real con
+    `%LOCALAPPDATA%\Temp\kplan-dev\e2e\run-e2e-f2.ps1` (19 comprobaciones): un rol que solo ve
+    guías es llevado a Seguridad, activa el 2FA, ve solo su módulo, y una invitación se acepta
+    con el código del correo y no se puede reutilizar.
 - Comprobaciones: `npm run typecheck && npm run lint && npm test && npm run build:demo`.
 
 ## Qué falta (depende de otras fases)
 
-1. **F2 (roles y permisos, API primero)**. Hoy el API devuelve como `permissions` los códigos de
-   permiso de Django, que el portal ignora, así que el superusuario entra con el mensaje "Tu rol
-   todavía no tiene módulos" y un menú vacío. Cuando F2 entregue los IDs funcionales
-   (`agenda.view`, `guides.review`...) y el rol interno (`groups`), el menú y las guardas
-   funcionan sin cambiar código: `navigationFor` y `RequirePermission` ya usan `can(...)`. Aquí
-   habrá que agregar los permisos `*.view` a `src/data/models/access.ts`, usarlos en
-   `navigation.ts`/`routes.tsx`, y mostrar `twoFactor.required` (la página de Seguridad ya lo
-   considera: oculta "Desactivar" y avisa si el rol lo exige).
+1. **Equipo, roles y usuarios contra el API real** (parte de F2 que sigue siendo demo).
+   `StaffPage`, `RolesPage`, `InviteSheet`, `ChangeRoleDialog` y `UsersPage` hablan con
+   `/api/users` y `/api/staff-roles` (solo demo). El API ya publica lo necesario bajo `/auth/`:
+   `staff-role/` (CRUD), `staff-permission/` (catálogo), `staff-invite/` (respuesta con `sent`:
+   si es `false` no salió otro correo por la espera de 60 s), `user-role/`, `user-status/` y
+   `user-password-reset/`; ver `api/docs/roles.md`. Falta: alinear `endpoints.ts`, los
+   repositorios y los handlers de demo con esas rutas y traducir snake_case a camelCase; y un
+   endpoint del API para **listar al equipo** (hoy solo existe `/auth/user/` con `group_id`,
+   `status` y `search`; sin filtro por rol del portal). Los roles del API tienen `name`,
+   `description`, `permissions`, `requires_two_factor`, `members` y `system` (el rol de sistema
+   es "Administrador").
 2. **F3 en adelante (dominio)**. El resto de `endpoints` (`/api/organizations`, `/api/stops`...)
    no existe en el API: esas pantallas responden 404 con el API real y solo se pueden trabajar en
    demo (`npm run dev:demo`). Al llegar cada fase se alinea su sección de `endpoints.ts`, su

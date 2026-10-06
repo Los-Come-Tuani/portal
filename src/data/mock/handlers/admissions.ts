@@ -31,6 +31,7 @@ import { readinessOf, withNewPlaceReadiness } from '../services/readiness'
 import { claimReview, logReview } from '../services/review'
 
 const REVIEWERS = ['organizations.review', 'organizations.manage'] as const
+const VIEWERS = ['organizations.view'] as const
 
 function findApplication(db: MockDatabase, applicationId: string): OrganizationApplication {
   const application = db.organizationApplications.find((item) => item.id === applicationId)
@@ -259,7 +260,7 @@ export const admissionRoutes = [
         .sort((a, b) => a.stageSince.localeCompare(b.stageSince))
         .map((item) => withNewPlaceReadiness(db, item))
     },
-    { permissions: [...REVIEWERS] },
+    { permissions: [...VIEWERS] },
   ),
   route(
     'GET',
@@ -269,12 +270,12 @@ export const admissionRoutes = [
         .filter((user) => user.role === 'admin' && hasPermission(db, user, REVIEWERS))
         .map((user) => ({ id: user.id, name: user.name, canDecide: true }))
         .sort((a, b) => a.name.localeCompare(b.name, 'es')),
-    { permissions: [...REVIEWERS] },
+    { permissions: [...VIEWERS] },
   ),
   route('GET', endpoints.organizationApplications.detail(':id'), (context) => {
     const user = requireUser(context)
     const application = findApplication(context.db, context.params.id)
-    if (hasPermission(context.db, user, REVIEWERS)) return withNewPlaceReadiness(context.db, application)
+    if (hasPermission(context.db, user, VIEWERS)) return withNewPlaceReadiness(context.db, application)
     if (isOwner(user, application)) return forApplicant(context.db, application)
     throw fail.notFound('No encontramos esa solicitud')
   }),

@@ -282,6 +282,19 @@ describe('errores', () => {
     await expect(request('GET', '/auth/profile/')).rejects.toMatchObject({ status: 0, message: 'No hay conexión a internet' })
   })
 
+  it('no muestra la página HTML de un 404 ni de un 502: el mensaje sale del estado', async () => {
+    const page = '<!DOCTYPE html><html><head><title>Page not found at /api/guide-applications</title></head></html>'
+    const fetchFn = vi.fn(async () => new Response(page, { status: 404, headers: { 'content-type': 'text/html' } })) as unknown as typeof fetch
+    const { request } = clientWith(fetchFn)
+
+    const error = await request('GET', '/api/guide-applications').catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect((error as ApiError).status).toBe(404)
+    expect((error as ApiError).message).not.toContain('<')
+    expect((error as ApiError).message.length).toBeGreaterThan(0)
+  })
+
   it('devuelve el cuerpo de una respuesta sin contenido como nulo', async () => {
     const { fetchFn } = fakeFetch((call) => (call.path === CSRF ? empty(204, { 'x-csrftoken': 't1' }) : empty(204)))
     const { request } = clientWith(fetchFn)

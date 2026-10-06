@@ -88,6 +88,13 @@ function CredentialsStep({ onTwoFactor }: { onTwoFactor: () => void }) {
         >
           ¿Olvidaste tu contraseña?
         </button>
+        <button
+          type="button"
+          onClick={() => navigate(`${paths.invitation}?correo=${encodeURIComponent(getValues('email').trim())}`)}
+          className="min-h-11 self-start text-small font-semibold text-ink underline decoration-outline underline-offset-4 hover:decoration-ink"
+        >
+          ¿Te invitaron al equipo? Activa tu cuenta
+        </button>
       </form>
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-panel border border-divider bg-canvas px-4 py-4">

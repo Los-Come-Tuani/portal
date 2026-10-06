@@ -107,7 +107,9 @@ export function createFetchTransport({ baseUrl, fetch: fetchFn = (...args) => fe
       try {
         data = JSON.parse(text)
       } catch {
-        data = { message: text }
+        // Un cuerpo que no es JSON (la página HTML de un 404, un 502 del proxy) no es para mostrarlo:
+        // el mensaje sale del código de estado.
+        data = null
       }
     }
     return { status: response.status, data, headers: response.headers }

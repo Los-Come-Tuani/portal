@@ -49,3 +49,7 @@ export function useForgotPassword() {
 export function useResetPassword() {
   return useMutation({ mutationFn: (input: ResetPasswordInput) => authRepository.resetPassword(input) })
 }
+
+export function useAcceptInvitation() {
+  return useMutation({ mutationFn: (input: ResetPasswordInput) => authRepository.acceptInvitation(input) })
+}

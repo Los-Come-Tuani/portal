@@ -51,6 +51,7 @@ function act(handler: (application: GuideApplication, actor: User, context: Mock
 }
 
 const REVIEWERS = ['guides.review', 'guides.decide'] as const
+const VIEWERS = ['guides.view'] as const
 
 export const guideRoutes = [
   route(
@@ -62,7 +63,7 @@ export const guideRoutes = [
         .filter((item) => !status || item.status === status)
         .sort((a, b) => a.stageSince.localeCompare(b.stageSince))
     },
-    { permissions: [...REVIEWERS] },
+    { permissions: [...VIEWERS] },
   ),
   route(
     'GET',
@@ -72,10 +73,10 @@ export const guideRoutes = [
         .filter((user) => user.role === 'admin' && hasPermission(db, user, REVIEWERS))
         .map((user) => ({ id: user.id, name: user.name, canDecide: hasPermission(db, user, ['guides.decide']) }))
         .sort((a, b) => a.name.localeCompare(b.name, 'es')),
-    { permissions: [...REVIEWERS] },
+    { permissions: [...VIEWERS] },
   ),
   route('GET', endpoints.guideApplications.detail(':id'), ({ db, params }) => findApplication(db, params.id), {
-    permissions: [...REVIEWERS],
+    permissions: [...VIEWERS],
   }),
   route(
     'POST',
