@@ -5,9 +5,7 @@ import { endpoints } from '../../api/endpoints'
 import {
   admissionBlocker,
   ORGANIZATION_DOCUMENT_INFO,
-  ORGANIZATION_DOCUMENT_RULES,
   readinessGaps,
-  resubmitBlocker,
   type AssistedApplicationInput,
   type Organization,
   type OrganizationApplication,
@@ -16,12 +14,7 @@ import {
   type User,
 } from '../../models'
 import { assignSchema, changesRequestSchema, decisionSchema, documentReviewSchema } from '../../schemas/guide.schema'
-import {
-  documentReplaceSchema,
-  normalizeRuc,
-  parseApplication,
-  parseAssistedApplication,
-} from '../../schemas/organization-application.schema'
+import { normalizeRuc, parseApplication, parseAssistedApplication } from '../../schemas/organization-application.schema'
 import type { MockDatabase } from '../db'
 import { fail, parseBody, requireUser, route, type MockContext } from '../http'
 import { hasPermission, toSessionUser } from '../services/access'
@@ -37,31 +30,6 @@ function findApplication(db: MockDatabase, applicationId: string): OrganizationA
   const application = db.organizationApplications.find((item) => item.id === applicationId)
   if (!application) throw fail.notFound('No encontramos esa solicitud')
   return application
-}
-
-const isOwner = (user: User, application: OrganizationApplication) =>
-  application.userId === user.id || (!!user.organizationId && application.organizationId === user.organizationId)
-
-/** La solicitud de quien entró; si se postuló más de una vez, la última. */
-function ownApplication(db: MockDatabase, user: User): OrganizationApplication {
-  const own = db.organizationApplications
-    .filter((item) => isOwner(user, item))
-    .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0]
-  if (!own) throw fail.notFound('No tienes una solicitud')
-  return own
-}
-
-/** Lo que ve quien se postuló: sin asignaciones internas ni nombres del equipo. */
-function forApplicant(db: MockDatabase, application: OrganizationApplication): OrganizationApplication {
-  return {
-    ...withNewPlaceReadiness(db, application),
-    assigneeId: null,
-    assisted: application.assisted && { ...application.assisted, byId: 'equipo', byName: "Equipo K'Plan" },
-    documents: application.documents.map((document) => ({ ...document, reviewedBy: null })),
-    history: application.history
-      .filter((event) => event.kind !== 'assigned')
-      .map((event) => (event.actorId === null ? event : { ...event, actorId: 'equipo', actorName: "Equipo K'Plan" })),
-  }
 }
 
 /** Quien llenó un alta asistida no la revisa ni la decide: la ve otra persona del equipo. */
@@ -249,7 +217,6 @@ export const admissionRoutes = [
     },
     { permissions: [...REVIEWERS] },
   ),
-  route('GET', endpoints.organizationApplications.mine, (context) => forApplicant(context.db, ownApplication(context.db, requireUser(context)))),
   route(
     'GET',
     endpoints.organizationApplications.list,
@@ -272,56 +239,12 @@ export const admissionRoutes = [
         .sort((a, b) => a.name.localeCompare(b.name, 'es')),
     { permissions: [...VIEWERS] },
   ),
-  route('GET', endpoints.organizationApplications.detail(':id'), (context) => {
-    const user = requireUser(context)
-    const application = findApplication(context.db, context.params.id)
-    if (hasPermission(context.db, user, VIEWERS)) return withNewPlaceReadiness(context.db, application)
-    if (isOwner(user, application)) return forApplicant(context.db, application)
-    throw fail.notFound('No encontramos esa solicitud')
-  }),
-
-  // Quien se postuló
-  route('POST', endpoints.organizationApplications.documents(':id'), (context) => {
-    const user = requireUser(context)
-    const application = findApplication(context.db, context.params.id)
-    if (!isOwner(user, application)) throw fail.forbidden()
-    const open = application.status === 'changes_requested' || (application.status === 'in_review' && application.stage === 'documents')
-    if (!open) throw fail.conflict('Tu solicitud ya no recibe documentos')
-    const input = parseBody(documentReplaceSchema, context.body)
-    const rules = ORGANIZATION_DOCUMENT_RULES[application.type]
-    if (![...rules.required, ...rules.optional].includes(input.type)) throw fail.invalid('Ese documento no aplica a tu solicitud')
-    const now = nowLocalDateTime()
-    const fresh = {
-      fileName: input.fileName,
-      pages: input.pages,
-      uploadedAt: now,
-      status: 'pending' as const,
-      checks: [],
-      note: '',
-      reviewedBy: null,
-      reviewedAt: null,
-    }
-    const existing = application.documents.find((document) => document.type === input.type)
-    if (existing) Object.assign(existing, fresh)
-    else {
-      application.documents.push({ id: `${application.id}-${input.type}`, type: input.type, number: null, detail: null, issuedOn: null, expiresOn: null, ...fresh })
-    }
-    const label = lowerFirst(ORGANIZATION_DOCUMENT_INFO[input.type].label)
-    logReview(application, { id: null, name: user.name }, 'document_replaced', existing ? `Subió de nuevo: ${label}` : `Subió ${label}`)
-    return forApplicant(context.db, application)
-  }),
-  route('POST', endpoints.organizationApplications.resubmit(':id'), (context) => {
-    const user = requireUser(context)
-    const application = findApplication(context.db, context.params.id)
-    if (!isOwner(user, application)) throw fail.forbidden()
-    const blocker = resubmitBlocker(application)
-    if (blocker) throw fail.conflict(blocker)
-    application.status = 'in_review'
-    application.stage = 'documents'
-    application.stageSince = nowLocalDateTime()
-    logReview(application, { id: null, name: user.name }, 'resubmitted', 'Mandó de nuevo la solicitud con las correcciones')
-    return forApplicant(context.db, application)
-  }),
+  route(
+    'GET',
+    endpoints.organizationApplications.detail(':id'),
+    ({ db, params }) => withNewPlaceReadiness(db, findApplication(db, params.id)),
+    { permissions: [...VIEWERS] },
+  ),
 
   // Equipo de K'Plan
   route(

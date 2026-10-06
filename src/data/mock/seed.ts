@@ -7,9 +7,10 @@ import type { MockDatabase } from './db'
 import { generateRedemptions, seedActivations, seedCampaigns, seedPayments } from './generators/activity'
 import { seedAdmissions, seedPlaceRequests } from './generators/admissions'
 import { seedPeople } from './generators/people'
+import { seedApplications } from './services/applications'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 7
+export const SCHEMA_VERSION = 8
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -96,6 +97,7 @@ export function seedDatabase(today: ISODate): MockDatabase {
   const people = seedPeople(today)
   const admissions = seedAdmissions(today, people.users, structuredClone(catalog.organizations), structuredClone(catalog.stops))
   const placeRequests = seedPlaceRequests(today, admissions.organizations, admissions.stops)
+  const verification = seedApplications(admissions.applications, admissions.organizations, admissions.users)
 
   return {
     version: SCHEMA_VERSION,
@@ -104,6 +106,8 @@ export function seedDatabase(today: ISODate): MockDatabase {
     staffRoles: structuredClone(catalog.staffRoles),
     guideApplications: people.guideApplications,
     organizationApplications: admissions.applications,
+    applications: verification.applications,
+    files: verification.files,
     placeRequests,
     organizations: admissions.organizations,
     stops: admissions.stops,

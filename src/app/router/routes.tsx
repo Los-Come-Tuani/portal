@@ -73,6 +73,12 @@ export const router = createBrowserRouter([
                   Component: (await import('@/features/onboarding/ApplicationStatusPage')).ApplicationStatusPage,
                 }),
               },
+              {
+                path: 'solicitud/corregir',
+                lazy: async () => ({
+                  Component: (await import('@/features/onboarding/CorrectApplicationPage')).CorrectApplicationPage,
+                }),
+              },
             ],
           },
           {

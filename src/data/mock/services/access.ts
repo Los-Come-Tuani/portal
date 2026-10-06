@@ -29,6 +29,7 @@ export function toSessionUser(db: MockDatabase, user: User): SessionUser {
     permissions: permissionsOf(db, user),
     staffRoleName: db.staffRoles.find((role) => role.id === user.staffRoleId)?.name ?? null,
     twoFactor: { enabled: demoTwoFactor.get(user.id).enabled, required: false },
+    organizationRef: null,
   }
 }
 
@@ -51,8 +52,21 @@ export function toApiSessionUser(db: MockDatabase, user: User): ApiSessionUser {
     groups: roleIndex < 0 ? [] : [{ id: roleIndex + 1, name: db.staffRoles[roleIndex].name }],
     permissions: permissionsOf(db, user),
     organization_id: user.organizationId,
+    organization: organizationRefOf(db, user),
     two_factor: { enabled: demoTwoFactor.get(user.id).enabled, required: false },
     created_at: `${user.createdAt}T12:00:00Z`,
+  }
+}
+
+/** Como el API: la organización de la sesión con su clase y si ya la verificó el equipo. */
+function organizationRefOf(db: MockDatabase, user: User): ApiSessionUser['organization'] {
+  const organization = db.organizations.find((item) => item.id === user.organizationId)
+  if (!organization) return null
+  return {
+    id: organization.id,
+    kind: organization.type === 'negocio' ? 'business' : 'municipality',
+    name: organization.name,
+    verified: organization.status === 'active',
   }
 }
 

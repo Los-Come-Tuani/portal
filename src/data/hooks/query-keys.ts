@@ -10,6 +10,15 @@ import type { VisitFilters } from '../repositories/visits.repository'
 
 /** Todas las llaves de caché en un lugar, para invalidar sin adivinar. */
 export const queryKeys = {
+  catalog: {
+    cities: ['catalog', 'cities'] as const,
+    businessTypes: ['catalog', 'business-types'] as const,
+    institutionTypes: ['catalog', 'institution-types'] as const,
+  },
+  /** La solicitud de quien entró (F3). */
+  applications: {
+    mine: ['applications', 'mine'] as const,
+  },
   organizations: {
     all: ['organizations'] as const,
     list: (filters: OrganizationFilters) => ['organizations', 'list', filters] as const,
@@ -68,7 +77,6 @@ export const queryKeys = {
     all: ['admissions'] as const,
     list: (filters: AdmissionFilters) => ['admissions', 'list', filters] as const,
     detail: (applicationId: string) => ['admissions', 'detail', applicationId] as const,
-    mine: ['admissions', 'mine'] as const,
     reviewers: ['admissions', 'reviewers'] as const,
   },
   guides: {

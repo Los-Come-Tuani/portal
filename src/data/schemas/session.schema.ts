@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { todayISO } from '@/lib/dates'
 import { ApiError } from '../api/errors'
 import { PERMISSIONS, type Permission } from '../models/access'
+import { ORGANIZATION_KINDS } from '../models/application'
 import type { GuideServiceRole } from '../models/guide'
 import type { SessionUser, UserRole } from '../models/user'
 
@@ -24,6 +25,10 @@ export const apiSessionUserSchema = z.object({
   groups: z.array(z.object({ id: z.number(), name: z.string() })),
   permissions: z.array(z.string()),
   organization_id: z.string().nullable(),
+  /** El negocio, la institución o la alcaldía sobre la que actúa; `verified` es la aprobación del equipo. */
+  organization: z
+    .object({ id: z.string(), kind: z.enum(ORGANIZATION_KINDS), name: z.string(), verified: z.boolean() })
+    .nullish(),
   two_factor: z.object({ enabled: z.boolean(), required: z.boolean() }),
   created_at: z.string(),
 })
@@ -83,5 +88,6 @@ export function toSessionUser(api: ApiSessionUser): SessionUser {
     permissions: role === 'admin' ? api.permissions.filter(isPermission) : [],
     staffRoleName: group?.name ?? null,
     twoFactor: api.two_factor,
+    organizationRef: api.organization ?? null,
   }
 }

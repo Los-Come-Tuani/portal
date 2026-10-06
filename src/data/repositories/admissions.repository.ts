@@ -1,7 +1,6 @@
 import { endpoints } from '../api/endpoints'
 import { http } from '../api/http-client'
 import type {
-  ApplicationDocumentInput,
   ApplicationStatus,
   AssistedApplicationInput,
   AuthResponse,
@@ -23,10 +22,6 @@ export const admissionsRepository = {
   /** Pública: crea la cuenta, la organización en revisión y la solicitud, y deja la sesión abierta. */
   apply: (input: OrganizationApplicationInput) =>
     http.post<AuthResponse>(endpoints.organizationApplications.list, { body: input }),
-  mine: () => http.get<OrganizationApplication>(endpoints.organizationApplications.mine),
-  replaceDocument: (applicationId: string, input: ApplicationDocumentInput) =>
-    http.post<OrganizationApplication>(endpoints.organizationApplications.documents(applicationId), { body: input }),
-  resubmit: (applicationId: string) => http.post<OrganizationApplication>(endpoints.organizationApplications.resubmit(applicationId)),
 
   createAssisted: (input: AssistedApplicationInput) =>
     http.post<OrganizationApplication>(endpoints.organizationApplications.assisted, { body: input }),

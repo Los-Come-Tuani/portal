@@ -15,4 +15,6 @@ export const visitsRepository = {
 export const demoRepository = {
   /** Sólo en modo demo: vuelve a sembrar los datos de prueba. */
   reset: () => http.post<void>(endpoints.demoReset),
+  /** Sólo en modo demo: hace de equipo de K'Plan y resuelve la solicitud de quien entró. */
+  decideApplication: (decision: 'approved' | 'rejected') => http.post<void>(endpoints.demoDecision, { body: { decision } }),
 }

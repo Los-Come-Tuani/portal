@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
-  ApplicationDocumentInput,
   AssistedApplicationInput,
   DecisionInput,
   DocumentReviewInput,
@@ -13,29 +12,8 @@ export function useUploadFile() {
   return useMutation({ mutationFn: (file: File) => admissionsRepository.upload(file) })
 }
 
-// ── Quien se postula ─────────────────────────────────────────────────────
-
-export function useMyApplication(enabled = true) {
-  return useQuery({ queryKey: queryKeys.admissions.mine, queryFn: admissionsRepository.mine, enabled })
-}
-
-export function useReplaceDocument(applicationId: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: ApplicationDocumentInput) => admissionsRepository.replaceDocument(applicationId, input),
-    onSuccess: (application) => queryClient.setQueryData(queryKeys.admissions.mine, application),
-  })
-}
-
-export function useResubmit(applicationId: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: () => admissionsRepository.resubmit(applicationId),
-    onSuccess: (application) => queryClient.setQueryData(queryKeys.admissions.mine, application),
-  })
-}
-
 // ── Equipo de K'Plan ─────────────────────────────────────────────────────
+// (La solicitud de quien se postula, alta y estado, vive en `use-applications.ts`.)
 
 export function useCreateAssisted() {
   const queryClient = useQueryClient()

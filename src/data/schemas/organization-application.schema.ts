@@ -140,5 +140,3 @@ export function parseAssistedApplication(value: unknown) {
   }
   return issues
 }
-
-export const documentReplaceSchema = documentInputSchema

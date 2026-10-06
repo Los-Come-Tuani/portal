@@ -11,9 +11,7 @@ import { AuthContext, type AuthStatus, type LoginOutcome } from './auth-context'
 /** Cuánto se espera a que la API confirme el cierre de sesión antes de salir de todos modos. */
 const LOGOUT_PATIENCE_MS = 2500
 
-async function loadOrganization(user: SessionUser): Promise<Organization | null> {
-  return user.organizationId ? organizationsRepository.get(user.organizationId) : null
-}
+const loadOrganization = (user: SessionUser): Promise<Organization | null> => organizationsRepository.ofSession(user)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
@@ -87,8 +85,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const acceptSession = useCallback(async (response: AuthResponse) => openSession(response.user), [openSession])
 
+  /** Vuelve a pedir a la persona y a su organización: la aprobación del equipo cambia lo que ve. */
   const refreshUser = useCallback(async () => {
-    setUser(await authRepository.profile())
+    const me = await authRepository.profile()
+    const org = await loadOrganization(me)
+    setUser(me)
+    setOrganization(org)
   }, [])
 
   const endSession = useCallback(() => {

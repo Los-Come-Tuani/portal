@@ -1,6 +1,7 @@
 import type { Permission } from './access'
 import type { ISODate, LocalDateTime } from './common'
 import type { GuideServiceRole } from './guide'
+import type { OrganizationRef } from './organization'
 
 /**
  * Todos los usuarios de K'Plan. `admin` es el equipo interno (lo que puede
@@ -58,6 +59,8 @@ export interface SessionUser extends User {
   staffRoleName: string | null
   /** El segundo factor de la cuenta: si ya lo activó y si su rol lo exige. */
   twoFactor: { enabled: boolean; required: boolean }
+  /** Lo que el API dice de su organización; `null` para el equipo y para el modo demo. */
+  organizationRef: OrganizationRef | null
 }
 
 /** Abrir una sesión: la API la guarda en cookies, así que solo devuelve a la persona. */

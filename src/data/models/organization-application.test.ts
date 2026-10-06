@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { applicationDocumentsSchema, applicationOrganizationSchema } from '../schemas/organization-application.schema'
-import { admissionBlocker, resubmitBlocker, type OrganizationApplication, type OrganizationDocumentType } from './organization-application'
+import { admissionBlocker, type OrganizationApplication, type OrganizationDocumentType } from './organization-application'
 import type { DocumentStatus } from './review'
 
 function application(
@@ -76,11 +76,5 @@ describe('postulación de organizaciones', () => {
     expect(admissionBlocker(application({}, ALL_ACCEPTED))).toBeNull()
     expect(admissionBlocker(application({}, { ...ALL_ACCEPTED, 'permiso-sanitario': 'pending' }))).toMatch(/Revisa/)
     expect(admissionBlocker(application({}, { ruc: 'accepted', 'cedula-representante': 'accepted' }))).toMatch(/Faltan/)
-  })
-
-  it('se manda de nuevo cuando ya no quedan documentos rechazados', () => {
-    const asked = { status: 'changes_requested' } as const
-    expect(resubmitBlocker(application(asked, { ...ALL_ACCEPTED, 'matricula-municipal': 'rejected' }))).toMatch(/matrícula/)
-    expect(resubmitBlocker(application(asked, { ...ALL_ACCEPTED, 'matricula-municipal': 'pending' }))).toBeNull()
   })
 })

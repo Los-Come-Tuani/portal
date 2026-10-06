@@ -2,10 +2,13 @@
  * El contrato con la API: todas las rutas en un solo lugar. El backend de
  * demo (src/data/mock) implementa estas mismas rutas.
  *
- * - `auth` son las rutas reales del API (docs/autenticacion.md del repo del API): sin
- *   prefijo `/api` y con barra final. La sesión viaja en cookies `HttpOnly`.
+ * - `auth`, `catalog`, `upload` y `organizationApplication` son rutas reales del API
+ *   (docs/autenticacion.md y docs/organizaciones.md del repo del API): sin prefijo `/api` y
+ *   con barra final. La sesión viaja en cookies `HttpOnly`.
  * - El resto (`/api/...`) es el checklist de lo que falta: el API todavía no publica esos
- *   recursos y cada sección se alinea con el API cuando su fase llega (F3 en adelante).
+ *   recursos y cada sección se alinea con el API cuando su fase llega (F4 en adelante).
+ *   `organizationApplications` (en plural) y `uploads` son del modelo de demo anterior a F3
+ *   (revisión por documento, alta asistida) y solo existen en el modo demo.
  */
 const id = (value: string) => encodeURIComponent(value)
 
@@ -25,6 +28,10 @@ export const endpoints = {
     passwordChange: '/auth/password-change/',
     /** Una persona invitada al equipo activa su cuenta con el código del correo. */
     staffAccept: '/auth/staff-accept/',
+    /** Manda un código de seis dígitos al correo: quien se postula verifica así que es suyo. */
+    registerCode: '/auth/register-code/',
+    /** Comprueba el código sin gastarlo, para avanzar en el formulario. */
+    registerVerify: '/auth/register-verify/',
     /** Cierra la sesión en todos los dispositivos. */
     sessionRevoke: '/auth/session-revoke/',
     /** `GET`: estado del 2FA de quien está dentro. */
@@ -33,6 +40,24 @@ export const endpoints = {
     twoFactorConfirm: '/auth/two-factor-confirm/',
     twoFactorRecovery: '/auth/two-factor-recovery/',
     twoFactorDisable: '/auth/two-factor-disable/',
+  },
+  /** Las listas de los formularios de alta: públicas. */
+  catalog: {
+    cities: '/catalog/city/',
+    businessTypes: '/catalog/business-type/',
+    institutionTypes: '/catalog/institution-type/',
+  },
+  /** `POST`: pide una URL firmada para subir un archivo directo al almacenamiento. */
+  upload: '/upload/',
+  /** Alta y estado de la solicitud de una organización (F3). */
+  organizationApplication: {
+    business: '/organization-application/business/',
+    institution: '/organization-application/institution/',
+    municipality: '/organization-application/municipality/',
+    /** La solicitud más reciente de quien entró, con lo que mandó. */
+    mine: '/organization-application/mine/',
+    /** Corregir lo rechazado y volver a enviarlo. */
+    resubmit: '/organization-application/mine/resubmit/',
   },
   organizations: {
     list: '/api/organizations',
@@ -95,15 +120,10 @@ export const endpoints = {
     /** El equipo llena la solicitud por la organización. */
     assisted: '/api/organization-applications/assisted',
     reviewers: '/api/organization-applications/reviewers',
-    /** La solicitud de quien entró: negocio o alcaldía en revisión. */
-    mine: '/api/organization-applications/mine',
     detail: (applicationId: string) => `/api/organization-applications/${id(applicationId)}`,
     assign: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/assign`,
     review: (applicationId: string, documentId: string) =>
       `/api/organization-applications/${id(applicationId)}/documents/${id(documentId)}/review`,
-    /** Quien se postuló sube o reemplaza un documento. */
-    documents: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/documents`,
-    resubmit: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/resubmit`,
     advance: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/advance`,
     requestChanges: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/request-changes`,
     decision: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/decision`,
@@ -135,4 +155,8 @@ export const endpoints = {
   visitEvents: '/api/visit-events',
   /** Sólo existe en el modo demo. */
   demoReset: '/api/demo/reset',
+  /** Sólo existe en el modo demo: hace de equipo y resuelve la solicitud de quien entró. */
+  demoDecision: '/api/demo/application-decision',
+  /** Sólo existe en el modo demo: el "almacenamiento" que recibe los archivos firmados. */
+  demoBucket: '/api/demo/bucket',
 } as const

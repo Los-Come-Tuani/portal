@@ -6,6 +6,7 @@ export const paths = {
   security: '/seguridad',
   apply: '/postular',
   application: '/solicitud',
+  correctApplication: '/solicitud/corregir',
   admissions: '/solicitudes',
   assistedApplication: '/solicitudes/nueva',
   admission: (applicationId: string) => `/solicitudes/${encodeURIComponent(applicationId)}`,

@@ -18,6 +18,7 @@ import type {
   Stop,
   User,
 } from '../models'
+import type { MockApplication, MockFiles } from './services/applications'
 import { SCHEMA_VERSION, seedDatabase } from './seed'
 
 const STORAGE_KEY = 'kplan.portal.demo'
@@ -34,7 +35,12 @@ export interface MockDatabase {
   users: User[]
   staffRoles: StaffRole[]
   guideApplications: GuideApplication[]
+  /** El modelo de demo anterior a F3: revisión por documento y alta asistida. */
   organizationApplications: OrganizationApplication[]
+  /** Los expedientes de verificación de F3: los que ve quien se postula. */
+  applications: MockApplication[]
+  /** Lo que se "subió" en el modo demo: la clave del archivo y su contenido. */
+  files: MockFiles
   placeRequests: PlaceRequest[]
   organizations: Organization[]
   stops: Stop[]

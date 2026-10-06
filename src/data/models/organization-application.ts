@@ -239,14 +239,3 @@ export function admissionBlocker(application: OrganizationApplication): string |
   if (application.documents.some((document) => document.status === 'pending')) return 'Revisa todos los documentos primero'
   return null
 }
-
-/** Lo que le falta a quien se postuló para volver a mandar su solicitud; `null` si ya puede. */
-export function resubmitBlocker(application: OrganizationApplication): string | null {
-  if (application.status !== 'changes_requested') return 'No hay correcciones pendientes'
-  const byType = new Map(application.documents.map((document) => [document.type, document]))
-  const missing = ORGANIZATION_DOCUMENT_RULES[application.type].required.filter((type) => !byType.has(type))
-  if (missing.length > 0) return `Sube ${ORGANIZATION_DOCUMENT_INFO[missing[0]].label.toLowerCase()}`
-  const rejected = application.documents.filter((document) => document.status === 'rejected')
-  if (rejected.length > 0) return `Sube de nuevo: ${rejected.map((document) => ORGANIZATION_DOCUMENT_INFO[document.type].label.toLowerCase()).join(', ')}`
-  return null
-}
