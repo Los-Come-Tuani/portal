@@ -51,6 +51,24 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
     `%LOCALAPPDATA%\Temp\kplan-dev\e2e\run-e2e-f2.ps1` (19 comprobaciones): un rol que solo ve
     guías es llevado a Seguridad, activa el 2FA, ve solo su módulo, y una invitación se acepta
     con el código del correo y no se puede reutilizar.
+- **Hecho: la cola del equipo de F3** (`/solicitudes`, contra `/verification-request/`):
+  - `AdmissionsPage` (bandeja con pestañas Abiertas/Aprobadas/Rechazadas/Todas, filtro por clase,
+    paginación, `PlaceRequestsView` intacta en la otra vista) y `AdmissionPage` (quién se postuló,
+    datos por clase, archivos con enlace de lectura, intentos anteriores, y tomar/devolver/aprobar/
+    rechazar con motivo y nota; los botones siguen a `organizations.review|manage` y a quién la tiene).
+  - Datos: `models/verification.ts`, `schemas/verification-api.schema.ts`, `repositories/
+    verification.repository.ts`, `hooks/use-verification.ts` (`useOpenRequestCount` alimenta el menú y
+    `AdminPending`). Demo: `mock/handlers/verification.ts` sobre `db.applications` (`takenById`).
+  - **Se retiró el modelo de demo anterior**: `ApplicationWizard`, `ApplySteps`, `DocumentUpload`,
+    `AssistedApplicationPage` (el alta asistida; el API no la tiene), `use-admissions`, `admissions.
+    repository`, `handlers/admissions.ts` y `uploads.ts`, el esquema y la prueba de la solicitud
+    anterior. `models/organization-application.ts` queda solo como la semilla de la demo (de ahí
+    salen los expedientes de `db.applications`) y para dos lectores: los estados de cuenta (cobro del
+    alta asistida, `services/statements.ts`) y la propiedad de los lugares (`services/ownership.ts`);
+    se retira cuando esos pasen al modelo del API.
+  - Pruebas: 144 unitarias. Navegador contra el API real con S3 local: `run-e2e-f3-queue.ps1` (20
+    comprobaciones: filtros, tomar, devolver, «otro» sin nota, rechazar con motivo, aprobar sin tomar,
+    pestañas, 404). Demo: `e2e-f3-demo.mjs` (14, con la cola del equipo).
 - **Hecho: lado del portal de F3 para quien se postula** (alta, estado y corrección contra el API real):
   - `/postular` (`ApplyPage` -> `components/ApplicationFlow.tsx`): cinco pasos (qué es, sus datos con
     el mapa, lo que sube, la cuenta con código por correo, revisión) para las tres clases. Los
@@ -88,26 +106,16 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
    `status` y `search`; sin filtro por rol del portal). Los roles del API tienen `name`,
    `description`, `permissions`, `requires_two_factor`, `members` y `system` (el rol de sistema
    es "Administrador").
-2. **F3: la cola del equipo contra el API real** (el lado de quien se postula ya está, ver arriba).
-   `AdmissionsPage`, `AdmissionPage`, el contador de la barra lateral (`useAdmissions`),
-   `AdminPending` y `OrganizationDetailPage` siguen en el **modelo de demo anterior** (revisión por
-   documento, etapas `documents` -> `decision`, asignación, alta asistida con cobro, `OrganizationApplication`
-   en `models/organization-application.ts`) y con el API real responden 404. El API publica otra cosa
-   (confirmada con el usuario): tres clases de organización, **un solo paso de decisión** (tomar,
-   devolver, aprobar o rechazar con motivo), corregir = otro expediente. Hay que escribir las
-   pantallas nuevas contra `GET /verification-request/` (filtros `status`: `open|submitted|in_review|
-   approved|rejected|all`, `kind`, `page`, `page_size`), `.../{id}/` (trae `applicant`, `business|
-   institution|municipality`, `documents` con URL de lectura de 5 min, `resolution` e `history`),
-   `.../reason/` (los motivos) y `POST .../{id}/take|release|approve|reject/`; después retirar el
-   modelo anterior: `ApplicationWizard` (hoy solo lo usa el alta asistida), `ApplySteps`,
-   `DocumentUpload`, `ApplyGuide`, `lib/draft.ts`, `organization-application.*`, `handlers/admissions.ts`
-   y `generators/admissions.ts`. La parte de demo de F3 (`mock/handlers/applications.ts`) ya
-   guarda los expedientes en `db.applications`, con el formato del API: la cola nueva se apoya en eso.
-   Permisos de la cola: `organizations.view` para ver; `organizations.review` o `manage` para actuar.
-   El resto de `endpoints` (`/api/stops`, `/api/circuits`...) es de F4 en adelante: responden 404
-   con el API real y solo se trabajan en demo (`npm run dev:demo`); al llegar cada fase se alinea
-   su sección de `endpoints.ts`, su repositorio y su handler de demo (sin prefijo `/api`, con
-   barra final).
+2. **F4 en adelante** (lugares, circuitos, eventos, cupones, insignias, cobros): el resto de
+   `endpoints` (`/api/stops`, `/api/circuits`...) no existe en el API: esas pantallas responden 404
+   con el API real y solo se trabajan en demo (`npm run dev:demo`); al llegar cada fase se alinea su
+   sección de `endpoints.ts`, su repositorio y su handler de demo (sin prefijo `/api`, con barra
+   final). Lo que dejó F3 y se retira entonces: el cobro del alta asistida en `statements.ts` y la
+   propiedad de los lugares por `claimedStopIds` en `ownership.ts` (leen `db.organizationApplications`),
+   y `generators/admissions.ts`. Mientras tanto, la agenda de quien acaba de ser aprobado pide cosas
+   que el API todavía no tiene y muestra errores de red en la consola: es lo esperado.
+   Un `429` en `GET /auth/profile/` al cargar la página lleva a la pantalla de entrada sin cerrar la
+   sesión (`AuthProvider`); conviene mostrar un error con "Reintentar" en vez del login.
 3. **Google en el portal** (opcional): el API ya acepta `POST /auth/web/google/`; falta el botón con
    Google Identity Services. Solo aplica a roles públicos, así que no sirve para el equipo ni las
    organizaciones: no hay prisa.
