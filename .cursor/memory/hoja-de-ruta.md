@@ -66,12 +66,29 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
    `status` y `search`; sin filtro por rol del portal). Los roles del API tienen `name`,
    `description`, `permissions`, `requires_two_factor`, `members` y `system` (el rol de sistema
    es "Administrador").
-2. **F3 en adelante (dominio)**. El resto de `endpoints` (`/api/organizations`, `/api/stops`...)
-   no existe en el API: esas pantallas responden 404 con el API real y solo se pueden trabajar en
-   demo (`npm run dev:demo`). Al llegar cada fase se alinea su sección de `endpoints.ts`, su
-   repositorio y su handler de demo con lo que publique el API (sin prefijo `/api`, con barra final).
-   `ApplicationWizard` (postular) usa `acceptSession(response)`: el API real de la solicitud
-   (F3) debe dejar la sesión abierta con cookies y devolver `{ user }`.
+2. **F3 (organizaciones): el API ya está, falta el portal.** Lo que publica el API (guía en
+   `api/docs/organizaciones.md`, memoria en `api/.cursor/memory/hoja-de-ruta.md` sección 7b):
+   - Alta pública: `GET /catalog/city|business-type|institution-type/`, `POST /upload/` (URL
+     firmada: se sube con un `multipart` directo al bucket) y
+     `POST /organization-application/business|institution|municipality/`, que deja la sesión
+     abierta con cookies y devuelve `{ user, application }` (lo que ya espera `acceptSession`).
+   - Estado: `GET /organization-application/mine/` y `POST .../mine/resubmit/` (corregir y
+     reenviar lo rechazado: abre otro expediente).
+   - Cola del equipo: `GET /verification-request/` (bandeja por orden de llegada), `.../{id}/`,
+     `.../reason/` y `POST .../{id}/take|release|approve|reject/`.
+   - La sesión trae `organization` (`{id, kind, name, verified}`).
+   El modelo del portal es más rico que el del API: `Organization` única (negocio o alcaldía,
+   sin institución), revisión por documento, etapas (`advance`, `request-changes`), asignar a un
+   revisor y solicitud asistida con cobro. El API decidió otra cosa (confirmada con el usuario):
+   tres clases de organización, **un solo paso de decisión** (aprobar o rechazar con motivo),
+   corregir = otro expediente, y sin solicitud asistida ni pedir otro lugar. Hay que adaptar las
+   pantallas (`ApplyPage`, `ApplicationStatusPage`, admisiones) y los handlers de demo, no el API.
+   Estados del API: `submitted`, `in_review`, `approved`, `rejected`. Falta además crear el
+   bucket (`api/docs/archivos.md`, con el CORS del portal) para poder subir de verdad.
+   El resto de `endpoints` (`/api/stops`, `/api/circuits`...) es de F4 en adelante: responden 404
+   con el API real y solo se trabajan en demo (`npm run dev:demo`); al llegar cada fase se alinea
+   su sección de `endpoints.ts`, su repositorio y su handler de demo (sin prefijo `/api`, con
+   barra final).
 3. **Google en el portal** (opcional): el API ya acepta `POST /auth/web/google/`; falta el botón con
    Google Identity Services. Solo aplica a roles públicos, así que no sirve para el equipo ni las
    organizaciones: no hay prisa.
