@@ -4,13 +4,13 @@ import { Link, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { Button, ButtonLink, ConfirmDialog, ErrorState, IconButton, Panel, Skeleton, Tag, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
-import { useAdmissions } from '@/data/hooks/use-admissions'
 import { useBadgeCampaigns } from '@/data/hooks/use-badges'
 import { useStatements } from '@/data/hooks/use-billing'
 import { useCoupons } from '@/data/hooks/use-coupons'
 import { useEvents } from '@/data/hooks/use-events'
 import { useOrganization, useRemoveStop, useSaveOrganization } from '@/data/hooks/use-organizations'
 import { usePlaces } from '@/data/hooks/use-places'
+import { useVerificationQueue } from '@/data/hooks/use-verification'
 import {
   ORGANIZATION_STATUS_LABELS,
   ORGANIZATION_TYPE_LABELS,
@@ -53,10 +53,9 @@ export function OrganizationDetailPage() {
   const remove = useRemoveStop()
   const toast = useToast()
   const canManage = useSession().can('organizations.manage')
-  const admissions = useAdmissions()
-  const admission = admissions.data
-    ?.filter((item) => item.organizationId === organizationId)
-    .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0]
+  // La solicitud abierta de esta organización, si la tiene: lleva a revisarla.
+  const openRequests = useVerificationQueue({ status: 'open', pageSize: 100 })
+  const admission = openRequests.data?.results.find((item) => item.organizationId === organizationId)
   const [editing, setEditing] = useState(false)
   const [assigning, setAssigning] = useState(false)
   const [removing, setRemoving] = useState<Stop | null>(null)

@@ -241,6 +241,7 @@ const newApplication = (db: MockDatabase, user: User, organizationId: string, da
   submittedAt: instantNow(),
   resolvedAt: null,
   resolution: null,
+  takenById: null,
 })
 
 // ── Rutas ─────────────────────────────────────────────────────────────────

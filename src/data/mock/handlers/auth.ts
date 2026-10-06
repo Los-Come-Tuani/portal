@@ -8,9 +8,9 @@ import type { MockDatabase } from '../db'
 import { resetDatabase } from '../db'
 import { fail, MockHttpError, parseBody, requireUser, route } from '../http'
 import { toApiSessionUser } from '../services/access'
+import { lastRejectionNote } from '../services/applications'
 import { demoSession } from '../services/demo-session'
 import { DEMO_CODE, demoTwoFactor } from '../services/demo-two-factor'
-import { rejectionNote } from './admissions'
 
 /** Quién tiene la sesión abierta en la demo (el equivalente a la cookie de la API real). */
 export function userFromSession(db: MockDatabase): User | null {
@@ -63,7 +63,7 @@ export const authRoutes = [
         throw new MockHttpError(403, "Tu cuenta está suspendida. Escríbele al equipo de K'Plan para reactivarla.")
       }
       const organization = db.organizations.find((item) => item.id === user.organizationId)
-      const rejected = organization?.status === 'suspended' ? rejectionNote(db, organization.id) : null
+      const rejected = organization?.status === 'suspended' ? lastRejectionNote(db, organization.id) : null
       if (rejected !== null) {
         throw new MockHttpError(
           403,

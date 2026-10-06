@@ -9,7 +9,8 @@ import {
   type StoredFile,
   type User,
 } from '../../models'
-import { BUSINESS_TYPES, cityByName, CITIES, REJECTION_REASONS } from './application-catalog'
+import type { MockDatabase } from '../db'
+import { BUSINESS_TYPES, cityByName, CITIES, INSTITUTION_TYPES, REJECTION_REASONS } from './application-catalog'
 
 /** El expediente de verificación de una organización, como lo guarda el backend de demo. */
 export interface MockApplication {
@@ -22,6 +23,8 @@ export interface MockApplication {
   submittedAt: string
   resolvedAt: string | null
   resolution: { approved: boolean; reasonCode: string | null; note: string } | null
+  /** Quién del equipo la tiene en revisión. */
+  takenById: string | null
 }
 
 /** Los archivos "subidos" del modo demo: la clave y su contenido como `data:`. */
@@ -120,6 +123,98 @@ export function wireApplication(files: MockFiles, application: MockApplication) 
   return { ...wireSummary(application), submitted: wireOrganization(files, application.data) }
 }
 
+/** Para el inicio de sesión de la demo: la nota con que rechazaron a la organización, si la rechazaron. */
+export function lastRejectionNote(db: MockDatabase, organizationId: string): string | null {
+  const latest = db.applications.findLast((item) => item.organizationId === organizationId)
+  return latest?.status === 'rejected' ? (latest.resolution?.note ?? '') : null
+}
+
+// ── La cola del equipo ────────────────────────────────────────────────────
+
+const person = (user: User | undefined) => user && { id: user.id, name: user.name, email: user.email }
+
+const reasonOf = (code: string | null | undefined) => {
+  const reason = REJECTION_REASONS.find((item) => item.code === code)
+  return reason ? { code: reason.code, label: reason.label } : null
+}
+
+/** Una fila de la bandeja. */
+export function wireQueueItem(db: MockDatabase, application: MockApplication) {
+  const city = CITIES.find((item) => item.id === application.data.cityId) ?? CITIES[0]
+  return {
+    id: application.id,
+    kind: application.data.kind,
+    organization_id: application.organizationId,
+    organization_name: application.data.name,
+    city: { id: city.id, code: city.code, name: city.name },
+    status: application.status,
+    submitted_at: application.submittedAt,
+    resolved_at: application.resolvedAt,
+    taken_by: person(db.users.find((user) => user.id === application.takenById)) ?? null,
+  }
+}
+
+/** El expediente completo, como lo ve quien revisa. */
+export function wireQueueDetail(db: MockDatabase, application: MockApplication) {
+  const { data } = application
+  const wire = wireOrganization(db.files, data)
+  const documents =
+    data.kind === 'business'
+      ? [{ kind: 'signature_dish_photo', url: db.files[data.signatureDish.photo?.key ?? ''] ?? null }]
+      : [{ kind: 'legal_document', url: db.files[data.document?.key ?? ''] ?? null }]
+  const business =
+    data.kind === 'business'
+      ? {
+          business_type: BUSINESS_TYPES.find((type) => type.id === data.businessTypeId) ?? BUSINESS_TYPES[0],
+          ruc: data.ruc,
+          address: data.address,
+          phone: data.phone,
+          alternate_phone: data.alternatePhone,
+          latitude: data.latitude ?? 0,
+          longitude: data.longitude ?? 0,
+          hours: (wire as { hours: unknown[] }).hours,
+          signature_dish: {
+            name: data.signatureDish.name,
+            description: data.signatureDish.description,
+            reference_price: Number(data.signatureDish.referencePrice),
+            currency: data.signatureDish.currency,
+          },
+        }
+      : null
+  const institution =
+    data.kind === 'institution'
+      ? {
+          institution_type: INSTITUTION_TYPES.find((type) => type.id === data.institutionTypeId) ?? INSTITUTION_TYPES[0],
+          contact_email: data.contactEmail,
+          phone: data.phone,
+        }
+      : null
+  const municipality = data.kind === 'municipality' ? { contact_email: data.contactEmail, phone: data.phone } : null
+  const summary = wireSummary(application)
+
+  return {
+    ...wireQueueItem(db, application),
+    applicant: person(db.users.find((user) => user.id === application.userId)) ?? null,
+    business,
+    institution,
+    municipality,
+    documents,
+    resolution: summary.resolution,
+    // Los expedientes anteriores de la misma organización: cuántas veces se intentó y por qué falló cada una.
+    history: db.applications
+      .filter((item) => item.organizationId === application.organizationId && item.id !== application.id)
+      .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))
+      .map((item) => ({
+        id: item.id,
+        status: item.status,
+        submitted_at: item.submittedAt,
+        resolved_at: item.resolvedAt,
+        reason: reasonOf(item.resolution?.reasonCode),
+        note: item.resolution?.note ?? '',
+      })),
+  }
+}
+
 // ── Siembra ───────────────────────────────────────────────────────────────
 
 /** Una imagen de relleno para las fotos y los documentos de los expedientes sembrados. */
@@ -201,6 +296,7 @@ export function seedApplications(
       data,
       status: decided ? (approved ? 'approved' : 'rejected') : old.assigneeId ? 'in_review' : 'submitted',
       submittedAt: toInstant(old.submittedAt),
+      takenById: old.assigneeId,
       resolvedAt: decided ? toInstant(old.decidedAt ?? old.stageSince) : null,
       resolution: decided
         ? {

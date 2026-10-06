@@ -7,10 +7,8 @@
 import { env } from '@/config/env'
 import type { TransportRequest, TransportResponse } from '../api/http-client'
 import { getDatabase, saveDatabase } from './db'
-import { admissionRoutes } from './handlers/admissions'
 import { applicationRoutes } from './handlers/applications'
 import { authRoutes, userFromSession } from './handlers/auth'
-import { uploadRoutes } from './handlers/uploads'
 import { badgeRoutes } from './handlers/badges'
 import { billingRoutes } from './handlers/billing'
 import { circuitRoutes } from './handlers/circuits'
@@ -21,6 +19,7 @@ import { organizationRoutes } from './handlers/organizations'
 import { placeRequestRoutes } from './handlers/place-requests'
 import { placeRoutes } from './handlers/places'
 import { staffRoleRoutes, userRoutes } from './handlers/users'
+import { verificationRoutes } from './handlers/verification'
 import { visitRoutes } from './handlers/visits'
 import { MockHttpError, matchRoute, type MockRoute } from './http'
 import { hasPermission } from './services/access'
@@ -28,8 +27,7 @@ import { hasPermission } from './services/access'
 const routes: MockRoute[] = [
   ...authRoutes,
   ...applicationRoutes,
-  ...uploadRoutes,
-  ...admissionRoutes,
+  ...verificationRoutes,
   ...placeRequestRoutes,
   ...userRoutes,
   ...staffRoleRoutes,

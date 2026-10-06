@@ -1,4 +1,4 @@
-import type { AdmissionFilters } from '../repositories/admissions.repository'
+import type { QueueFilters } from '../models'
 import type { EventFilters } from '../repositories/events.repository'
 import type { GuideApplicationFilters } from '../repositories/guides.repository'
 import type { OrganizationFilters } from '../repositories/organizations.repository'
@@ -18,6 +18,13 @@ export const queryKeys = {
   /** La solicitud de quien entró (F3). */
   applications: {
     mine: ['applications', 'mine'] as const,
+  },
+  /** La cola de verificación del equipo (F3). */
+  verification: {
+    all: ['verification'] as const,
+    list: (filters: QueueFilters) => ['verification', 'list', filters] as const,
+    detail: (requestId: string) => ['verification', 'detail', requestId] as const,
+    reasons: ['verification', 'reasons'] as const,
   },
   organizations: {
     all: ['organizations'] as const,
@@ -72,12 +79,6 @@ export const queryKeys = {
   placeRequests: {
     all: ['place-requests'] as const,
     list: (filters: PlaceRequestFilters) => ['place-requests', 'list', filters] as const,
-  },
-  admissions: {
-    all: ['admissions'] as const,
-    list: (filters: AdmissionFilters) => ['admissions', 'list', filters] as const,
-    detail: (applicationId: string) => ['admissions', 'detail', applicationId] as const,
-    reviewers: ['admissions', 'reviewers'] as const,
   },
   guides: {
     all: ['guides'] as const,

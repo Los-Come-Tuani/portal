@@ -2,13 +2,11 @@
  * El contrato con la API: todas las rutas en un solo lugar. El backend de
  * demo (src/data/mock) implementa estas mismas rutas.
  *
- * - `auth`, `catalog`, `upload` y `organizationApplication` son rutas reales del API
- *   (docs/autenticacion.md y docs/organizaciones.md del repo del API): sin prefijo `/api` y
- *   con barra final. La sesión viaja en cookies `HttpOnly`.
+ * - `auth`, `catalog`, `upload`, `organizationApplication` y `verificationRequest` son rutas
+ *   reales del API (docs/autenticacion.md y docs/organizaciones.md del repo del API): sin
+ *   prefijo `/api` y con barra final. La sesión viaja en cookies `HttpOnly`.
  * - El resto (`/api/...`) es el checklist de lo que falta: el API todavía no publica esos
  *   recursos y cada sección se alinea con el API cuando su fase llega (F4 en adelante).
- *   `organizationApplications` (en plural) y `uploads` son del modelo de demo anterior a F3
- *   (revisión por documento, alta asistida) y solo existen en el modo demo.
  */
 const id = (value: string) => encodeURIComponent(value)
 
@@ -58,6 +56,17 @@ export const endpoints = {
     mine: '/organization-application/mine/',
     /** Corregir lo rechazado y volver a enviarlo. */
     resubmit: '/organization-application/mine/resubmit/',
+  },
+  /** La cola de verificación del equipo (F3): una bandeja para las tres clases de organización. */
+  verificationRequest: {
+    list: '/verification-request/',
+    /** Los motivos que se ofrecen al rechazar. */
+    reasons: '/verification-request/reason/',
+    detail: (requestId: string) => `/verification-request/${id(requestId)}/`,
+    take: (requestId: string) => `/verification-request/${id(requestId)}/take/`,
+    release: (requestId: string) => `/verification-request/${id(requestId)}/release/`,
+    approve: (requestId: string) => `/verification-request/${id(requestId)}/approve/`,
+    reject: (requestId: string) => `/verification-request/${id(requestId)}/reject/`,
   },
   organizations: {
     list: '/api/organizations',
@@ -112,21 +121,6 @@ export const endpoints = {
   placeRequests: {
     list: '/api/place-requests',
     decision: (requestId: string) => `/api/place-requests/${id(requestId)}/decision`,
-  },
-  /** Sube un archivo y devuelve su URL; se usa antes de mandar una solicitud. */
-  uploads: '/api/uploads',
-  organizationApplications: {
-    list: '/api/organization-applications',
-    /** El equipo llena la solicitud por la organización. */
-    assisted: '/api/organization-applications/assisted',
-    reviewers: '/api/organization-applications/reviewers',
-    detail: (applicationId: string) => `/api/organization-applications/${id(applicationId)}`,
-    assign: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/assign`,
-    review: (applicationId: string, documentId: string) =>
-      `/api/organization-applications/${id(applicationId)}/documents/${id(documentId)}/review`,
-    advance: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/advance`,
-    requestChanges: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/request-changes`,
-    decision: (applicationId: string) => `/api/organization-applications/${id(applicationId)}/decision`,
   },
   users: {
     list: '/api/users',

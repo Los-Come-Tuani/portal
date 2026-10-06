@@ -4,7 +4,7 @@ import { Link, matchPath, NavLink, useLocation, useNavigate } from 'react-router
 import { Logo } from '@/components/brand/Logo'
 import { Avatar, Menu, MenuItem } from '@/components/ui'
 import { useGuideApplications } from '@/data/hooks/use-guides'
-import { useAdmissions } from '@/data/hooks/use-admissions'
+import { useOpenRequestCount } from '@/data/hooks/use-verification'
 import { usePlaceRequests } from '@/data/hooks/use-place-requests'
 import { ROLE_LABELS } from '@/data/models'
 import { useAuth, useSession } from '@/features/auth/use-auth'
@@ -45,11 +45,11 @@ function usePendingCounts(): Record<NavCount, number> {
   const { can } = useSession()
   const guides = useGuideApplications({ status: 'in_review' }, can('guides.view'))
   const reviewsOrganizations = can('organizations.view')
-  const admissions = useAdmissions({ status: 'in_review' }, reviewsOrganizations)
+  const openRequests = useOpenRequestCount(reviewsOrganizations)
   const placeRequests = usePlaceRequests({ status: 'pending' }, reviewsOrganizations)
   return {
     pendingGuides: guides.data?.length ?? 0,
-    pendingAdmissions: (admissions.data?.length ?? 0) + (placeRequests.data?.length ?? 0),
+    pendingAdmissions: (openRequests ?? 0) + (placeRequests.data?.length ?? 0),
   }
 }
 
