@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState, type FocusEvent, type MouseEvent } 
 import { Link, matchPath, NavLink, useLocation, useNavigate } from 'react-router'
 import { Logo } from '@/components/brand/Logo'
 import { Avatar, Menu, MenuItem } from '@/components/ui'
-import { useGuideApplications } from '@/data/hooks/use-guides'
+import { useOpenProviderCount } from '@/data/hooks/use-providers'
 import { useOpenRequestCount } from '@/data/hooks/use-verification'
 import { usePlaceRequests } from '@/data/hooks/use-place-requests'
 import { ROLE_LABELS } from '@/data/models'
@@ -43,12 +43,12 @@ function isActive(pathname: string, item: { to: string; end?: boolean }): boolea
 
 function usePendingCounts(): Record<NavCount, number> {
   const { can } = useSession()
-  const guides = useGuideApplications({ status: 'in_review' }, can('guides.view'))
+  const guides = useOpenProviderCount(can('guides.view'))
   const reviewsOrganizations = can('organizations.view')
   const openRequests = useOpenRequestCount(reviewsOrganizations)
   const placeRequests = usePlaceRequests({ status: 'pending' }, reviewsOrganizations)
   return {
-    pendingGuides: guides.data?.length ?? 0,
+    pendingGuides: guides ?? 0,
     pendingAdmissions: (openRequests ?? 0) + (placeRequests.data?.length ?? 0),
   }
 }

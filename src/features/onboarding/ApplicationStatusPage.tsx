@@ -5,7 +5,7 @@ import { ButtonLink, ErrorState, PageHeader, Panel, Skeleton, Tag } from '@/comp
 import { useMyApplication } from '@/data/hooks/use-applications'
 import { canCorrect, ORGANIZATION_KIND_LABELS, REQUEST_STATUS_LABELS, type MyApplication, type RequestStatus } from '@/data/models'
 import { useAuth, useSession } from '@/features/auth/use-auth'
-import { Notice } from '@/features/verification/components/ReviewControls'
+import { Notice } from '@/features/verification/components/Notice'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { cn } from '@/lib/cn'
 import { nowLocalDateTime } from '@/lib/dates'

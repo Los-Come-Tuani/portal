@@ -14,10 +14,10 @@ import { billingRoutes } from './handlers/billing'
 import { circuitRoutes } from './handlers/circuits'
 import { couponRoutes } from './handlers/coupons'
 import { eventRoutes } from './handlers/events'
-import { guideRoutes } from './handlers/guides'
 import { organizationRoutes } from './handlers/organizations'
 import { placeRequestRoutes } from './handlers/place-requests'
 import { placeRoutes } from './handlers/places'
+import { providerRoutes } from './handlers/providers'
 import { staffRoleRoutes, userRoutes } from './handlers/users'
 import { verificationRoutes } from './handlers/verification'
 import { visitRoutes } from './handlers/visits'
@@ -31,7 +31,7 @@ const routes: MockRoute[] = [
   ...placeRequestRoutes,
   ...userRoutes,
   ...staffRoleRoutes,
-  ...guideRoutes,
+  ...providerRoutes,
   ...organizationRoutes,
   ...placeRoutes,
   ...circuitRoutes,

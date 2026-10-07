@@ -6,23 +6,24 @@ import { Avatar, Button, ConfirmDialog, Dialog, Tag, useToast } from '@/componen
 import { errorMessage } from '@/data/api/errors'
 import { useSendPasswordReset, useUpdateUser } from '@/data/hooks/use-users'
 import {
-  APPLICATION_STATUS_LABELS,
-  STAGE_LABELS,
+  PROVIDER_STAGE_LABELS,
+  REQUEST_STATUS_LABELS,
   USER_STATUS_LABELS,
-  type ApplicationStatus,
-  type GuideApplication,
   type Organization,
+  type ProviderRequestSummary,
+  type RequestStatus,
   type StaffRole,
   type User,
 } from '@/data/models'
 import { useSession } from '@/features/auth/use-auth'
 import { cn } from '@/lib/cn'
+import { nowLocalDateTime } from '@/lib/dates'
 import { formatDate, formatDateTime } from '@/lib/format'
 import { SUSPEND_EFFECT, USER_STATUS_TONES, userKind, usesApp } from './status'
 
-const APPLICATION_DOT: Record<ApplicationStatus, string> = {
+const APPLICATION_DOT: Record<RequestStatus, string> = {
+  submitted: 'border border-ink/40',
   in_review: 'bg-planned',
-  changes_requested: 'border border-ink/40',
   approved: 'bg-confirmed',
   rejected: 'bg-danger',
 }
@@ -31,7 +32,8 @@ interface UserSheetProps {
   user: User | null
   organization: Organization | undefined
   staffRole: StaffRole | undefined
-  application: GuideApplication | undefined
+  /** Su solicitud de guía o traductor más reciente. */
+  application: ProviderRequestSummary | undefined
   onClose: () => void
 }
 
@@ -152,12 +154,12 @@ export function UserSheet({ user, organization, staffRole, application, onClose 
             <ContextLink
               label="Verificación"
               title={
-                application.status === 'in_review'
-                  ? `${APPLICATION_STATUS_LABELS.in_review} · ${STAGE_LABELS[application.stage]}`
-                  : APPLICATION_STATUS_LABELS[application.status]
+                application.stage
+                  ? `${REQUEST_STATUS_LABELS[application.status]} · ${PROVIDER_STAGE_LABELS[application.stage]}`
+                  : REQUEST_STATUS_LABELS[application.status]
               }
               tag={<span aria-hidden="true" className={cn('size-2.5 shrink-0 rounded-full', APPLICATION_DOT[application.status])} />}
-              detail={`Envió su solicitud el ${formatDate(application.submittedAt.slice(0, 10))}`}
+              detail={`Envió su solicitud el ${formatDate(nowLocalDateTime(new Date(application.submittedAt)).slice(0, 10))}`}
               to={paths.guideApplication(application.id)}
             />
           )}

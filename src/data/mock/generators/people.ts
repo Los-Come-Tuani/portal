@@ -4,25 +4,10 @@
  * guías que esperan verificación (guide_applications.json) y turistas.
  */
 import { addDays, nowMinutes, toLocalDateTime, type ISODate, type LocalDateTime } from '@/lib/dates'
-import { lowerFirst } from '@/lib/format'
 import { createRandom, hashSeed, type Random } from '@/lib/random'
 import { slugify } from '@/lib/slug'
-import {
-  BACKGROUND_CHECK_INFO,
-  CITIES,
-  DOCUMENT_TYPE_INFO,
-  requiredChecks,
-  requiredDocuments,
-  type BackgroundCheck,
-  type DocumentStatus,
-  type DocumentType,
-  type GuideApplication,
-  type GuideDocument,
-  type ReviewEvent,
-  type User,
-} from '../../models'
+import { CITIES, type User } from '../../models'
 import { catalog, type AppGuide, type ApplicationSeed } from '../catalog'
-import { documentScans } from './document-scans'
 
 /** guides.json de la app no trae ciudad. */
 const APP_GUIDE_CITIES: Record<string, string> = {
@@ -36,18 +21,12 @@ const APP_GUIDE_CITIES: Record<string, string> = {
   'guide-translator-noemi': 'Granada',
 }
 
-const HOUR = 60
+export const HOUR = 60
 
 /** Hoy, nunca después de la hora en que se siembra la demo. */
-function moment(today: ISODate, daysAgo: number, minutes: number): LocalDateTime {
+export function moment(today: ISODate, daysAgo: number, minutes: number): LocalDateTime {
   const clamped = daysAgo === 0 ? Math.max(0, Math.min(minutes, nowMinutes() - 15)) : minutes
   return toLocalDateTime(addDays(today, -daysAgo), clamped)
-}
-
-function later(value: LocalDateTime, minutes: number): LocalDateTime {
-  const date = value.slice(0, 10)
-  const base = Number(value.slice(11, 13)) * 60 + Number(value.slice(14, 16))
-  return toLocalDateTime(date, base + minutes)
 }
 
 function emailFor(name: string, index = 0): string {
@@ -59,72 +38,8 @@ function phone(random: Random): string {
   return `+505 8${random.int(100, 999)} ${random.int(1000, 9999)}`
 }
 
-function documentNumber(random: Random, type: DocumentType, issuedOn: ISODate): string {
-  switch (type) {
-    case 'cedula': {
-      const [year, month, day] = issuedOn.split('-')
-      return `${String(random.int(1, 616)).padStart(3, '0')}-${day}${month}${year.slice(2)}-${random.int(1000, 9999)}${'ABCDEFGHJKLMNPQRSTUVWXY'[random.int(0, 22)]}`
-    }
-    case 'record-policia':
-      return `PN-${issuedOn.slice(0, 4)}-${random.int(100000, 999999)}`
-    case 'carne-intur':
-      return `INTUR-GT-${random.int(1000, 9999)}`
-    case 'primeros-auxilios':
-      return `CRN-PA-${random.int(10000, 99999)}`
-    case 'certificado-idioma':
-      return `CI-${random.int(10000, 99999)}`
-    case 'licencia-conducir':
-      return `LC-${random.int(1000000, 9999999)}`
-    case 'seguro-vehiculo':
-      return `POL-${random.int(100000, 999999)}`
-  }
-}
-
-/** Cuándo se emitió y cuándo vence, según el tipo. */
-function validity(random: Random, type: DocumentType, today: ISODate): { issuedOn: ISODate; expiresOn: ISODate | null } {
-  const issued = (min: number, max: number) => addDays(today, -random.int(min, max))
-  switch (type) {
-    case 'cedula': {
-      const issuedOn = issued(400, 2500)
-      return { issuedOn, expiresOn: addDays(issuedOn, 3650) }
-    }
-    case 'record-policia':
-      return { issuedOn: issued(8, 60), expiresOn: null }
-    case 'carne-intur': {
-      const issuedOn = issued(90, 300)
-      return { issuedOn, expiresOn: addDays(issuedOn, 730) }
-    }
-    case 'primeros-auxilios': {
-      const issuedOn = issued(60, 400)
-      return { issuedOn, expiresOn: addDays(issuedOn, 730) }
-    }
-    case 'certificado-idioma':
-      return { issuedOn: issued(200, 900), expiresOn: null }
-    case 'licencia-conducir': {
-      const issuedOn = issued(300, 1200)
-      return { issuedOn, expiresOn: addDays(issuedOn, 1825) }
-    }
-    case 'seguro-vehiculo': {
-      const issuedOn = issued(20, 200)
-      return { issuedOn, expiresOn: addDays(issuedOn, 365) }
-    }
-  }
-}
-
-const LEVELS = ['B2', 'C1', 'C2']
-
-/** El texto de cada constancia en el escaneo de muestra. */
-const GUIDE_SCAN_TEXT: Record<DocumentType, (name: string, city: string, detail: string | null) => string> = {
-  cedula: () => '',
-  'carne-intur': () => '',
-  'licencia-conducir': () => '',
-  'record-policia': (name) => `Se hace constar que ${name} no registra antecedentes policiales a la fecha de emisión de esta constancia.`,
-  'primeros-auxilios': (name) => `Se certifica que ${name} aprobó el curso de primeros auxilios básicos, con prácticas de reanimación y atención de heridas.`,
-  'certificado-idioma': (name, _city, detail) => `Se certifica que ${name} acreditó los siguientes niveles, según el Marco Común Europeo: ${detail ?? ''}.`,
-  'seguro-vehiculo': (name, city) => `Póliza vigente de responsabilidad civil y cobertura de pasajeros a nombre de ${name}, para el vehículo registrado en ${city}.`,
-}
-
-interface ApplicationDraft {
+/** Un guía o traductor de la demo: su cuenta y lo que mandó para que lo verifiquen. */
+export interface GuideDraft {
   id: string
   userId: string
   name: string
@@ -133,137 +48,10 @@ interface ApplicationDraft {
   city: string
   photoUrl: string
   seed: ApplicationSeed
-  reviewerId: string
-}
-
-function buildApplication(draft: ApplicationDraft, today: ISODate, staff: Map<string, string>): GuideApplication {
-  const { seed } = draft
-  const random = createRandom(hashSeed(`kplan-application:${draft.id}`))
-  const submittedAt = moment(today, seed.submittedDaysAgo, seed.submittedDaysAgo === 0 ? 7 * HOUR + random.int(0, 50) : random.int(8, 19) * HOUR + random.int(0, 59))
-  const stageSince = seed.stageDaysAgo === seed.submittedDaysAgo ? submittedAt : moment(today, seed.stageDaysAgo, seed.stageDaysAgo === 0 ? 7 * HOUR + random.int(20, 55) : random.int(9, 17) * HOUR + random.int(0, 59))
-  const reviewerId = seed.assigneeId ?? draft.reviewerId
-  const reviewerName = staff.get(reviewerId) ?? "Equipo K'Plan"
-  const history: Omit<ReviewEvent, 'id'>[] = []
-  const log = (at: LocalDateTime, kind: ReviewEvent['kind'], text: string, byApplicant = false) =>
-    history.push({ at, kind, text, actorId: byApplicant ? null : reviewerId, actorName: byApplicant ? draft.name : reviewerName })
-
-  const foreign = seed.languages.filter((language) => language !== 'Español')
-  const documentTypes = requiredDocuments(seed).filter((type) => seed.documents[type] !== undefined)
-  log(submittedAt, 'submitted', `Envió su solicitud desde la app con ${documentTypes.length} documentos`, true)
-  if (seed.assigneeId) log(later(submittedAt, 2 * HOUR + 10), 'assigned', `${reviewerName} tomó la solicitud`)
-
-  const documents: GuideDocument[] = documentTypes.map((type, index) => {
-    const status = seed.documents[type] as DocumentStatus
-    const info = DOCUMENT_TYPE_INFO[type]
-    const resubmitted = seed.correction?.document === type
-    const uploadedAt = resubmitted ? stageSince : submittedAt
-    const reviewedAt = status === 'pending' ? null : later(submittedAt, 3 * HOUR + index * 55)
-    const { issuedOn, expiresOn } = validity(random, type, today)
-    const detail =
-      type === 'certificado-idioma'
-        ? (status === 'rejected' ? foreign.slice(0, 1) : foreign).map((language) => `${language} ${random.pick(LEVELS)}`).join(' · ')
-        : null
-    if (reviewedAt) {
-      log(
-        reviewedAt,
-        status === 'accepted' ? 'document_accepted' : 'document_rejected',
-        status === 'accepted' ? `Aceptó: ${lowerFirst(info.label)}` : `Rechazó: ${lowerFirst(info.label)}. ${seed.notes[type] ?? ''}`.trim(),
-      )
-    }
-    const number = documentNumber(random, type, issuedOn)
-    return {
-      id: `${draft.id}-${type}`,
-      type,
-      fileName: `${type}-${slugify(draft.name)}.${info.format === 'card' ? 'jpg' : 'pdf'}`,
-      pages: documentScans({ info, name: draft.name, city: draft.city, number, issuedOn, expiresOn, body: GUIDE_SCAN_TEXT[type](draft.name, draft.city, detail) }),
-      number,
-      detail,
-      issuedOn,
-      expiresOn,
-      uploadedAt,
-      status,
-      checks:
-        status === 'accepted'
-          ? info.checks.map((check) => check.id)
-          : status === 'rejected'
-            ? info.checks.slice(0, -2).map((check) => check.id)
-            : [],
-      note: seed.notes[type] ?? '',
-      reviewedBy: reviewedAt ? reviewerId : null,
-      reviewedAt,
-    }
-  })
-
-  if (seed.correction) {
-    const requestedAt = moment(today, seed.correction.requestedDaysAgo, 11 * HOUR + 20)
-    log(requestedAt, 'changes_requested', `Pidió una corrección: ${seed.correction.note}`)
-    log(stageSince, 'resubmitted', `Subió un documento nuevo: ${lowerFirst(DOCUMENT_TYPE_INFO[seed.correction.document].label)}`, true)
-  }
-  if (seed.status === 'changes_requested') {
-    const rejected = documents.filter((document) => document.status === 'rejected')
-    log(stageSince, 'changes_requested', `Pidió una corrección: ${rejected.map((document) => document.note).join(' ')}`)
-  }
-
-  const decided = seed.status === 'approved' || seed.status === 'rejected'
-  const decisionEnteredAt = decided ? moment(today, seed.stageDaysAgo + 1, 10 * HOUR) : stageSince
-  const backgroundAt =
-    seed.stage === 'background'
-      ? stageSince
-      : moment(today, Math.round((seed.submittedDaysAgo + seed.stageDaysAgo + (decided ? 1 : 0)) / 2), 9 * HOUR + 15)
-  if (seed.stage !== 'documents') log(backgroundAt, 'stage', 'Pasó a antecedentes')
-
-  const background: BackgroundCheck[] = requiredChecks(seed).map((type, index) => {
-    const status = seed.stage === 'documents' ? 'pending' : (seed.checks[type] ?? 'pending')
-    const checkedAt = status === 'pending' ? null : later(backgroundAt, 2 * HOUR + index * 95)
-    if (checkedAt) {
-      const label = lowerFirst(BACKGROUND_CHECK_INFO[type].label)
-      log(
-        checkedAt,
-        status === 'clear' ? 'check_clear' : 'check_flagged',
-        status === 'clear' ? `Verificó ${label}: sin problemas` : `Verificó ${label}: ${seed.notes[type] ?? 'con observaciones'}`,
-      )
-    }
-    return { type, status, note: seed.notes[type] ?? '', checkedBy: checkedAt ? reviewerId : null, checkedAt }
-  })
-
-  if (seed.stage === 'decision') log(decisionEnteredAt, 'stage', 'Pasó a decisión')
-  if (decided) {
-    log(stageSince, seed.status === 'approved' ? 'approved' : 'rejected', seed.status === 'approved' ? 'Aprobó la solicitud' : `Rechazó la solicitud: ${seed.decisionNote ?? ''}`.trim())
-  }
-
-  return {
-    id: draft.id,
-    userId: draft.userId,
-    name: draft.name,
-    email: draft.email,
-    phone: draft.phone,
-    city: draft.city,
-    photoUrl: draft.photoUrl,
-    serviceRole: seed.serviceRole,
-    languages: seed.languages,
-    specialties: seed.specialties,
-    yearsExperience: seed.yearsExperience,
-    hasTransport: seed.hasTransport,
-    bio: seed.bio,
-    references: seed.references,
-    submittedAt,
-    stage: seed.stage,
-    stageSince,
-    status: seed.status,
-    assigneeId: seed.assigneeId,
-    documents,
-    background,
-    decisionNote: seed.decisionNote ?? '',
-    decidedAt: decided ? stageSince : null,
-    history: history
-      .sort((a, b) => a.at.localeCompare(b.at))
-      .map((event, index) => ({ ...event, id: `${draft.id}-event-${index + 1}` })),
-  }
 }
 
 /** Los guías de la app ya pasaron la verificación hace meses. */
 function approvedSeed(guide: AppGuide, index: number): ApplicationSeed {
-  const everything = requiredDocuments({ serviceRole: guide.role, hasTransport: guide.hasTransport })
   return {
     id: `app-${guide.id}`,
     name: guide.name,
@@ -281,15 +69,14 @@ function approvedSeed(guide: AppGuide, index: number): ApplicationSeed {
     stage: 'decision',
     status: 'approved',
     assigneeId: index % 2 === 0 ? 'user-raquel' : 'user-daniela',
-    documents: Object.fromEntries(everything.map((type) => [type, 'accepted'])),
-    checks: { policia: 'clear', intur: 'clear', referencias: 'clear' },
+    documents: {},
+    checks: {},
     notes: {},
   }
 }
 
-export function seedPeople(today: ISODate): { users: User[]; guideApplications: GuideApplication[] } {
+export function seedPeople(today: ISODate): { users: User[]; guides: GuideDraft[] } {
   const random = createRandom(hashSeed(`kplan-people:${today}`))
-  const staff = new Map(catalog.users.filter((user) => user.role === 'admin').map((user) => [user.id, user.name]))
 
   const portalUsers: User[] = catalog.users.map(({ createdDaysAgo, seenDaysAgo, ...user }) => ({
     ...user,
@@ -298,7 +85,7 @@ export function seedPeople(today: ISODate): { users: User[]; guideApplications: 
     lastSeenAt: seenDaysAgo === null ? null : moment(today, seenDaysAgo, random.int(8, 17) * HOUR + random.int(0, 59)),
   }))
 
-  const drafts: ApplicationDraft[] = [
+  const guides: GuideDraft[] = [
     ...catalog.appGuides.map((guide, index) => {
       const seed = approvedSeed(guide, index)
       return {
@@ -310,7 +97,6 @@ export function seedPeople(today: ISODate): { users: User[]; guideApplications: 
         city: seed.city,
         photoUrl: guide.photoUrl,
         seed,
-        reviewerId: seed.assigneeId ?? 'user-daniela',
       }
     }),
     ...catalog.guideApplications.map((seed) => ({
@@ -322,13 +108,10 @@ export function seedPeople(today: ISODate): { users: User[]; guideApplications: 
       city: seed.city,
       photoUrl: `https://picsum.photos/seed/${seed.id}/300/300`,
       seed,
-      reviewerId: 'user-daniela',
     })),
   ]
 
-  const guideApplications = drafts.map((draft) => buildApplication(draft, today, staff))
-
-  const guideUsers: User[] = drafts.map((draft) => ({
+  const guideUsers: User[] = guides.map((draft) => ({
     id: draft.userId,
     name: draft.name,
     email: draft.email,
@@ -343,7 +126,7 @@ export function seedPeople(today: ISODate): { users: User[]; guideApplications: 
     lastSeenAt: moment(today, random.int(0, 6), random.int(7, 20) * HOUR + random.int(0, 59)),
   }))
 
-  return { users: [...portalUsers, ...guideUsers, ...seedTourists(today)], guideApplications }
+  return { users: [...portalUsers, ...guideUsers, ...seedTourists(today)], guides }
 }
 
 const TOURIST_FIRST = [

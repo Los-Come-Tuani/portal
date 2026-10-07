@@ -140,19 +140,21 @@ export const endpoints = {
     detail: (userId: string) => `/api/users/${id(userId)}`,
     passwordReset: (userId: string) => `/api/users/${id(userId)}/password-reset`,
   },
-  guideApplications: {
-    list: '/api/guide-applications',
-    /** Quienes pueden revisar o decidir: para asignar solicitudes y leer nombres. */
-    reviewers: '/api/guide-applications/reviewers',
-    detail: (applicationId: string) => `/api/guide-applications/${id(applicationId)}`,
-    assign: (applicationId: string) => `/api/guide-applications/${id(applicationId)}/assign`,
-    document: (applicationId: string, documentId: string) =>
-      `/api/guide-applications/${id(applicationId)}/documents/${id(documentId)}/review`,
-    check: (applicationId: string, checkType: string) =>
-      `/api/guide-applications/${id(applicationId)}/background/${id(checkType)}`,
-    advance: (applicationId: string) => `/api/guide-applications/${id(applicationId)}/advance`,
-    requestChanges: (applicationId: string) => `/api/guide-applications/${id(applicationId)}/request-changes`,
-    decision: (applicationId: string) => `/api/guide-applications/${id(applicationId)}/decision`,
+  /**
+   * La cola de guías y traductores (F5): quien revisa acepta o rechaza cada documento y pide
+   * correcciones; quien decide aprueba o rechaza al final.
+   */
+  providerRequest: {
+    list: '/provider-request/',
+    /** Los motivos para rechazar un documento y para rechazar al prestador. */
+    reasons: '/provider-request/reason/',
+    detail: (requestId: string) => `/provider-request/${id(requestId)}/`,
+    take: (requestId: string) => `/provider-request/${id(requestId)}/take/`,
+    release: (requestId: string) => `/provider-request/${id(requestId)}/release/`,
+    documentReview: (requestId: string) => `/provider-request/${id(requestId)}/document-review/`,
+    requestChanges: (requestId: string) => `/provider-request/${id(requestId)}/request-changes/`,
+    approve: (requestId: string) => `/provider-request/${id(requestId)}/approve/`,
+    reject: (requestId: string) => `/provider-request/${id(requestId)}/reject/`,
   },
   visitEvents: '/api/visit-events',
   /** Sólo existe en el modo demo. */

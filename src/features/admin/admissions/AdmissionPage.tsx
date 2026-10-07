@@ -17,7 +17,7 @@ import {
   type RequestDetail,
 } from '@/data/models'
 import { useSession } from '@/features/auth/use-auth'
-import { Notice } from '@/features/verification/components/ReviewControls'
+import { Notice } from '@/features/verification/components/Notice'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { cn } from '@/lib/cn'
 import { nowLocalDateTime } from '@/lib/dates'

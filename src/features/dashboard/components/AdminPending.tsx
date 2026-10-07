@@ -2,7 +2,7 @@ import { ArrowRight, BadgeCheck, Building2, MapPin, Receipt } from 'lucide-react
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { useStatements } from '@/data/hooks/use-billing'
-import { useGuideApplications } from '@/data/hooks/use-guides'
+import { useOpenProviderCount } from '@/data/hooks/use-providers'
 import { usePlaceRequests } from '@/data/hooks/use-place-requests'
 import { useOpenRequestCount } from '@/data/hooks/use-verification'
 import { useSession } from '@/features/auth/use-auth'
@@ -13,21 +13,17 @@ export function AdminPending() {
   const { can } = useSession()
   const pendingRequests = useOpenRequestCount(can('organizations.view'))
   const placeRequests = usePlaceRequests({ status: 'pending' }, can('organizations.view'))
-  const guides = useGuideApplications({ status: 'in_review' }, can('guides.view'))
+  const guideCount = useOpenProviderCount(can('guides.view')) ?? 0
   const statements = useStatements(undefined, can('billing.view'))
   const due = (statements.data ?? []).filter((statement) => statement.status === 'due' && statement.total > 0)
   const dueTotal = due.reduce((sum, statement) => sum + statement.total, 0)
-  const toDecide = (guides.data ?? []).filter((application) => application.stage === 'decision').length
-  const guideCount = can('guides.review') ? (guides.data?.length ?? 0) : toDecide
 
   const items = [
     guideCount > 0
       ? {
-          to: can('guides.review') ? paths.guides : `${paths.guides}?etapa=decision`,
+          to: paths.guides,
           icon: <BadgeCheck size={16} aria-hidden="true" />,
-          text: can('guides.review')
-            ? `${plural(guideCount, 'guía o traductor espera', 'guías y traductores esperan')} verificación`
-            : `${plural(guideCount, 'solicitud espera', 'solicitudes esperan')} tu decisión`,
+          text: `${plural(guideCount, 'solicitud de guía o traductor espera', 'solicitudes de guías y traductores esperan')} revisión`,
         }
       : null,
     pendingRequests !== undefined && pendingRequests > 0

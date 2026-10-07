@@ -4,14 +4,11 @@
  * propios del portal. `daysFromNow` / `daysAgo` sólo existen en el mock.
  */
 import type {
-  BackgroundCheckType,
   Circuit,
   CircuitGroupSession,
   Coupon,
   DocumentStatus,
-  DocumentType,
   EventItem,
-  GuideApplication,
   GuideServiceRole,
   LatLng,
   NewPlace,
@@ -93,30 +90,39 @@ export interface AppGuide {
   hasTransport: boolean
 }
 
-export type ApplicationSeed = Pick<
-  GuideApplication,
-  | 'id'
-  | 'name'
-  | 'city'
-  | 'phone'
-  | 'serviceRole'
-  | 'languages'
-  | 'specialties'
-  | 'yearsExperience'
-  | 'hasTransport'
-  | 'bio'
-  | 'references'
-  | 'stage'
-  | 'status'
-  | 'assigneeId'
-> & {
+/** Los documentos como los nombran los datos de demo (guide_applications.json). */
+export type SeedDocumentType =
+  | 'cedula'
+  | 'record-policia'
+  | 'carne-intur'
+  | 'primeros-auxilios'
+  | 'certificado-idioma'
+  | 'licencia-conducir'
+  | 'seguro-vehiculo'
+
+/** Un guía o traductor que se postuló en la demo, en días desde hoy. */
+export interface ApplicationSeed {
+  id: string
+  name: string
+  city: string
+  phone: string
+  serviceRole: GuideServiceRole
+  languages: string[]
+  specialties: string[]
+  yearsExperience: number
+  hasTransport: boolean
+  bio: string
+  references: { name: string; relation: string; phone: string }[]
+  stage: 'documents' | 'background' | 'decision'
+  status: 'in_review' | 'changes_requested' | 'approved' | 'rejected'
+  assigneeId: string | null
   submittedDaysAgo: number
   stageDaysAgo: number
-  documents: Partial<Record<DocumentType, DocumentStatus>>
-  checks: Partial<Record<BackgroundCheckType, 'clear' | 'flagged'>>
-  notes: Partial<Record<DocumentType | BackgroundCheckType, string>>
+  documents: Partial<Record<SeedDocumentType, 'pending' | 'accepted' | 'rejected'>>
+  checks: Partial<Record<string, 'clear' | 'flagged'>>
+  notes: Partial<Record<string, string>>
   /** Se le pidió corregir un documento y ya subió uno nuevo. */
-  correction?: { requestedDaysAgo: number; document: DocumentType; note: string }
+  correction?: { requestedDaysAgo: number; document: SeedDocumentType; note: string }
   decisionNote?: string
 }
 

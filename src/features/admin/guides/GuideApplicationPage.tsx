@@ -1,260 +1,213 @@
-import { ArrowLeft, ArrowRight, MessageSquareWarning } from 'lucide-react'
+import { ArrowLeft, Check, MessageSquareWarning, Undo2, UserRoundCheck, X } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Button, ErrorState, Skeleton, Tag, useToast } from '@/components/ui'
+import { Button, ButtonLink, ErrorState, PageHeader, Panel, Skeleton, Tag, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
-import { useGuideAction, useGuideApplication, useReviewers } from '@/data/hooks/use-guides'
+import { useProviderAction, useProviderRequest } from '@/data/hooks/use-providers'
 import {
-  advanceBlocker,
-  APPLICATION_STATUS_LABELS,
-  BACKGROUND_CHECK_INFO,
-  checkProgress,
-  DOCUMENT_TYPE_INFO,
-  documentProgress,
-  DOCUMENT_TYPES,
-  requiredDocuments,
-  SERVICE_ROLE_LABELS,
-  STAGE_LABELS,
-  type DocumentType,
-  type GuideApplication,
-  type Reviewer,
+  isOpenRequest,
+  PROCEDURE_LABELS,
+  PROVIDER_STAGE_LABELS,
+  REQUEST_STATUS_LABELS,
+  servicesLabel,
+  type ProviderRequestDetail,
+  type RequestCredential,
 } from '@/data/models'
 import { useSession } from '@/features/auth/use-auth'
-import { DecisionPanel } from '@/features/verification/components/DecisionPanel'
-import { DocumentReviewSheet } from '@/features/verification/components/DocumentReviewSheet'
-import { DocumentsPanel } from '@/features/verification/components/DocumentsPanel'
-import { AssigneeMenu, Notice, RequestChangesDialog } from '@/features/verification/components/ReviewControls'
-import { ReviewHistory } from '@/features/verification/components/ReviewHistory'
-import { StageTrack } from '@/features/verification/components/StageTrack'
-import { APPLICATION_STATUS_TONES, waitingMinutes } from '@/features/verification/status'
+import { Notice } from '@/features/verification/components/Notice'
 import { useDocumentTitle } from '@/hooks/use-document-title'
-import { useNow } from '@/hooks/use-now'
-import { toLocalDateTime } from '@/lib/dates'
-import { formatDate, formatDateTime, plural } from '@/lib/format'
+import { nowLocalDateTime } from '@/lib/dates'
+import { formatDateTime, lowerFirst } from '@/lib/format'
+import { REQUEST_STATUS_TONES } from '../admissions/status'
 import { ApplicantContact, ApplicantProfile } from './components/ApplicantPanels'
-import { BackgroundPanel } from './components/BackgroundPanel'
-import { guideSteps } from './lib/queue'
+import { DocumentList } from './components/DocumentList'
+import { DecisionDialog, RejectDocumentDialog, RequestChangesDialog, type Deciding } from './components/ReviewDialogs'
 
-const READER_HINT = 'El guía lo lee tal cual en la app.'
+/** Una fecha del API con la hora de Nicaragua, como el resto del portal. */
+const when = (iso: string) => formatDateTime(nowLocalDateTime(new Date(iso)))
 
-export function GuideApplicationPage() {
-  const { applicationId = '' } = useParams()
-  const application = useGuideApplication(applicationId)
-  const reviewers = useReviewers()
-  useDocumentTitle(application.data?.name ?? 'Solicitud')
-
-  if (application.isError) return <ErrorState error={application.error} onRetry={() => void application.refetch()} />
-  if (!application.data) return <Skeleton className="h-96" />
-  return <ApplicationView application={application.data} reviewers={reviewers.data ?? []} />
+function Resolution({ request }: { request: ProviderRequestDetail }) {
+  const { resolution } = request
+  if (!resolution) return null
+  if (resolution.approved) {
+    return (
+      <Notice tone="confirmed" title={`${request.procedure === 'renewal' ? 'Renovación aprobada' : 'Aprobado'} el ${when(resolution.resolvedAt)}`}>
+        {resolution.note || (request.procedure === 'renewal' ? 'Los documentos nuevos están en vigor.' : 'Aparece en la app para el turista.')}
+      </Notice>
+    )
+  }
+  return (
+    <Notice tone="danger" title={`${resolution.reason?.label ?? 'Rechazada'} · ${when(resolution.resolvedAt)}`}>
+      {resolution.note || 'Sin nota. La persona recibió el motivo por correo.'}
+    </Notice>
+  )
 }
 
-function ApplicationView({ application, reviewers }: { application: GuideApplication; reviewers: readonly Reviewer[] }) {
-  const { can } = useSession()
-  const action = useGuideAction(application.id)
+function History({ request }: { request: ProviderRequestDetail }) {
+  if (request.history.length === 0) return null
+  return (
+    <Panel title="Solicitudes anteriores" description="Cada vez que se rechaza, corregir o renovar abre otra solicitud.">
+      <ul className="flex flex-col divide-y divide-divider">
+        {request.history.map((item) => (
+          <li key={item.id} className="py-3 first:pt-0 last:pb-0">
+            <p className="flex flex-wrap items-center gap-2">
+              <Tag tone={REQUEST_STATUS_TONES[item.status]}>{REQUEST_STATUS_LABELS[item.status]}</Tag>
+              <span className="text-small text-muted">
+                {PROCEDURE_LABELS[item.procedure]} · enviada el {when(item.submittedAt)}
+              </span>
+            </p>
+            {item.reason && <p className="mt-1.5 text-body font-semibold text-ink">{item.reason.label}</p>}
+            {item.note && <p className="text-body text-ink">{item.note}</p>}
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  )
+}
+
+/** Quién la tiene, y lo que puede hacer cada quien según sus permisos. */
+function ReviewPanel({ request, onRequestChanges, onDecide }: { request: ProviderRequestDetail; onRequestChanges: () => void; onDecide: (value: Deciding) => void }) {
+  const { user, can } = useSession()
+  const action = useProviderAction(request.id)
   const toast = useToast()
-  const { today, minutes } = useNow()
-  const [documentId, setDocumentId] = useState<string | null>(null)
-  const [requesting, setRequesting] = useState(false)
+  const canReview = can('guides.review', 'guides.decide')
+  const canDecide = can('guides.decide')
+  const holder = request.takenBy
+  const mine = holder?.id === user.id
+  const renewal = request.procedure === 'renewal'
 
-  const inReview = application.status === 'in_review'
-  const canReview = can('guides.review')
-  const reviewingDocuments = canReview && inReview && application.stage === 'documents'
-  const blocker = application.stage === 'decision' ? null : advanceBlocker(application)
-  const pending = (kind: string) => action.isPending && action.variables?.kind === kind
-  const lastEvent = (kind: GuideApplication['history'][number]['kind']) => application.history.findLast((event) => event.kind === kind)
-  const required = new Set(requiredDocuments(application))
-
-  const advance = () =>
+  const run = (kind: 'take' | 'release') =>
     action.mutate(
-      { kind: 'advance' },
+      { kind },
       {
-        onSuccess: (updated) => toast({ title: `Pasó a ${STAGE_LABELS[updated.stage].toLowerCase()}` }),
+        onSuccess: () => toast({ title: kind === 'take' ? 'La tomaste: queda en revisión a tu nombre' : 'La devolviste a la cola' }),
         onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
       },
     )
 
-  const documents = documentProgress(application)
-  const checks = checkProgress(application)
-  const flagged = application.background.filter((check) => check.status === 'flagged')
+  if (!isOpenRequest(request)) {
+    return (
+      <Panel title="Decisión">
+        <Resolution request={request} />
+        {holder && <p className="mt-3 text-small text-muted">{mine ? 'La resolviste tú.' : `La resolvió ${holder.name}.`}</p>}
+      </Panel>
+    )
+  }
+
+  const { counts } = request
+  return (
+    <Panel title="Revisión" description="Se atiende por orden de llegada. La persona recibe un correo con lo que se decida.">
+      <div className="flex flex-col gap-4">
+        <p className="text-body text-ink">
+          {holder ? (mine ? 'La tienes en revisión.' : <>La tiene en revisión <strong className="font-semibold">{holder.name}</strong>.</>) : 'Nadie la tiene todavía.'}
+        </p>
+        <p className="text-small text-muted tabular-nums">
+          {PROVIDER_STAGE_LABELS[request.stage ?? 'documents']}: {counts.accepted} aceptados, {counts.rejected} rechazados y {counts.pending} sin revisar de{' '}
+          {counts.total}.
+        </p>
+
+        {!canReview ? (
+          <p className="text-small text-muted">Puedes verla, pero revisarla necesita el permiso de revisar solicitudes.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {!holder && (
+              <Button icon={<UserRoundCheck size={16} />} onClick={() => run('take')} loading={action.isPending}>
+                Tomarla
+              </Button>
+            )}
+            {!renewal && (!holder || mine) && (
+              <Button variant="secondary" icon={<MessageSquareWarning size={16} />} disabled={counts.rejected === 0} onClick={onRequestChanges}>
+                Pedir correcciones
+              </Button>
+            )}
+            {holder && (mine || canDecide) && (
+              <Button variant="ghost" icon={<Undo2 size={16} />} onClick={() => run('release')} loading={action.isPending}>
+                Devolver a la cola
+              </Button>
+            )}
+          </div>
+        )}
+
+        {renewal ? (
+          <p className="text-small text-muted">Una renovación se resuelve sola cuando su último documento queda revisado: lo aceptado entra en vigor.</p>
+        ) : canDecide ? (
+          <div className="flex flex-col gap-2 border-t border-divider pt-4">
+            <p className="text-small text-muted">
+              {request.stage === 'decision' ? 'Todo lo que se pide está aceptado: falta tu decisión.' : 'Para aprobar, cada documento que se pide tiene que estar aceptado.'}
+            </p>
+            <Button icon={<Check size={16} />} disabled={request.stage !== 'decision'} onClick={() => onDecide('approve')}>
+              Aprobar
+            </Button>
+            <Button variant="secondary" icon={<X size={16} />} onClick={() => onDecide('reject')}>
+              Rechazar
+            </Button>
+          </div>
+        ) : (
+          <p className="border-t border-divider pt-4 text-small text-muted">
+            La decisión final la toma alguien con el permiso <span className="font-semibold text-ink">Decidir solicitudes</span>.
+          </p>
+        )}
+      </div>
+    </Panel>
+  )
+}
+
+function RequestView({ request }: { request: ProviderRequestDetail }) {
+  const { user, can } = useSession()
+  const [rejecting, setRejecting] = useState<RequestCredential | null>(null)
+  const [requestingChanges, setRequestingChanges] = useState(false)
+  const [deciding, setDeciding] = useState<Deciding>(null)
+  // Revisar sin tomar antes la toma; lo que tiene otra persona no se revisa.
+  const canReviewDocuments = can('guides.review', 'guides.decide') && (!request.takenBy || request.takenBy.id === user.id)
 
   return (
     <div className="flex flex-col gap-6">
-      <Link to={paths.guides} className="inline-flex items-center gap-1.5 self-start text-small font-semibold text-muted hover:text-ink">
-        <ArrowLeft size={15} aria-hidden="true" />
-        Guías y traductores
-      </Link>
-
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <img src={application.photoUrl} alt="" className="size-16 shrink-0 rounded-full bg-placeholder object-cover" />
-          <div className="min-w-0">
-            <h1 className="text-headline font-bold tracking-tight text-ink">{application.name}</h1>
-            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-small text-muted">
-              <Tag tone="ink">{SERVICE_ROLE_LABELS[application.serviceRole]}</Tag>
-              <Tag tone={APPLICATION_STATUS_TONES[application.status]}>
-                {inReview ? `${APPLICATION_STATUS_LABELS.in_review} · ${STAGE_LABELS[application.stage]}` : APPLICATION_STATUS_LABELS[application.status]}
-              </Tag>
-              <span>
-                {application.city} · {plural(application.yearsExperience, 'año', 'años')} de experiencia · envió su solicitud el{' '}
-                {formatDate(application.submittedAt.slice(0, 10))}
-              </span>
-            </div>
-          </div>
-        </div>
-        <AssigneeMenu
-          assigneeId={application.assigneeId}
-          reviewers={reviewers}
-          closed={application.status === 'approved' || application.status === 'rejected'}
-          onAssign={(assigneeId) => action.mutateAsync({ kind: 'assign', assigneeId })}
-          assigning={pending('assign')}
-        />
-      </header>
-
-      {application.status === 'changes_requested' && (
-        <Notice tone="neutral" title={`Esperando a que ${application.name.split(' ')[0]} corrija desde la app`}>
-          {lastEvent('changes_requested')?.text.replace(/^Pidió una corrección: /, '')}
-        </Notice>
-      )}
-      {application.status === 'approved' && application.decidedAt && (
-        <Notice tone="confirmed" title={`Verificado el ${formatDateTime(application.decidedAt)}`}>
-          {application.decisionNote || `Aprobado por ${lastEvent('approved')?.actorName ?? "el equipo de K'Plan"}. Aparece en la app como verificado.`}
-        </Notice>
-      )}
-      {application.status === 'rejected' && application.decidedAt && (
-        <Notice tone="danger" title={`Rechazado el ${formatDateTime(application.decidedAt)} por ${lastEvent('rejected')?.actorName ?? "el equipo de K'Plan"}`}>
-          {application.decisionNote}
-        </Notice>
-      )}
-
-      <StageTrack
-        steps={guideSteps(application)}
-        waitingMinutes={waitingMinutes(application.stageSince, toLocalDateTime(today, minutes))}
-        waitingLabel="Esperando al guía"
-        blocker={inReview && canReview ? blocker : null}
+      <PageHeader
+        title={request.applicant.name}
+        description={`${servicesLabel(request.services)} · ${request.city?.name ?? 'Todo el país'}`}
         actions={
-          inReview &&
-          canReview &&
-          application.stage !== 'decision' && (
-            <>
-              <Button variant="secondary" icon={<MessageSquareWarning size={16} />} onClick={() => setRequesting(true)}>
-                Pedir corrección
-              </Button>
-              <Button icon={<ArrowRight size={16} />} disabled={blocker !== null} loading={pending('advance')} onClick={advance}>
-                {application.stage === 'documents' ? 'Pasar a antecedentes' : 'Pasar a decisión'}
-              </Button>
-            </>
-          )
+          <>
+            <Tag tone={REQUEST_STATUS_TONES[request.status]}>{REQUEST_STATUS_LABELS[request.status]}</Tag>
+            <Tag tone="outline">{PROCEDURE_LABELS[request.procedure]}</Tag>
+            <span className="text-small text-muted">Enviada el {when(request.submittedAt)}</span>
+            <ButtonLink to={paths.guides} variant="ghost" icon={<ArrowLeft size={16} />}>
+              Guías y traductores
+            </ButtonLink>
+          </>
         }
       />
 
-      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="flex min-w-0 flex-col gap-6">
-          {application.stage === 'decision' && inReview && (
-            <DecisionPanel
-              subject={application.name}
-              description="Lo que se revisó, en una mirada. Al aprobar, aparece en la app como verificado."
-              summary={
-                <>
-                  <ul className="flex flex-col gap-2 text-body text-ink">
-                    <li>
-                      <span className="font-semibold tabular-nums">
-                        {documents.accepted} de {documents.required}
-                      </span>{' '}
-                      documentos aceptados.
-                    </li>
-                    <li>
-                      <span className="font-semibold tabular-nums">{plural(checks.clear, 'verificación', 'verificaciones')}</span> sin
-                      problemas
-                      {checks.flagged > 0 && (
-                        <>
-                          {' y '}
-                          <span className="font-semibold text-danger tabular-nums">{checks.flagged} con observaciones</span>
-                        </>
-                      )}
-                      .
-                    </li>
-                  </ul>
-                  {flagged.length > 0 && (
-                    <ul className="flex flex-col gap-2">
-                      {flagged.map((check) => (
-                        <li key={check.type} className="rounded-kp border border-danger/25 bg-danger/5 px-4 py-3">
-                          <p className="text-small font-semibold text-danger">{BACKGROUND_CHECK_INFO[check.type].label}</p>
-                          <p className="mt-0.5 text-body text-ink">{check.note}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              }
-              canDecide={can('guides.decide')}
-              noPermission={
-                <>
-                  La decisión la toma alguien con el permiso <span className="font-semibold text-ink">Decidir solicitudes</span>, como
-                  Coordinación de verificación.
-                </>
-              }
-              approveLabel={`Aprobar como ${SERVICE_ROLE_LABELS[application.serviceRole].toLowerCase()}`}
-              approveEffect="Aparece en la app como verificado, con los idiomas y servicios que revisaste."
-              rejectEffect="Le llega tu nota en la app. Puede volver a enviar su solicitud cuando corrija lo que se le pide."
-              noteHint="Obligatoria si lo rechazas. Llega a la app junto con la decisión."
-              approvedToast={`${application.name} ya está verificado`}
-              onDecide={(input) => action.mutateAsync({ kind: 'decide', input })}
-              deciding={pending('decide')}
-            />
+          {request.missing.length > 0 && (
+            <Notice tone="danger" title="Falta documentación">
+              No tiene un documento utilizable de: {request.missing.map((item) => lowerFirst(item.label)).join(', ')}.
+            </Notice>
           )}
-          <DocumentsPanel
-            requirements={DOCUMENT_TYPES.filter((type) => required.has(type)).map((type) => ({
-              type,
-              info: DOCUMENT_TYPE_INFO[type],
-              required: true,
-            }))}
-            documents={application.documents}
-            canReview={reviewingDocuments}
-            onOpen={setDocumentId}
-          />
-          <BackgroundPanel
-            application={application}
-            canReview={canReview && inReview && application.stage === 'background'}
-            reviewers={reviewers}
-          />
+          <DocumentList request={request} canReview={canReviewDocuments} onReject={setRejecting} />
+          <History request={request} />
         </div>
-        <div className="flex min-w-0 flex-col gap-6">
-          <ApplicantProfile application={application} />
-          <ApplicantContact application={application} />
-          <ReviewHistory history={application.history} applicantChannel="desde la app" />
+        <div className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-24">
+          <ReviewPanel request={request} onRequestChanges={() => setRequestingChanges(true)} onDecide={setDeciding} />
+          <ApplicantProfile request={request} />
+          <ApplicantContact request={request} />
         </div>
       </div>
 
-      <DocumentReviewSheet
-        documents={application.documents}
-        infoOf={(type) => DOCUMENT_TYPE_INFO[type as DocumentType]}
-        documentId={documentId}
-        canReview={reviewingDocuments}
-        reviewers={reviewers}
-        readerHint={READER_HINT}
-        onReview={async (id, input) => (await action.mutateAsync({ kind: 'document', documentId: id, input })).documents}
-        reviewing={pending('document')}
-        onSelect={setDocumentId}
-        declaredOf={(type) => [
-          { label: 'Nombre', value: application.name },
-          ...(type === 'certificado-idioma' ? [{ label: 'Dice que habla', value: application.languages.join(', ') }] : []),
-          ...(type === 'carne-intur' ? [{ label: 'Especialidades', value: application.specialties.join(', ') }] : []),
-        ]}
-      />
-      <RequestChangesDialog
-        open={requesting}
-        suggested={application.documents
-          .filter((document) => document.status === 'rejected' && document.note)
-          .map((document) => document.note)
-          .join(' ')}
-        readerHint={READER_HINT}
-        description="La solicitud se pausa hasta que suba lo que falta desde la app."
-        onSubmit={(note) => action.mutateAsync({ kind: 'request-changes', note })}
-        submitting={pending('request-changes')}
-        onClose={() => setRequesting(false)}
-        successToast={`${application.name} lo verá en la app.`}
-      />
+      <RejectDocumentDialog request={request} document={rejecting} onClose={() => setRejecting(null)} />
+      <RequestChangesDialog request={request} open={requestingChanges} onClose={() => setRequestingChanges(false)} />
+      <DecisionDialog request={request} deciding={deciding} onClose={() => setDeciding(null)} />
     </div>
   )
+}
+
+/** Una solicitud de guía o traductor: sus documentos, su perfil y lo que decide el equipo. */
+export function GuideApplicationPage() {
+  const { applicationId = '' } = useParams()
+  const request = useProviderRequest(applicationId)
+  useDocumentTitle(request.data?.applicant.name ?? 'Solicitud')
+  if (request.isError) return <ErrorState error={request.error} onRetry={() => void request.refetch()} />
+  if (!request.data) return <Skeleton className="h-96" />
+  return <RequestView request={request.data} />
 }

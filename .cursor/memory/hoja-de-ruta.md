@@ -110,6 +110,24 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
     reenviar dentro del minuto, cambiar el rol, crear un rol sin 2FA, editarlo, nombre repetido,
     borrarlo, quitar y devolver el acceso), contra el API real y en demo (`E2E_PORTAL`,
     `E2E_ROLE_A` y `E2E_ROLE_B` cambian el puerto y los nombres de los roles).
+- **Hecho: la cola de guías y traductores de F5** (`/guias`, contra `/provider-request/`):
+  - `GuideApplicationsPage` (bandeja con pestañas, filtros por servicio y trámite, paginación) y
+    `GuideApplicationPage` (documentos con el visor y aceptar o rechazar con motivo, pedir
+    correcciones, aprobar o rechazar con un motivo de la decisión, tomar y devolver; perfil,
+    contacto e historial). Los botones siguen a `guides.review|decide` y a quién la tiene.
+  - Datos: `models/provider.ts`, `schemas/provider-api.schema.ts` (+ prueba),
+    `repositories/providers.repository.ts`, `hooks/use-providers.ts` (`useOpenProviderCount`
+    alimenta el menú y `AdminPending`). "Todos los usuarios" (demo) muestra la solicitud de cada
+    guía con la misma bandeja.
+  - Demo: `mock/handlers/providers.ts` y `mock/services/providers.ts` con las mismas reglas que el
+    API sobre `db.providers`, sembrado por `mock/generators/providers.ts` desde los guías de la app
+    y `guide_applications.json` (escaneos de muestra). **Se retiró el modelo anterior**: antecedentes,
+    etapas, asignar y la revisión por lista de chequeo (`models/guide.ts` queda con `GuideServiceRole`)
+    y los componentes de `features/verification` que solo usaba (quedan `Notice`, `DocumentViewer`
+    y `STAGE_LIMIT_MINUTES`).
+  - Navegador: `e2e-f5-queue.mjs` contra el API real (23 comprobaciones: la app se postula, revisar,
+    rechazar con nota, pedir correcciones, corregir solo lo rechazado, aprobar, entrar como guía,
+    renovar, rechazar en la decisión) y `e2e-f5-demo.mjs` en demo (6).
 - Comprobaciones: `npm run typecheck && npm run lint && npm test && npm run build:demo`.
 
 ## Qué falta (depende de otras fases)

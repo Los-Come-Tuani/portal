@@ -16,13 +16,13 @@ import {
   Th,
   Tr,
 } from '@/components/ui'
-import { useGuideApplications } from '@/data/hooks/use-guides'
 import { useOrganizations } from '@/data/hooks/use-organizations'
+import { useProviderQueue } from '@/data/hooks/use-providers'
 import { useStaffRoles, useUsers } from '@/data/hooks/use-users'
 import {
-  APPLICATION_STATUS_LABELS,
+  REQUEST_STATUS_LABELS,
   USER_STATUS_LABELS,
-  type GuideApplication,
+  type ProviderRequestSummary,
   type User,
   type UserRole,
   type UserStatus,
@@ -30,7 +30,7 @@ import {
 import { useSession } from '@/features/auth/use-auth'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { formatDate, formatDateTime, plural } from '@/lib/format'
-import { APPLICATION_STATUS_TONES } from '@/features/verification/status'
+import { REQUEST_STATUS_TONES } from '../admissions/status'
 import { UserSheet } from './UserSheet'
 import { USER_STATUS_TONES, userKind, usesApp } from './status'
 
@@ -51,7 +51,8 @@ export function UsersPage() {
   const users = useUsers()
   const organizations = useOrganizations()
   const roles = useStaffRoles()
-  const applications = useGuideApplications({}, can('guides.view'))
+  // La demo tiene pocos guías: la página más grande del API los trae a todos.
+  const applications = useProviderQueue({ status: 'all', pageSize: 100 }, can('guides.view'))
   const [params, setParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<'todas' | UserStatus>('todas')
@@ -68,8 +69,8 @@ export function UsersPage() {
 
   const organizationOf = (user: User) => organizations.data?.find((item) => item.id === user.organizationId)
   const roleOf = (user: User) => roles.data?.find((item) => item.id === user.staffRoleId)
-  const applicationOf = (user: User): GuideApplication | undefined =>
-    applications.data?.filter((item) => item.userId === user.id).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0]
+  const applicationOf = (user: User): ProviderRequestSummary | undefined =>
+    applications.data?.results.filter((item) => item.applicant.id === user.id).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0]
   const open = all.find((user) => user.id === openId) ?? null
 
   return (
@@ -180,8 +181,8 @@ export function UsersPage() {
                     ) : user.role === 'negocio' || user.role === 'alcaldia' ? (
                       <span className="text-small text-ink">{organizationOf(user)?.name ?? '—'}</span>
                     ) : application ? (
-                      <Tag tone={APPLICATION_STATUS_TONES[application.status]}>
-                        {application.status === 'approved' ? 'Verificado' : APPLICATION_STATUS_LABELS[application.status]}
+                      <Tag tone={REQUEST_STATUS_TONES[application.status]}>
+                        {application.status === 'approved' ? 'Verificado' : REQUEST_STATUS_LABELS[application.status]}
                       </Tag>
                     ) : (
                       <span className="text-small text-muted">{user.city ?? '—'}</span>

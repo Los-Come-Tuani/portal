@@ -7,7 +7,6 @@ import type {
   Coupon,
   CouponRedemption,
   EventItem,
-  GuideApplication,
   Organization,
   OrganizationApplication,
   PlaceProfile,
@@ -19,6 +18,7 @@ import type {
   User,
 } from '../models'
 import type { MockApplication, MockFiles } from './services/applications'
+import type { MockProvider } from './services/providers'
 import { SCHEMA_VERSION, seedDatabase } from './seed'
 
 const STORAGE_KEY = 'kplan.portal.demo'
@@ -37,7 +37,8 @@ export interface MockDatabase {
   seededOn: ISODate
   users: User[]
   staffRoles: MockStaffRole[]
-  guideApplications: GuideApplication[]
+  /** Los guías y traductores de F5: su perfil, sus documentos y sus expedientes. */
+  providers: MockProvider[]
   /** El modelo de demo anterior a F3: revisión por documento y alta asistida. */
   organizationApplications: OrganizationApplication[]
   /** Los expedientes de verificación de F3: los que ve quien se postula. */

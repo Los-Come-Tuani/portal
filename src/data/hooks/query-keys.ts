@@ -1,6 +1,5 @@
-import type { QueueFilters } from '../models'
+import type { ProviderQueueFilters, QueueFilters } from '../models'
 import type { EventFilters } from '../repositories/events.repository'
-import type { GuideApplicationFilters } from '../repositories/guides.repository'
 import type { OrganizationFilters } from '../repositories/organizations.repository'
 import type { PlaceRequestFilters } from '../repositories/place-requests.repository'
 import type { RedemptionFilters } from '../repositories/coupons.repository'
@@ -81,10 +80,11 @@ export const queryKeys = {
     all: ['place-requests'] as const,
     list: (filters: PlaceRequestFilters) => ['place-requests', 'list', filters] as const,
   },
-  guides: {
-    all: ['guides'] as const,
-    list: (filters: GuideApplicationFilters) => ['guides', 'list', filters] as const,
-    reviewers: ['guides', 'reviewers'] as const,
-    detail: (applicationId: string) => ['guides', 'detail', applicationId] as const,
+  /** La cola de guías y traductores (F5). */
+  providers: {
+    all: ['providers'] as const,
+    list: (filters: ProviderQueueFilters) => ['providers', 'list', filters] as const,
+    detail: (requestId: string) => ['providers', 'detail', requestId] as const,
+    reasons: ['providers', 'reasons'] as const,
   },
 }
