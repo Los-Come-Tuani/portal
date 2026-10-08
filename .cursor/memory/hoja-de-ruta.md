@@ -1,6 +1,6 @@
 # Memoria de trabajo: portal y la hoja de ruta del API
 
-Actualizada el 2026-10-06. Traspaso para el siguiente agente. La memoria general (estado de
+Actualizada el 2026-10-08. Traspaso para el siguiente agente. La memoria general (estado de
 todas las tareas, API, F2 a F8, avisos y cómo correr el API en esta máquina) está en
 `C:\development\kplan\api\.cursor\memory\hoja-de-ruta.md`: léela primero.
 
@@ -128,25 +128,63 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
   - Navegador: `e2e-f5-queue.mjs` contra el API real (23 comprobaciones: la app se postula, revisar,
     rechazar con nota, pedir correcciones, corregir solo lo rechazado, aprobar, entrar como guía,
     renovar, rechazar en la decisión) y `e2e-f5-demo.mjs` en demo (6).
+- **Hecho: el directorio de cuentas y F4 contra el API real** (commits `d9cbae0`, `67c5bbc` y
+  `b1df681`). Estas pantallas ya no usan rutas de demo:
+  - Todos los usuarios (`UsersPage`, `UserSheet`): el directorio de cuentas del API.
+  - Lugares (`place/`), sus fichas (`place/{id}/profile/`) y sus novedades (`post/`).
+  - Circuitos (`official-circuit/`, docs/territorio.md del API): la lista trae todas las páginas
+    y filtra en el cliente (solo "Retirados" pide `status=retired`); el editor guarda con `PUT`
+    completo y retira con `DELETE` después de escribir el nombre exacto (RF-A-09). Las paradas
+    salen de `stop/?city=`. Fotos por `POST /upload/` con `kind: "circuit-photo"` (sin bucket,
+    503 y el formulario lo dice). Los horarios de grupo pasaron a ser las salidas de guía
+    (`circuit/{id}/departure/`, F7), en solo lectura (`DeparturesPanel`); la agenda nombra los
+    grupos con la lista pública `circuit/`.
+  - La alcaldía entra a Circuitos (menú; `RequireRole ['admin', 'alcaldia']` >
+    `RequireActiveOrganization` > `RequirePermission circuits.view`): ve los de su ciudad, crea y
+    edita los suyos (el API los fuerza creativos y de su ciudad) y ve los del equipo en solo
+    lectura (el API responde 403 si los toca). Quién edita lo decide
+    `features/circuits/lib/access.ts`; el equipo necesita `circuits.manage` para cambiar algo.
+    La sesión no trae la ciudad de la alcaldía: el editor la saca de sus lugares
+    (`useOwnCity`) o de sus circuitos, y si no la encuentra el API la pone.
+  - El demo habla el mismo formato (`SCHEMA_VERSION` 11, `mock/services/circuits.ts`).
+  - El contrato de circuitos se probó contra el API local con un script temporal de vitest
+    (sesión web): el equipo lista y guarda de vuelta sin cambiar la versión; la alcaldía crea
+    sin ciudad (cae en León), no publica sin foto (400 en `images`), recibe 403 al editar o
+    retirar uno del equipo y retira el suyo (204); una parada que no existe llega como
+    `stops.1.point_id`; subir una foto da 503. Las pantallas no se recorrieron en un navegador.
 - Comprobaciones: `npm run typecheck && npm run lint && npm test && npm run build:demo`.
 
 ## Qué falta (depende de otras fases)
 
-1. **Todos los usuarios** (`UsersPage`, `UserSheet`) sigue en demo (`/api/users`): hace falta
-   un directorio de cuentas en el API con el rol del portal derivado (hoy `/auth/user/` filtra
-   por `group_id`, `status` y `search`, y sus rutas `/auth/user/{id}/groups|permissions/`
-   responden 400). Con eso se mueve también "Mandar código para nueva contraseña"
-   (`POST /auth/user-password-reset/`, que ya existe).
-2. **F4 en adelante** (lugares, circuitos, eventos, cupones, insignias, cobros): el resto de
-   `endpoints` (`/api/stops`, `/api/circuits`...) no existe en el API: esas pantallas responden 404
-   con el API real y solo se trabajan en demo (`npm run dev:demo`); al llegar cada fase se alinea su
-   sección de `endpoints.ts`, su repositorio y su handler de demo (sin prefijo `/api`, con barra
-   final). Lo que dejó F3 y se retira entonces: el cobro del alta asistida en `statements.ts` y la
-   propiedad de los lugares por `claimedStopIds` en `ownership.ts` (leen `db.organizationApplications`),
-   y `generators/admissions.ts`. Mientras tanto, la agenda de quien acaba de ser aprobado pide cosas
-   que el API todavía no tiene y muestra errores de red en la consola: es lo esperado.
+1. **Siguen en demo** (rutas `/api/...` de `endpoints.ts`: con el API real responden 404 y se
+   trabajan con `npm run dev:demo`):
+   - Organizaciones (`/api/organizations`, lista y detalle del equipo): el API todavía no publica
+     la lista de organizaciones del portal.
+   - Solicitudes de lugares (`/api/place-requests`, `/api/stops/available`): el API no tiene que
+     una organización aprobada pida administrar otro lugar; hoy el equipo le da dueño con
+     `PUT place/{id}/owner/`.
+   - Eventos, cupones e insignias (`/api/events`, `/api/coupons`, `/api/coupon-redemptions`,
+     `/api/badge-*`): el API ya los tiene (F6), falta conectarlos (punto 2).
+   - Pagos y tarifas (`/api/billing/*`, `/api/pricing`): llegan con F8.
+   - La agenda de llegadas (`/api/visit-events`): el API la dejó para después (docs/servicios.md,
+     "Lo que queda para después").
+   Al conectarlos se retira lo que dejó F3: el cobro del alta asistida en `statements.ts`, la
+   propiedad de los lugares por `claimedStopIds` en `ownership.ts` y `generators/admissions.ts`.
    Un `429` en `GET /auth/profile/` al cargar la página lleva a la pantalla de entrada sin cerrar la
    sesión (`AuthProvider`); conviene mostrar un error con "Reintentar" en vez del login.
+2. **Listo en el API para una fase siguiente del portal**:
+   - F6 (docs/agenda-y-recompensas.md): eventos del portal (`cultural-event/`: programar,
+     corregir, cancelar, clonar; ocultar y mostrar con `content.moderate`), el QR de la insignia
+     de un lugar (`place/{id}/qr/`), campañas de cupones (`coupon-campaign/`, hasta tres activas)
+     y los cupones entregados con su validación en el mostrador (`coupon-redemption/`). En el API
+     la insignia se activa con `has_badge` del lugar: las "activaciones" y "campañas de
+     insignias" del demo no tienen equivalente.
+   - F7 (docs/servicios.md): salidas de guía, convocatorias, reservas, chat y reseñas, casi todo
+     para la app. Al portal le toca moderar las reseñas impugnadas (`review-dispute/`, con
+     `content.moderate`); las salidas ya se ven en el editor de circuitos.
+   - Anotado para el API (no se tocó): que la sesión traiga la ciudad de la organización; qué
+     pasa con las reservas al retirar o despublicar un circuito; poder ver las salidas de un
+     circuito no publicado; un mensaje legible cuando `stops` trae menos de dos paradas.
 3. **Google en el portal** (opcional): el API ya acepta `POST /auth/web/google/`; falta el botón con
    Google Identity Services. Solo aplica a roles públicos, así que no sirve para el equipo ni las
    organizaciones: no hay prisa.
@@ -159,6 +197,12 @@ con el API en `http://localhost:8080` y `npm run dev` (puerto 5173) se entra con
 del `.env` del API. El script de navegador que usé está fuera del repo, en
 `%LOCALAPPDATA%\Temp\kplan-dev\e2e` (`run-e2e.ps1`); si no existe, la prueba de integración de
 arriba cubre el contrato.
+
+Cuentas locales (contraseña `Kplan-Local-2026`): `admin@example.com` (superusuario) y
+`alcaldia.leon@example.com` (Alcaldía de León); se recrean con `dev_accounts.py` (memoria del
+API, sección 10). La alcaldía no entra por `/auth/mobile/login/` (el API la rechaza por la
+superficie con el mismo error que una contraseña mala): en un script, `GET /auth/csrf/`,
+`POST /auth/web/login/` con `X-CSRFToken` y reenviar las cookies a mano.
 
 ## Cómo está armado el portal
 
