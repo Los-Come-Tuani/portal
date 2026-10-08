@@ -263,6 +263,30 @@ describe('una salida de guía', () => {
       guideName: 'Ana Pérez',
       transportIncluded: true,
       note: 'Salimos puntuales',
+      cancelled: false,
     })
+  })
+
+  it('conserva las canceladas para el portal', () => {
+    const departure = toDeparture(
+      apiDepartureSchema.parse({
+        id: '0196-cancelada',
+        circuit: { id: '0195-centro', title: 'León colonial a pie', kind: 'creative', city: CITY },
+        guide: { id: '0193-guia', name: 'Ana Pérez', photo: null },
+        date: '2026-10-11',
+        start_time: '14:00',
+        capacity: 8,
+        booked: 0,
+        remaining: 8,
+        exclusive: false,
+        transport_included: false,
+        note: '',
+        cancelled: true,
+        price_adult: 12,
+        price_child: 6,
+      }),
+    )
+    expect(departure.cancelled).toBe(true)
+    expect(departure.startTime).toBe('2:00 p.m.')
   })
 })

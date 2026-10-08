@@ -153,9 +153,14 @@ export interface CircuitGroupSession {
   guideId: string
   transportIncluded: boolean
   note: string
+  /** La demo la cancela al despublicar o retirar el circuito, como el API. */
+  cancelled?: boolean
 }
 
-/** Una salida de guía de un circuito publicado (`circuit/{id}/departure/`, F7): la publica el guía. */
+/**
+ * Una salida de guía de un circuito (`official-circuit/{id}/departure/`, F7): la publica el guía. El
+ * portal ve también las canceladas, aunque el circuito ya no esté publicado.
+ */
 export interface Departure {
   id: string
   circuitId: string
@@ -170,6 +175,8 @@ export interface Departure {
   guideName: string
   transportIncluded: boolean
   note: string
+  /** La canceló el guía, o el circuito salió de la app: sus reservas se cancelaron. */
+  cancelled: boolean
 }
 
 /** Los circuitos armados por turistas no están en el catálogo. */

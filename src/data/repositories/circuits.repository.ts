@@ -51,7 +51,7 @@ export const circuitsRepository = {
   /** Lo retira para siempre: sale de la app y ya no se edita. */
   retire: (circuitId: string) => http.delete(endpoints.officialCircuit.detail(circuitId)),
 
-  /** Las próximas salidas de guía; sólo un circuito publicado tiene. */
+  /** Las próximas salidas de guía, con las canceladas; también las de uno que salió de la app. */
   departures: async (circuitId: string): Promise<Departure[]> =>
-    z.array(apiDepartureSchema).parse(await http.get<unknown>(endpoints.circuitDepartures(circuitId))).map(toDeparture),
+    z.array(apiDepartureSchema).parse(await http.get<unknown>(endpoints.officialCircuit.departures(circuitId))).map(toDeparture),
 }

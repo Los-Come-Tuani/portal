@@ -10,6 +10,7 @@ import { hasPermission } from '../services/access'
 import { CITIES } from '../services/application-catalog'
 import {
   actorMunicipality,
+  cancelDepartures,
   checkCircuitStops,
   editableCircuit,
   visibleCircuit,
@@ -56,8 +57,13 @@ const circuitBody = z.object({
         leg_minutes: z.number().int().min(0).max(600).nullable().default(null),
       }),
     )
-    .min(2)
-    .max(10),
+    .min(2, {
+      error: (issue) =>
+        Array.isArray(issue.input) && issue.input.length === 1
+          ? 'Un circuito necesita al menos dos paradas: te falta una.'
+          : 'Un circuito necesita al menos dos paradas: te faltan dos.',
+    })
+    .max(10, { error: 'Un circuito tiene a lo sumo diez paradas.' }),
   status: z.enum(['draft', 'published', 'unpublished']).default('draft'),
 })
 
@@ -212,6 +218,9 @@ export const circuitRoutes = [
   route('GET', endpoints.officialCircuit.detail(':id'), (context) =>
     wireCircuitDetail(context.db, visibleCircuit(context.db, requireUser(context), context.params.id)),
   ),
+  route('GET', endpoints.officialCircuit.departures(':id'), (context) =>
+    wireDepartures(context.db, visibleCircuit(context.db, requireUser(context), context.params.id), { portal: true }),
+  ),
   route('PUT', endpoints.officialCircuit.detail(':id'), (context) => {
     const { db, body, params } = context
     const circuit = editableCircuit(db, requireUser(context), params.id)
@@ -223,6 +232,7 @@ export const circuitRoutes = [
     // Sacar de la app uno que ya se publicó lo deja "despublicado"; lo que nunca salió sigue en borrador.
     const status = input.status === 'published' ? 'published' : wasPublished ? 'unpublished' : 'draft'
     const geometryChanged = circuit.stopIds.join(',') !== fields.stopIds.join(',')
+    if (circuit.status === 'published' && status !== 'published') cancelDepartures(db, circuit)
     delete circuit.legMinutes
     delete circuit.directions
     Object.assign(circuit, fields, rules, {
@@ -237,6 +247,7 @@ export const circuitRoutes = [
   }),
   route('DELETE', endpoints.officialCircuit.detail(':id'), (context) => {
     const circuit = editableCircuit(context.db, requireUser(context), context.params.id)
+    cancelDepartures(context.db, circuit)
     circuit.status = 'retired'
     return undefined
   }),

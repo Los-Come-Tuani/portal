@@ -29,7 +29,7 @@ export function useCircuit(circuitId: string | undefined) {
   })
 }
 
-/** Las próximas salidas de guía de un circuito publicado. */
+/** Las próximas salidas de guía de un circuito, con las canceladas. */
 export function useDepartures(circuitId: string | undefined, enabled = true) {
   return useQuery({
     queryKey: queryKeys.circuits.departures(circuitId ?? ''),

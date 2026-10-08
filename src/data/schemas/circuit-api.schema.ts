@@ -17,7 +17,7 @@ import { apiStopSchema, toStop } from './place-api.schema'
 
 /**
  * Los circuitos oficiales como los habla el API (`official-circuit/`, la ruta pública `circuit/` y
- * las salidas de guía `circuit/{id}/departure/`; docs/territorio.md y docs/servicios.md del repo del
+ * las salidas de guía `official-circuit/{id}/departure/`; docs/territorio.md y docs/servicios.md del repo del
  * API): `snake_case`, códigos en inglés, horas `"HH:MM"` y las fotos por su clave. El portal los
  * muestra como la app: "Ciudad", "Fácil", `"8:30 a.m."`.
  */
@@ -225,5 +225,6 @@ export function toDeparture(api: z.infer<typeof apiDepartureSchema>): Departure 
     guideName: api.guide.name,
     transportIncluded: api.transport_included,
     note: api.note,
+    cancelled: api.cancelled,
   }
 }

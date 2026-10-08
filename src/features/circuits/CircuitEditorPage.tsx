@@ -28,6 +28,17 @@ function scrollToFirstError() {
   )
 }
 
+/** Lo que se cancela al sacar un circuito de la app, si tiene salidas próximas. */
+function CancelledBookings({ departures, booked }: { departures: number; booked: number }) {
+  if (departures === 0) return null
+  return (
+    <p className="font-medium text-danger">
+      Se cancelan {plural(departures, 'salida próxima', 'salidas próximas')}
+      {booked > 0 ? ` con ${plural(booked, 'persona que reservó', 'personas que reservaron')}` : ''}.
+    </p>
+  )
+}
+
 export function CircuitEditorPage() {
   const { circuitId = '' } = useParams()
   const isNew = circuitId === 'nuevo'
@@ -61,13 +72,15 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
   const cities = useCities()
   const save = useSaveCircuit()
   const retire = useRetireCircuit()
-  const departures = useDepartures(circuit?.id, circuit?.status === 'published')
-  const booked = (departures.data ?? []).reduce((sum, departure) => sum + departure.booked, 0)
+  const departures = useDepartures(circuit?.id, !!circuit && circuit.status !== 'retired')
+  const openDepartures = (departures.data ?? []).filter((departure) => !departure.cancelled && departure.date >= today)
+  const booked = openDepartures.reduce((sum, departure) => sum + departure.booked, 0)
 
   const initial = useMemo(() => (circuit ? toCircuitInput(circuit) : emptyCircuit({ kind: municipalityMode ? 'creative' : 'kplan', cityId: '' })), [circuit, municipalityMode])
   const [draft, setDraft] = useState<CircuitInput>(initial)
   const [errors, setErrors] = useState<CircuitErrors>({})
   const [retiring, setRetiring] = useState(false)
+  const [unpublishing, setUnpublishing] = useState<CircuitInput | null>(null)
   const [confirmName, setConfirmName] = useState('')
   useDocumentTitle(circuit?.shortTitle ?? 'Nuevo circuito')
 
@@ -125,10 +138,20 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
       scrollToFirstError()
       return
     }
+    // Sacarlo de la app cancela sus próximas salidas y reservas: se confirma antes.
+    if (circuit?.status === 'published' && data.draft) {
+      setUnpublishing(data)
+      return
+    }
+    persist(data)
+  }
+
+  const persist = (data: CircuitInput) => {
     save.mutate(
       { id: circuit?.id, input: data },
       {
         onSuccess: (saved) => {
+          setUnpublishing(null)
           toast({
             title: circuit ? 'Cambios guardados' : `Creaste ${saved.shortTitle}`,
             description: saved.status === 'published' ? 'Así lo ve el turista en la app.' : 'No está en la app hasta que lo publiques.',
@@ -137,6 +160,7 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
           else leave(paths.circuit(saved.id))
         },
         onError: (error) => {
+          setUnpublishing(null)
           const fromServer = serverErrors(error)
           toast({ title: fromServer ? (Object.values(fromServer)[0] ?? errorMessage(error)) : errorMessage(error), tone: 'error' })
           if (fromServer) {
@@ -230,7 +254,7 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
               description={
                 view.draft
                   ? circuit?.status === 'published'
-                    ? 'Al guardar sale de la app hasta que lo vuelvas a publicar.'
+                    ? 'Al guardar sale de la app hasta que lo vuelvas a publicar, y se cancelan sus próximas salidas de guía con sus reservas.'
                     : 'Es un borrador: lo ves aquí, el turista no.'
                   : flaggedTimes.length > 0
                     ? 'Primero corrige las horas de salida marcadas en rojo.'
@@ -263,6 +287,24 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
         />
       )}
 
+      {circuit && (
+        <ConfirmDialog
+          open={unpublishing !== null}
+          title={`¿Sacar ${circuit.shortTitle} de la app?`}
+          confirmLabel="Sacar de la app"
+          loading={save.isPending}
+          onClose={() => setUnpublishing(null)}
+          onConfirm={() => unpublishing && persist(unpublishing)}
+        >
+          <div className="flex flex-col gap-3">
+            <p>
+              El turista deja de verlo hasta que lo vuelvas a publicar. Se cancelan sus próximas salidas de guía y sus reservas: el pago pendiente se
+              anula, el cobrado queda por reembolsar, y el turista y el guía reciben un aviso.
+            </p>
+            <CancelledBookings departures={openDepartures.length} booked={booked} />
+          </div>
+        </ConfirmDialog>
+      )}
       <ConfirmDialog
         open={blocker.state === 'blocked'}
         title="Tienes cambios sin guardar"
@@ -295,14 +337,10 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
         >
           <div className="flex flex-col gap-4">
             <p>
-              Sale de la app y ya no se puede editar ni volver a publicar. Los itinerarios que lo seguían lo conservan. Si sólo quieres esconderlo un tiempo,
-              apaga "Publicado en la app".
+              Sale de la app y ya no se puede editar ni volver a publicar. Los itinerarios que lo seguían lo conservan. Se cancelan sus próximas salidas
+              de guía y sus reservas, y el turista y el guía reciben un aviso. Si sólo quieres esconderlo un tiempo, apaga "Publicado en la app".
             </p>
-            {booked > 0 && (
-              <p className="font-medium text-danger">
-                Tiene {plural(booked, 'persona con reserva', 'personas con reserva')} en las próximas salidas de guía.
-              </p>
-            )}
+            <CancelledBookings departures={openDepartures.length} booked={booked} />
             <Field label={`Para confirmar, escribe ${circuit.shortTitle}`}>
               {(control) => <Input {...control} value={confirmName} autoComplete="off" onChange={(event) => setConfirmName(event.target.value)} />}
             </Field>

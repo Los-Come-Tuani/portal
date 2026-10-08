@@ -4,7 +4,8 @@
  * en `snake_case`.
  */
 import { addDays, todayISO } from '@/lib/dates'
-import { clockToInput, parseDuration } from '@/lib/time'
+import { planItinerary } from '@/lib/itinerary'
+import { clockToInput } from '@/lib/time'
 import { CIRCUIT_CATEGORY_CODES, CIRCUIT_DIFFICULTY_CODES, type Organization, type User } from '../../models'
 import { catalog } from '../catalog'
 import type { MockCircuit, MockDatabase } from '../db'
@@ -86,7 +87,8 @@ export function wireCircuit(db: MockDatabase, circuit: MockCircuit) {
     images: circuit.images.map((key) => wirePhoto(db, key)),
     stop_ids: circuit.stopIds,
     badges: stops.filter((stop) => stop.hasBadge).length + circuit.bonusBadges,
-    duration_minutes: stops.reduce((sum, stop) => sum + (parseDuration(stop.duration) || 30) + (circuit.legMinutes?.[stop.id] ?? 0), 0),
+    // La visita más los traslados (el escrito a mano o el estimado), con la cuenta del portal y la app.
+    duration_minutes: planItinerary({ stops, start: 0, mode: circuit.travelMode, legMinutes: circuit.legMinutes }).totalMinutes,
     created_at: wireInstant(circuit.createdAt),
     published_at: circuit.publishedAt ? wireInstant(circuit.publishedAt) : null,
   }
@@ -106,14 +108,16 @@ export function wireCircuitDetail(db: MockDatabase, circuit: MockCircuit) {
 }
 
 /**
- * Las próximas salidas de un circuito publicado, como `DepartureGet` del API. En la demo salen de
- * los horarios de grupo de la app: el guía es uno de sus perfiles.
+ * Las próximas salidas de un circuito, como `DepartureGet` del API. En la demo salen de los horarios
+ * de grupo de la app: el guía es uno de sus perfiles. La app sólo ve las vigentes de uno publicado;
+ * el portal (`official-circuit/{id}/departure/`), todas, con las canceladas.
  */
-export function wireDepartures(db: MockDatabase, circuit: MockCircuit) {
-  if (circuit.status !== 'published') return []
+export function wireDepartures(db: MockDatabase, circuit: MockCircuit, { portal = false } = {}) {
+  if (!portal && circuit.status !== 'published') return []
   const today = todayISO()
   return db.groupSessions
     .filter((session) => session.circuitId === circuit.id && session.daysFromNow >= 0)
+    .filter((session) => portal || !session.cancelled)
     .map((session) => {
       const guide = catalog.appGuides.find((item) => item.id === session.guideId)
       const exclusive = circuit.bookingMode === 'private'
@@ -129,12 +133,21 @@ export function wireDepartures(db: MockDatabase, circuit: MockCircuit) {
         exclusive,
         transport_included: session.transportIncluded,
         note: session.note,
-        cancelled: false,
+        cancelled: !!session.cancelled,
         price_adult: circuit.priceAdult,
         price_child: circuit.priceChild,
       }
     })
     .sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time))
+}
+
+/** Despublicar o retirar un circuito cancela sus próximas salidas de guía y sus reservas, como el API. */
+export function cancelDepartures(db: MockDatabase, circuit: MockCircuit): void {
+  for (const session of db.groupSessions) {
+    if (session.circuitId !== circuit.id || session.daysFromNow < 0 || session.cancelled) continue
+    session.cancelled = true
+    session.joinedCount = 0
+  }
 }
 
 /** Las paradas tienen que ser lugares activos de la ciudad del circuito, sin repetir. */

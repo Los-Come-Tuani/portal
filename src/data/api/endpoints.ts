@@ -122,6 +122,8 @@ export const endpoints = {
   officialCircuit: {
     list: '/official-circuit/',
     detail: (circuitId: string) => `/official-circuit/${id(circuitId)}/`,
+    /** Sus próximas salidas de guía, también las canceladas y aunque ya no esté publicado. */
+    departures: (circuitId: string) => `/official-circuit/${id(circuitId)}/departure/`,
   },
   /** Los publicados como los ve la app, sin sesión ni paginar. */
   publishedCircuits: '/circuit/',
