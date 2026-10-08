@@ -37,6 +37,7 @@ export const queryKeys = {
     detail: (stopId: string) => ['places', 'detail', stopId] as const,
     profile: (stopId: string) => ['places', 'profile', stopId] as const,
     posts: (stopId: string) => ['places', 'posts', stopId] as const,
+    qr: (stopId: string) => ['places', 'qr', stopId] as const,
   },
   circuits: {
     all: ['circuits'] as const,

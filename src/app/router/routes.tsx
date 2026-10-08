@@ -97,10 +97,6 @@ export const router = createBrowserRouter([
                     ],
                   },
                   {
-                    path: 'insignias',
-                    lazy: async () => ({ Component: (await import('@/features/badges/BadgesPage')).BadgesPage }),
-                  },
-                  {
                     element: <RequireRole roles={['negocio', 'admin']} />,
                     children: [
                       {
@@ -108,6 +104,15 @@ export const router = createBrowserRouter([
                         lazy: async () => ({ Component: (await import('@/features/coupons/CouponsPage')).CouponsPage }),
                       },
                     ],
+                  },
+                ],
+              },
+              {
+                element: <RequirePermission anyOf={['places.view']} />,
+                children: [
+                  {
+                    path: 'insignias',
+                    lazy: async () => ({ Component: (await import('@/features/badges/BadgesPage')).BadgesPage }),
                   },
                 ],
               },

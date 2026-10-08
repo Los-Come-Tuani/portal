@@ -27,6 +27,19 @@ import {
 
 const PILLARS = STOP_CATEGORIES.map((label) => ({ id: `pillar-${PILLAR_CODES[label]}`, code: PILLAR_CODES[label], label }))
 
+const QR_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+/** Un código fijo por lugar; en el API (`qr_token`) es aleatorio y se guarda con la insignia. */
+function qrToken(stopId: string): string {
+  let hash = 2166136261
+  let token = ''
+  for (let round = 0; round < 24; round += 1) {
+    for (const char of `${stopId}:${round}`) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619)
+    token += QR_ALPHABET[(hash >>> 0) % QR_ALPHABET.length]
+  }
+  return token
+}
+
 const clock = z.string().regex(/^\d{2}:\d{2}$/, { error: 'Usa el formato HH:MM.' })
 
 const placeFields = {
@@ -331,6 +344,13 @@ export const placeRoutes = [
   route('GET', endpoints.place.profile(':id'), (context) => {
     const stop = visibleStop(context.db, requireUser(context), context.params.id)
     return wireProfile(context.db.profiles.find((item) => item.stopId === stop.id) ?? emptyProfile(stop.id))
+  }),
+  // El QR de la insignia: quien ve el lugar lo descarga; sin insignia, 404.
+  route('GET', endpoints.place.qr(':id'), (context) => {
+    const stop = visibleStop(context.db, requireUser(context), context.params.id)
+    if (!stop.hasBadge) throw fail.notFound('Ese lugar no da insignia.')
+    const token = qrToken(stop.id)
+    return { point_id: stop.id, payload: `kplan://visit/${token}`, token, value: 1, active: true }
   }),
   route('PUT', endpoints.place.profile(':id'), (context) => {
     const stop = editableStop(context.db, requireUser(context), context.params.id)

@@ -49,15 +49,13 @@ describe('menú del equipo según su rol', () => {
   })
 
   it('ver lugares y circuitos abre el contenido, pero no moderarlo', () => {
+    // Las insignias cuelgan de los lugares: las ve quien ve los lugares.
     expect(labels(navigationFor(teamMember('places.view', 'circuits.view')))).toEqual([
       'Contenido > Lugares',
       'Contenido > Circuitos',
-    ])
-    expect(labels(navigationFor(teamMember('content.moderate')))).toEqual([
-      'Contenido > Cupones',
-      'Contenido > Eventos',
       'Contenido > Insignias',
     ])
+    expect(labels(navigationFor(teamMember('content.moderate')))).toEqual(['Contenido > Cupones', 'Contenido > Eventos'])
   })
 
   it('ver usuarios no da acceso al equipo ni a los roles, y administrar el equipo sí', () => {

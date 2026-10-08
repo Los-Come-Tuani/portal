@@ -1,13 +1,5 @@
 import { create } from 'qrcode'
 
-/**
- * Texto exacto del QR de una parada. La app sólo acepta este formato
- * (mobile/lib/src/core/utils/qr_codes.dart).
- */
-export function stopQrPayload(stopId: string): string {
-  return `kplan:stop:${stopId}`
-}
-
 /** Los módulos del QR como un solo path SVG de cuadros de 1×1. */
 export function qrPath(text: string): { size: number; d: string } {
   const { modules } = create(text, { errorCorrectionLevel: 'M' })

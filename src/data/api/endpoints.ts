@@ -106,6 +106,8 @@ export const endpoints = {
     /** `PUT { kind, id }` le da dueño; `{}` lo devuelve al equipo. */
     owner: (placeId: string) => `/place/${id(placeId)}/owner/`,
     profile: (placeId: string) => `/place/${id(placeId)}/profile/`,
+    /** El QR de su insignia (F6); `404` si el lugar no da insignia. */
+    qr: (placeId: string) => `/place/${id(placeId)}/qr/`,
   },
   /** Las novedades de un lugar (`place_id` filtra). */
   post: {

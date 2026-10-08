@@ -223,9 +223,7 @@ export function PlaceEditorPage() {
                   Da insignia
                 </Tag>
               ) : (
-                <Link to={paths.badges} className="font-semibold text-brand-strong hover:underline">
-                  Activar insignia
-                </Link>
+                <span title="La insignia de un lugar la activa el equipo de K'Plan">Sin insignia</span>
               )}
             </div>
             {canRetire && (
@@ -284,7 +282,7 @@ export function PlaceEditorPage() {
           {section === 'servicios' &&
             (profile.data ? <ServicesContactForm form={profileForm} /> : <Skeleton className="h-64" />)}
           {section === 'novedades' && <PostsTab stopId={stopId} />}
-          {section === 'qr' && <QrPoster stop={place} />}
+          {section === 'qr' && <QrPoster stop={place} managesPlaces={managesPlaces} />}
         </Panel>
 
         {showPreview && (

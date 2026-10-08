@@ -6,6 +6,7 @@ import type { NewStopInput, OrganizationKind, Page, PlaceProfile, PlaceProfileIn
 import {
   apiPillarSchema,
   apiPlacePageSchema,
+  apiPlaceQrSchema,
   apiPlaceSchema,
   apiPostPageSchema,
   apiPostSchema,
@@ -18,6 +19,7 @@ import {
   POST_FORM_FIELDS,
   postBody,
   profileBody,
+  toPlaceQr,
   toPost,
   toProfile,
   toStop,
@@ -76,6 +78,9 @@ export const placesRepository = {
 
   /** La insignia la cambia solo el equipo con `places.manage`. */
   setBadge: (stopId: string, hasBadge: boolean) => place(http.patch<unknown>(endpoints.place.detail(stopId), { body: { has_badge: hasBadge } })),
+
+  /** El QR de su insignia, para imprimirlo en el local; `404` si no da insignia. */
+  qr: async (stopId: string) => toPlaceQr(apiPlaceQrSchema.parse(await http.get<unknown>(endpoints.place.qr(stopId)))),
 
   /** Lo devuelve a la app después de retirarlo. */
   restore: (stopId: string) => place(http.patch<unknown>(endpoints.place.detail(stopId), { body: { active: true } })),

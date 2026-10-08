@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   apiPlacePageSchema,
+  apiPlaceQrSchema,
   apiPlaceSchema,
   apiPostSchema,
   apiProfileSchema,
@@ -9,11 +10,19 @@ import {
   placeBody,
   postBody,
   profileBody,
+  toPlaceQr,
   toPost,
   toProfile,
   toStop,
   toStopPage,
 } from './place-api.schema'
+
+describe('el QR de la insignia', () => {
+  it('trae lo que se imprime y cuántas insignias da', () => {
+    const qr = toPlaceQr(apiPlaceQrSchema.parse({ point_id: '0194-catedral', payload: 'kplan://visit/ABC23456', token: 'ABC23456', value: 1, active: true }))
+    expect(qr).toEqual({ pointId: '0194-catedral', payload: 'kplan://visit/ABC23456', token: 'ABC23456', value: 1, active: true })
+  })
+})
 
 const STOP = {
   id: '0194-catedral',

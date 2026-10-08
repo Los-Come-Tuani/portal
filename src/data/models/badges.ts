@@ -1,5 +1,19 @@
 import type { ISODate } from './common'
 
+/**
+ * El QR de la insignia de un lugar (`GET place/{id}/qr/`, F6): lo que se imprime en el local. El
+ * turista lo escanea a menos de 50 m y gana la insignia, una vez por lugar cada 24 horas.
+ */
+export interface PlaceQr {
+  pointId: string
+  /** El texto del QR: `kplan://visit/<código>`. */
+  payload: string
+  token: string
+  /** Cuántas insignias da la visita. */
+  value: number
+  active: boolean
+}
+
 /** Activar la insignia en un lugar que hoy no da: cargo mensual. */
 export interface BadgeActivation {
   id: string

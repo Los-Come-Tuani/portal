@@ -81,7 +81,7 @@ export function navigationFor({ role, organization, can }: Session): NavEntry[] 
         can('circuits.view') && { to: paths.circuits, label: 'Circuitos' },
         can('content.moderate') && { to: paths.coupons, label: 'Cupones' },
         can('content.moderate') && { to: paths.events, label: 'Eventos' },
-        can('content.moderate') && { to: paths.badges, label: 'Insignias' },
+        can('places.view') && { to: paths.badges, label: 'Insignias' },
       ]),
       group('usuarios', 'Usuarios', Users, [
         can('users.view') && { to: paths.users, label: 'Todos los usuarios', end: true },

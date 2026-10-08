@@ -49,6 +49,16 @@ export function usePlace(stopId: string | undefined) {
   })
 }
 
+/** El QR de la insignia de un lugar; sólo lo tiene uno que da insignia. */
+export function usePlaceQr(stopId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.places.qr(stopId),
+    queryFn: () => placesRepository.qr(stopId),
+    enabled: !!stopId && enabled,
+    retry: false,
+  })
+}
+
 /** El lugar como quedó, en su detalle y en las listas. */
 function useStoreStop() {
   const queryClient = useQueryClient()

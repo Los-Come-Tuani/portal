@@ -9,6 +9,7 @@ import {
   type NewStopInput,
   type Page,
   type PlaceProfile,
+  type PlaceQr,
   type PlaceProfileInput,
   type Post,
   type PostInput,
@@ -88,6 +89,19 @@ export const apiPostSchema = z.object({
 export const apiPostPageSchema = page(apiPostSchema)
 
 export const apiPillarSchema = z.object({ id: z.string(), code: z.string(), label: z.string() })
+
+/** El QR de la insignia de un lugar (`GET place/{id}/qr/`, docs/agenda-y-recompensas.md). */
+export const apiPlaceQrSchema = z.object({
+  point_id: z.string(),
+  payload: z.string(),
+  token: z.string(),
+  value: z.number(),
+  active: z.boolean(),
+})
+
+export function toPlaceQr(api: z.infer<typeof apiPlaceQrSchema>): PlaceQr {
+  return { pointId: api.point_id, payload: api.payload, token: api.token, value: api.value, active: api.active }
+}
 
 /** Los campos del API que en el formulario del portal se llaman distinto. */
 export const PLACE_FORM_FIELDS = {
