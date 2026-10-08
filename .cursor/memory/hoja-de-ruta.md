@@ -152,6 +152,47 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
     sin ciudad (cae en León), no publica sin foto (400 en `images`), recibe 403 al editar o
     retirar uno del equipo y retira el suyo (204); una parada que no existe llega como
     `stops.1.point_id`; subir una foto da 503. Las pantallas no se recorrieron en un navegador.
+- **Hecho: F6, las reseñas de F7 y F8 contra el API real** (commits `5ee929c` a `73cf2a2`, uno
+  por área). Ya no usan rutas de demo:
+  - Circuitos: las salidas salen de `official-circuit/{id}/departure/` (también las canceladas y
+    las de uno no publicado; `DeparturesPanel` las tacha). Despublicar pide confirmar y, como
+    retirar, dice que cancela las próximas salidas y reservas y avisa a turistas y guías.
+  - Eventos (`cultural-event/`; `EventsPage`, `EventDrawer`, `EventDialogs`): la institución o la
+    alcaldía programa, corrige, cancela con motivo y clona con fechas nuevas; `content.moderate`
+    programa especiales de K'Plan, destaca y oculta con motivo o muestra. Clases de
+    `catalog/event-category/`, fotos `event-photo`. La ciudad no cambia al corregir (`PATCH` no la
+    acepta). El comercio ya no tiene Eventos (el API le da 403). Modelo `CulturalEvent`.
+  - Insignias: el QR de `place/{id}/qr/` en la sección "Código QR" del lugar (`QrPoster`);
+    `BadgesPage` lista los lugares con insignia y su QR, y `places.manage` la enciende ahí. Las
+    activaciones y campañas de insignias de la demo salieron de la pantalla.
+  - Cupones (`coupon-campaign/`, `coupon-redemption/`, `catalog/benefit-type/`): hasta tres
+    activas, corregir sin tocar beneficio ni costo, retirar con motivo; `content.moderate` ve y
+    retira. Validar busca el código entre los vigentes (`status=valid`, todas las páginas) sin
+    gastarlo y lo consume con `validate/`. Código de ocho caracteres sin I, O, 0 ni 1.
+  - Reseñas impugnadas (`/resenas`, `review-dispute/`, `content.moderate`).
+  - Finanzas: `/cobros` (pagos de reservas `payment/` y estados de cuenta `billing/statement/`),
+    `/retiros` (`guide-withdrawal/`; el número completo sólo con `billing.manage`), `/tarifas`
+    (`pricing/`) y `/pagos` del comercio (sus estados de cuenta). La alcaldía ya no tiene "Pagos"
+    (403). `AdminPending` cuenta pagos, retiros y estados por cobrar.
+  - Reportes (`/reportes`, `report/`), Sanciones (`/sanciones`, `sanction/`) y "Sancionar" con
+    sus sanciones en la ficha de "Todos los usuarios" (`UserSheet`).
+  - Campana de avisos (`NotificationBell` en `Topbar`): no leídos de `notification/` cada minuto,
+    los últimos diez al abrirla, marcar uno o todo leído.
+  - Compartido: `schemas/api-common.ts` (página, foto, ciudad, instantes en hora de Managua) y
+    `components/ui/Pager.tsx`.
+  - Demo (`SCHEMA_VERSION` 17): `mock/services/agenda.ts`, `rewards.ts`, `finance.ts` y
+    `moderation.ts`, con las mismas rutas y reglas. Se retiraron `services/statements.ts` (con el
+    cobro del alta asistida) y los canjes y pagos del modelo anterior.
+  - Pruebas: 223 unitarias. El contrato se probó contra el API local con un script temporal de
+    vitest (borrado): agenda (alcaldía, equipo y 403 del comercio), cupones (publicar, 400 con
+    150 %, corregir, 404 con un código ajeno, retirar, 409 al corregir una retirada), finanzas
+    (equipo, comercio, 403 de la alcaldía en estados de cuenta), sanciones (suspender una turista
+    por un día, levantar, 409 al repetir), avisos, QR (200 con insignia, 404 sin ella) y 503 al
+    subir `event-photo` y `coupon-photo`. Las impugnaciones sólo se leyeron (la base local no
+    tiene). Muchos inicios de sesión seguidos disparan el límite del API: esperar un minuto. Las
+    pantallas no se recorrieron en un navegador; la demo se probó con otro script temporal.
+  - No hay cuenta de institución local: se crea con `/postular` (clase institución, hace falta el
+    bucket local de la memoria del API para el documento) y se aprueba en `/solicitudes`.
 - Comprobaciones: `npm run typecheck && npm run lint && npm test && npm run build:demo`.
 
 ## Qué falta (depende de otras fases)
@@ -163,28 +204,28 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
    - Solicitudes de lugares (`/api/place-requests`, `/api/stops/available`): el API no tiene que
      una organización aprobada pida administrar otro lugar; hoy el equipo le da dueño con
      `PUT place/{id}/owner/`.
-   - Eventos, cupones e insignias (`/api/events`, `/api/coupons`, `/api/coupon-redemptions`,
-     `/api/badge-*`): el API ya los tiene (F6), falta conectarlos (punto 2).
-   - Pagos y tarifas (`/api/billing/*`, `/api/pricing`): llegan con F8.
+   - Las activaciones y campañas de insignias de la demo anterior (`/api/badge-*`): sólo las
+     dibuja la agenda; el API no las tiene (la insignia es `has_badge` del lugar).
    - La agenda de llegadas (`/api/visit-events`): el API la dejó para después (docs/servicios.md,
      "Lo que queda para después").
-   Al conectarlos se retira lo que dejó F3: el cobro del alta asistida en `statements.ts`, la
-   propiedad de los lugares por `claimedStopIds` en `ownership.ts` y `generators/admissions.ts`.
+   Queda por retirar lo que dejó F3: la propiedad de los lugares por `claimedStopIds` en
+   `ownership.ts` y `generators/admissions.ts`.
    Un `429` en `GET /auth/profile/` al cargar la página lleva a la pantalla de entrada sin cerrar la
    sesión (`AuthProvider`); conviene mostrar un error con "Reintentar" en vez del login.
-2. **Listo en el API para una fase siguiente del portal**:
-   - F6 (docs/agenda-y-recompensas.md): eventos del portal (`cultural-event/`: programar,
-     corregir, cancelar, clonar; ocultar y mostrar con `content.moderate`), el QR de la insignia
-     de un lugar (`place/{id}/qr/`), campañas de cupones (`coupon-campaign/`, hasta tres activas)
-     y los cupones entregados con su validación en el mostrador (`coupon-redemption/`). En el API
-     la insignia se activa con `has_badge` del lugar: las "activaciones" y "campañas de
-     insignias" del demo no tienen equivalente.
-   - F7 (docs/servicios.md): salidas de guía, convocatorias, reservas, chat y reseñas, casi todo
-     para la app. Al portal le toca moderar las reseñas impugnadas (`review-dispute/`, con
-     `content.moderate`); las salidas ya se ven en el editor de circuitos.
-   - Anotado para el API (no se tocó): que la sesión traiga la ciudad de la organización; qué
-     pasa con las reservas al retirar o despublicar un circuito; poder ver las salidas de un
-     circuito no publicado; un mensaje legible cuando `stops` trae menos de dos paradas.
+2. **Anotado para el API** (no se tocó):
+   - Que la sesión traiga la ciudad de la organización (el portal la saca de sus lugares).
+   - Una consulta de un cupón sin consumirlo (un filtro `code` en `coupon-redemption/` o
+     `GET coupon-redemption/{code}/`): hoy el mostrador recorre todos los vigentes del comercio.
+   - Un filtro `organizer_id` en `cultural-event/` (el detalle de una organización cuenta sus
+     eventos entre todos) y que `PATCH cultural-event/` acepte `city_id` o lo diga en el contrato.
+   - `pricing/` sólo lo ve `billing.view`: el comercio no puede ver en su portal cuánto paga por
+     cupón validado o por la insignia.
+   - Los estados de cuenta son sólo de comercios: si la alcaldía o la institución deben pagar
+     algo, falta en el API.
+   - Si una campaña agotada (`sold_out`) se puede retirar: el portal sólo ofrece retirar activas.
+   - Con menos de dos paradas, `body.stops` dice "Este campo necesita al menos 2 elemento(s).":
+     legible, pero podría decir "Un circuito necesita al menos dos paradas".
+   - El límite de inicios de sesión corta los scripts de contrato que entran con varias cuentas.
 3. **Google en el portal** (opcional): el API ya acepta `POST /auth/web/google/`; falta el botón con
    Google Identity Services. Solo aplica a roles públicos, así que no sirve para el equipo ni las
    organizaciones: no hay prisa.
