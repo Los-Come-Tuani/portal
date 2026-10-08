@@ -196,6 +196,15 @@ export const router = createBrowserRouter([
                 ],
               },
               {
+                element: <RequirePermission anyOf={['content.moderate']} />,
+                children: [
+                  {
+                    path: 'resenas',
+                    lazy: async () => ({ Component: (await import('@/features/admin/reviews/ReviewDisputesPage')).ReviewDisputesPage }),
+                  },
+                ],
+              },
+              {
                 element: <RequirePermission anyOf={['users.view']} />,
                 children: [
                   {

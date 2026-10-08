@@ -195,6 +195,11 @@ export const endpoints = {
     approve: (requestId: string) => `/provider-request/${id(requestId)}/approve/`,
     reject: (requestId: string) => `/provider-request/${id(requestId)}/reject/`,
   },
+  /** Las reseñas que el reseñado impugnó (F7): las resuelve el equipo con `content.moderate`. */
+  reviewDispute: {
+    list: '/review-dispute/',
+    resolve: (disputeId: string) => `/review-dispute/${id(disputeId)}/resolve/`,
+  },
   visitEvents: '/api/visit-events',
   /** Sólo existe en el modo demo. */
   demoReset: '/api/demo/reset',

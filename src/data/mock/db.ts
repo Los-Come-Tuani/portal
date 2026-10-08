@@ -23,6 +23,7 @@ import type {
   User,
 } from '../models'
 import type { MockEvent } from './services/agenda'
+import type { MockDispute } from './services/moderation'
 import type { MockCampaign, MockCouponCode } from './services/rewards'
 import type { MockApplication, MockFiles } from './services/applications'
 import type { MockProvider } from './services/providers'
@@ -140,6 +141,8 @@ export interface MockDatabase {
   badgeCampaigns: BadgeCampaign[]
   payments: Payment[]
   pricing: Pricing
+  /** Las reseñas impugnadas (F7), con las reglas del API. */
+  reviewDisputes: MockDispute[]
 }
 
 let database: MockDatabase | null = null

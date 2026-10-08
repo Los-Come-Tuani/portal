@@ -55,7 +55,7 @@ describe('menú del equipo según su rol', () => {
       'Contenido > Circuitos',
       'Contenido > Insignias',
     ])
-    expect(labels(navigationFor(teamMember('content.moderate')))).toEqual(['Contenido > Cupones', 'Contenido > Eventos'])
+    expect(labels(navigationFor(teamMember('content.moderate')))).toEqual(['Contenido > Cupones', 'Contenido > Eventos', 'Contenido > Reseñas impugnadas'])
   })
 
   it('ver usuarios no da acceso al equipo ni a los roles, y administrar el equipo sí', () => {

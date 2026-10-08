@@ -3,6 +3,7 @@ import { CREATIVE_BONUS_BADGES, type Coupon, type Organization } from '../models
 import { catalog, type AppCircuit } from './catalog'
 import type { MockCircuit, MockDatabase } from './db'
 import { categoryCode, toWireClock, type MockEvent } from './services/agenda'
+import { seedDisputes } from './services/moderation'
 import { CODE_ALPHABET, type MockCampaign, type MockCouponCode } from './services/rewards'
 import { generateRedemptions, seedActivations, seedCampaigns, seedPayments } from './generators/activity'
 import { seedAdmissions, seedPlaceRequests } from './generators/admissions'
@@ -11,7 +12,7 @@ import { seedProviders } from './generators/providers'
 import { seedApplications } from './services/applications'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 13
+export const SCHEMA_VERSION = 14
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -269,5 +270,10 @@ export function seedDatabase(today: ISODate): MockDatabase {
     badgeCampaigns: seedCampaigns(today, pricing),
     payments: seedPayments(catalog.organizations, today),
     pricing,
+    reviewDisputes: seedDisputes(
+      today,
+      catalog.appGuides.map((guide) => guide.name),
+      DEMO_TOURISTS,
+    ),
   }
 }

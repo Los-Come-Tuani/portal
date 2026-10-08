@@ -3,6 +3,7 @@ import type { EventFilters } from '../repositories/events.repository'
 import type { OrganizationFilters } from '../repositories/organizations.repository'
 import type { PlaceRequestFilters } from '../repositories/place-requests.repository'
 import type { CampaignFilters, RedemptionFilters } from '../repositories/coupons.repository'
+import type { DisputeFilters } from '../repositories/moderation.repository'
 import type { VisitFilters } from '../repositories/visits.repository'
 
 /** Todas las llaves de caché en un lugar, para invalidar sin adivinar. */
@@ -85,6 +86,11 @@ export const queryKeys = {
   placeRequests: {
     all: ['place-requests'] as const,
     list: (filters: PlaceRequestFilters) => ['place-requests', 'list', filters] as const,
+  },
+  /** La moderación del equipo: reseñas impugnadas, reportes y sanciones (F7 y F8). */
+  moderation: {
+    all: ['moderation'] as const,
+    disputes: (filters: DisputeFilters) => ['moderation', 'disputes', filters] as const,
   },
   /** La cola de guías y traductores (F5). */
   providers: {
