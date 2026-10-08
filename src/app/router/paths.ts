@@ -22,6 +22,7 @@ export const paths = {
   organizations: '/organizaciones',
   organization: (organizationId: string) => `/organizaciones/${encodeURIComponent(organizationId)}`,
   collections: '/cobros',
+  withdrawals: '/retiros',
   pricing: '/tarifas',
   reviewDisputes: '/resenas',
   guides: '/guias',

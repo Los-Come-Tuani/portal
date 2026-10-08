@@ -91,6 +91,7 @@ export function navigationFor({ role, organization, can }: Session): NavEntry[] 
       ]),
       group('finanzas', 'Finanzas', Wallet, [
         can('billing.view') && { to: paths.collections, label: 'Cobros' },
+        can('billing.view') && { to: paths.withdrawals, label: 'Retiros de guías' },
         can('billing.view') && { to: paths.pricing, label: 'Tarifas' },
       ]),
     ].filter((entry): entry is NavEntry => !!entry)
@@ -104,7 +105,8 @@ export function navigationFor({ role, organization, can }: Session): NavEntry[] 
     return [link(paths.application, 'Mi solicitud', FileCheck2), ...(placeCount > 0 ? [places] : [])]
   }
 
-  if (role === 'alcaldia') return [agenda, places, link(paths.circuits, 'Circuitos', Route), events, badges, billing]
+  // Los estados de cuenta (Pagos) son de los comercios: la alcaldía no paga a K'Plan.
+  if (role === 'alcaldia') return [agenda, places, link(paths.circuits, 'Circuitos', Route), events, badges]
   // Los eventos los programan las instituciones y las alcaldías: el comercio no.
   return [agenda, places, link(paths.coupons, 'Cupones', TicketPercent), badges, billing]
 }

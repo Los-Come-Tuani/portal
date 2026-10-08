@@ -93,11 +93,11 @@ export interface CouponCode {
   expiresAt: LocalDateTime
 }
 
-// ── El modelo de demo anterior: lo leen todavía los estados de cuenta de la demo ──
+// ── El formato de los cupones de ejemplo de la demo (coupons.json y portal_coupons.json) ──
 
 export type CouponStatus = 'active' | 'paused'
 
-/** coupons.json de la app, más los campos del portal. */
+/** coupons.json de la app, más los campos del portal: de aquí salen las campañas de la demo. */
 export interface Coupon {
   id: string
   title: string
@@ -117,19 +117,4 @@ export interface Coupon {
   maxRedemptions: number | null
   terms: string
   createdAt: ISODate
-}
-
-export type RedemptionStatus = 'pending' | 'validated' | 'expired'
-
-export interface CouponRedemption {
-  id: string
-  couponId: string
-  organizationId: string | null
-  code: string
-  touristName: string
-  claimedAt: LocalDateTime
-  validatedAt: LocalDateTime | null
-  status: RedemptionStatus
-  /** Tarifa fija cobrada por K'Plan al validar (C$), congelada en ese momento. */
-  fee: number
 }

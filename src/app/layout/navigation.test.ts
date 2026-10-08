@@ -71,8 +71,8 @@ describe('menú del equipo según su rol', () => {
     ])
   })
 
-  it('ver los cobros abre los cobros y las tarifas', () => {
-    expect(labels(navigationFor(teamMember('billing.view')))).toEqual(['Finanzas > Cobros', 'Finanzas > Tarifas'])
+  it('ver los cobros abre los cobros, los retiros de guías y las tarifas', () => {
+    expect(labels(navigationFor(teamMember('billing.view')))).toEqual(['Finanzas > Cobros', 'Finanzas > Retiros de guías', 'Finanzas > Tarifas'])
   })
 
   it('la agenda solo aparece con su permiso y es la entrada de quien la tiene', () => {
@@ -96,7 +96,7 @@ describe('menú de la alcaldía', () => {
   }
 
   it('entra a sus lugares y a los circuitos de su ciudad', () => {
-    expect(labels(navigationFor(municipality('active')))).toEqual(['Agenda', 'Lugares', 'Circuitos', 'Eventos', 'Insignias', 'Pagos'])
+    expect(labels(navigationFor(municipality('active')))).toEqual(['Agenda', 'Lugares', 'Circuitos', 'Eventos', 'Insignias'])
   })
 
   it('mientras su solicitud está pendiente no ve los circuitos', () => {

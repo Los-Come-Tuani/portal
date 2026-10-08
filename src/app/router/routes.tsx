@@ -117,7 +117,8 @@ export const router = createBrowserRouter([
                 ],
               },
               {
-                element: <RequireRole roles={['negocio', 'alcaldia']} />,
+                // Los estados de cuenta son de los comercios: la alcaldía no tiene.
+                element: <RequireRole roles={['negocio']} />,
                 children: [
                   {
                     path: 'pagos',
@@ -234,6 +235,10 @@ export const router = createBrowserRouter([
                     lazy: async () => ({
                       Component: (await import('@/features/admin/collections/CollectionsPage')).CollectionsPage,
                     }),
+                  },
+                  {
+                    path: 'retiros',
+                    lazy: async () => ({ Component: (await import('@/features/admin/finance/WithdrawalsPage')).WithdrawalsPage }),
                   },
                   {
                     path: 'tarifas',

@@ -1,57 +1,107 @@
 import type { BadgePack } from './badges'
 import type { ISODate, LocalDateTime } from './common'
 
-export type ChargeKind = 'coupon_fee' | 'badge_activation' | 'badge_campaign' | 'assisted_onboarding'
+// ── Cobros, retiros, tarifas y estados de cuenta del API (F8, docs/finanzas.md) ──
 
-export const CHARGE_KIND_LABELS: Record<ChargeKind, string> = {
-  coupon_fee: 'Cupones canjeados',
-  badge_activation: 'Insignia activada',
-  badge_campaign: 'Campaña de insignias',
-  assisted_onboarding: 'Alta asistida',
+export type PaymentStatus = 'pending' | 'confirmed' | 'refund_due' | 'refunded' | 'void'
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  pending: 'Por confirmar',
+  confirmed: 'Pagado',
+  refund_due: 'Por reembolsar',
+  refunded: 'Reembolsado',
+  void: 'Anulado',
 }
 
-export interface StatementLine {
+/** El cobro de una reserva: con la pasarela manual, el equipo con `billing.manage` lo confirma. */
+export interface BookingPayment {
   id: string
-  date: ISODate
-  kind: ChargeKind
-  description: string
-  quantity: number
-  unitPrice: number
+  bookingId: string
+  /** Córdobas. */
   amount: number
+  gateway: string
+  status: PaymentStatus
+  /** El número de la transferencia o de la operación. */
+  reference: string
+  instructions: string
+  touristName: string
+  guideName: string
+  createdAt: LocalDateTime
+  confirmedAt: LocalDateTime | null
+  refundedAt: LocalDateTime | null
 }
 
-/** `open`: el mes en curso. `due`: cerrado y sin pagar. `paid`: pagado. */
-export type StatementStatus = 'open' | 'due' | 'paid'
+export type WithdrawalStatus = 'pending' | 'paid' | 'rejected'
 
-export const STATEMENT_STATUS_LABELS: Record<StatementStatus, string> = {
-  open: 'Mes en curso',
-  due: 'Por pagar',
+export const WITHDRAWAL_STATUS_LABELS: Record<WithdrawalStatus, string> = {
+  pending: 'Por pagar',
   paid: 'Pagado',
+  rejected: 'Rechazado',
 }
 
-/** Estado de cuenta mensual de una organización con K'Plan. */
-export interface Statement {
+export const ACCOUNT_TYPE_LABELS = { ahorro: 'Ahorro', corriente: 'Corriente' } as const
+
+/** Lo que un guía pidió retirar de su saldo a su cuenta; el equipo deposita y lo marca pagado. */
+export interface GuideWithdrawal {
   id: string
-  organizationId: string
-  /** `"2026-09"` */
-  period: string
-  lines: StatementLine[]
-  total: number
-  status: StatementStatus
-  dueDate: ISODate
-  paidAt: LocalDateTime | null
+  amount: number
+  status: WithdrawalStatus
+  bankAccount: { bank: string; holder: string; accountType: keyof typeof ACCOUNT_TYPE_LABELS; last4: string }
+  reference: string
+  note: string
+  requestedAt: LocalDateTime
+  resolvedAt: LocalDateTime | null
+  guideName: string
+  /** El número completo, sólo para quien tiene `billing.manage`. */
+  accountNumber: string | null
 }
 
-/** Tarifas de K'Plan; las define el admin. */
-export interface Pricing {
-  /** C$ por cada cupón canjeado (validado por el negocio). */
-  couponFee: number
-  /** C$ al mes por lugar con la insignia activada. */
-  badgeActivationMonthly: number
-  badgePacks: BadgePack[]
-  /** C$ una sola vez, si el equipo llenó la solicitud por la organización y se marcó cobrarla. */
-  assistedOnboardingFee: number
+/** Una tarifa: la comisión de cada reserva (`percent`) o un monto en córdobas (`nio`). */
+export interface Tariff {
+  code: string
+  label: string
+  value: number
+  unit: 'percent' | 'nio'
   updatedAt: LocalDateTime
 }
 
-export type PricingInput = Omit<Pricing, 'updatedAt'>
+/** `PUT pricing/`: sólo cambian las que llegan. */
+export interface TariffInput {
+  commissionRate: number
+  badgeMonthly: number
+  couponFee: number
+}
+
+export type MonthlyStatementStatus = 'pending' | 'paid' | 'void'
+
+export const MONTHLY_STATEMENT_STATUS_LABELS: Record<MonthlyStatementStatus, string> = {
+  pending: 'Por pagar',
+  paid: 'Pagado',
+  void: 'Anulado',
+}
+
+/** El estado de cuenta mensual de un comercio: la insignia de su lugar y los cupones que validó. */
+export interface MonthlyStatement {
+  id: string
+  businessId: string
+  businessName: string
+  /** El primer día del mes que cobra: `2026-09-01`. */
+  period: ISODate
+  total: number
+  status: MonthlyStatementStatus
+  lines: { concept: string; description: string; quantity: number; unitPrice: number; amount: number }[]
+  issuedAt: LocalDateTime
+  paidAt: LocalDateTime | null
+  reference: string
+}
+
+// ── El modelo de demo anterior: lo leen todavía las insignias de la demo ──
+
+/** Tarifas de la demo anterior (activaciones y paquetes de insignias). */
+export interface Pricing {
+  couponFee: number
+  badgeActivationMonthly: number
+  badgePacks: BadgePack[]
+  assistedOnboardingFee: number
+  updatedAt: LocalDateTime
+}

@@ -1,12 +1,12 @@
-import { ArrowRight, BadgeCheck, Building2, MapPin, Receipt } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Building2, CreditCard, Landmark, MapPin, Receipt } from 'lucide-react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { useStatements } from '@/data/hooks/use-billing'
+import { usePayments, useStatements, useWithdrawals } from '@/data/hooks/use-billing'
 import { useOpenProviderCount } from '@/data/hooks/use-providers'
 import { usePlaceRequests } from '@/data/hooks/use-place-requests'
 import { useOpenRequestCount } from '@/data/hooks/use-verification'
 import { useSession } from '@/features/auth/use-auth'
-import { formatMoney, plural } from '@/lib/format'
+import { plural } from '@/lib/format'
 
 /** Lo que espera una decisión del equipo de K'Plan, según lo que su rol puede hacer. Si no hay nada, no se muestra. */
 export function AdminPending() {
@@ -14,9 +14,13 @@ export function AdminPending() {
   const pendingRequests = useOpenRequestCount(can('organizations.view'))
   const placeRequests = usePlaceRequests({ status: 'pending' }, can('organizations.view'))
   const guideCount = useOpenProviderCount(can('guides.view')) ?? 0
-  const statements = useStatements(undefined, can('billing.view'))
-  const due = (statements.data ?? []).filter((statement) => statement.status === 'due' && statement.total > 0)
-  const dueTotal = due.reduce((sum, statement) => sum + statement.total, 0)
+  // Sólo hace falta cuántos hay: una página de uno trae `elements`.
+  const statements = useStatements({ status: 'pending', pageSize: 1 }, can('billing.view'))
+  const payments = usePayments({ status: 'pending', pageSize: 1 }, can('billing.manage'))
+  const withdrawals = useWithdrawals({ status: 'pending', pageSize: 1 }, can('billing.manage'))
+  const dueStatements = statements.data?.elements ?? 0
+  const pendingPayments = payments.data?.elements ?? 0
+  const pendingWithdrawals = withdrawals.data?.elements ?? 0
 
   const items = [
     guideCount > 0
@@ -40,11 +44,25 @@ export function AdminPending() {
           text: `${plural(placeRequests.data.length, 'organización pide', 'organizaciones piden')} otro lugar`,
         }
       : null,
-    due.length > 0
+    pendingPayments > 0
       ? {
           to: paths.collections,
+          icon: <CreditCard size={16} aria-hidden="true" />,
+          text: `${plural(pendingPayments, 'pago de reserva', 'pagos de reservas')} por confirmar`,
+        }
+      : null,
+    pendingWithdrawals > 0
+      ? {
+          to: paths.withdrawals,
+          icon: <Landmark size={16} aria-hidden="true" />,
+          text: `${plural(pendingWithdrawals, 'retiro de guía', 'retiros de guías')} por pagar`,
+        }
+      : null,
+    dueStatements > 0
+      ? {
+          to: `${paths.collections}?vista=comercios`,
           icon: <Receipt size={16} aria-hidden="true" />,
-          text: `${plural(due.length, 'estado de cuenta', 'estados de cuenta')} por cobrar: ${formatMoney(dueTotal)}`,
+          text: `${plural(dueStatements, 'estado de cuenta', 'estados de cuenta')} por cobrar`,
         }
       : null,
   ].filter((item) => item !== null)

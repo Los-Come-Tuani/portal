@@ -167,11 +167,26 @@ export const endpoints = {
     campaigns: '/api/badge-campaigns',
     cancelCampaign: (campaignId: string) => `/api/badge-campaigns/${id(campaignId)}/cancel`,
   },
-  billing: {
-    statements: '/api/billing/statements',
-    pay: (statementId: string) => `/api/billing/statements/${id(statementId)}/pay`,
+  /**
+   * Las finanzas (F8, docs/finanzas.md): el equipo con `billing.view` ve y con `billing.manage` actúa;
+   * el comercio ve sus propios estados de cuenta.
+   */
+  payment: {
+    list: '/payment/',
+    confirm: (paymentId: string) => `/payment/${id(paymentId)}/confirm/`,
+    refund: (paymentId: string) => `/payment/${id(paymentId)}/refund/`,
   },
-  pricing: '/api/pricing',
+  guideWithdrawal: {
+    list: '/guide-withdrawal/',
+    pay: (withdrawalId: string) => `/guide-withdrawal/${id(withdrawalId)}/pay/`,
+    reject: (withdrawalId: string) => `/guide-withdrawal/${id(withdrawalId)}/reject/`,
+  },
+  billing: {
+    statements: '/billing/statement/',
+    pay: (statementId: string) => `/billing/statement/${id(statementId)}/pay/`,
+  },
+  /** Las tarifas: `GET` y `PUT` (sólo cambian las que llegan). */
+  pricing: '/pricing/',
   /** Organizaciones aprobadas que piden administrar otro lugar: el API todavía no lo tiene. */
   placeRequests: {
     list: '/api/place-requests',

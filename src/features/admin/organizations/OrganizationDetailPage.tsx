@@ -54,7 +54,10 @@ export function OrganizationDetailPage() {
   // `cultural-event/` no filtra por organizador: se cuentan los suyos entre los que ve el equipo.
   const events = useEvents({}, session.can('content.moderate'))
   const campaigns = useBadgeCampaigns(organizationId)
-  const statements = useStatements(organizationId)
+  const statements = useStatements(
+    { businessId: organizationId, status: 'pending', pageSize: 100 },
+    session.can('billing.view') && organization.data?.type === 'negocio',
+  )
   const save = useSaveOrganization()
   const remove = useRemoveStop()
   const toast = useToast()
@@ -72,8 +75,7 @@ export function OrganizationDetailPage() {
   if (!organization.data) return <Skeleton className="h-96" />
 
   const org = organization.data
-  const due = (statements.data ?? []).filter((statement) => statement.status === 'due' && statement.total > 0)
-  const open = statements.data?.find((statement) => statement.status === 'open')
+  const due = (statements.data?.results ?? []).filter((statement) => statement.total > 0)
 
   const changeStatus = (current: Organization, to: OrganizationStatus) => {
     save.mutate(
@@ -224,20 +226,18 @@ export function OrganizationDetailPage() {
           </Panel>
 
           <Panel title="Cobros">
-            {statements.isPending ? (
+            {statements.isPending && statements.fetchStatus !== 'idle' ? (
               <Skeleton className="h-16" />
+            ) : !statements.data ? (
+              <p className="text-small text-muted">Los estados de cuenta son de los comercios.</p>
             ) : (
               <div className="flex flex-col gap-3 text-body">
-                <p className="flex items-baseline justify-between gap-4">
-                  <span className="text-muted">Mes en curso</span>
-                  <span className="font-semibold text-ink tabular-nums">{formatMoney(open?.total ?? 0)}</span>
-                </p>
                 {due.length === 0 ? (
                   <p className="text-small text-confirmed">Al día con sus pagos.</p>
                 ) : (
                   due.map((statement) => (
                     <p key={statement.id} className="flex items-baseline justify-between gap-4 text-danger">
-                      <span>Por pagar: {formatMonth(statement.period)}</span>
+                      <span>Por pagar: {formatMonth(statement.period.slice(0, 7))}</span>
                       <span className="font-semibold tabular-nums">{formatMoney(statement.total)}</span>
                     </p>
                   ))

@@ -1,18 +1,19 @@
 import { addDays, toLocalDateTime, type ISODate } from '@/lib/dates'
-import { CREATIVE_BONUS_BADGES, type Coupon, type Organization } from '../models'
+import { CREATIVE_BONUS_BADGES, type Organization } from '../models'
 import { catalog, type AppCircuit } from './catalog'
 import type { MockCircuit, MockDatabase } from './db'
 import { categoryCode, toWireClock, type MockEvent } from './services/agenda'
+import { seedFinance } from './services/finance'
 import { seedDisputes } from './services/moderation'
 import { CODE_ALPHABET, type MockCampaign, type MockCouponCode } from './services/rewards'
-import { generateRedemptions, seedActivations, seedCampaigns, seedPayments } from './generators/activity'
+import { seedActivations, seedCampaigns } from './generators/activity'
 import { seedAdmissions, seedPlaceRequests } from './generators/admissions'
 import { seedPeople } from './generators/people'
 import { seedProviders } from './generators/providers'
 import { seedApplications } from './services/applications'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 14
+export const SCHEMA_VERSION = 15
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -221,27 +222,11 @@ export function seedDatabase(today: ISODate): MockDatabase {
   const now = toLocalDateTime(today, 8 * 60)
   const pricing = { ...DEMO_PRICING, updatedAt: toLocalDateTime(addDays(today, -30), 9 * 60) }
 
-  const coupons: Coupon[] = [
-    ...catalog.appCoupons.map((coupon) => ({
-      ...coupon,
-      organizationId: null,
-      stopId: null,
-      status: 'active' as const,
-      validUntil: null,
-      maxRedemptions: null,
-      terms: 'Muéstralo al reservar.',
-      createdAt: '2026-03-01',
-    })),
-    ...catalog.portalCoupons.map(({ validDays, daysAgo, ...coupon }) => {
-      const createdAt = addDays(today, -daysAgo)
-      return { ...coupon, createdAt, validUntil: addDays(createdAt, validDays) }
-    }),
-  ]
-
   const people = seedPeople(today)
   const admissions = seedAdmissions(today, people.users, structuredClone(catalog.organizations), structuredClone(catalog.stops))
   const placeRequests = seedPlaceRequests(today, admissions.organizations, admissions.stops)
   const verification = seedApplications(admissions.applications, admissions.organizations, admissions.users)
+  const guideNames = catalog.appGuides.map((guide) => guide.name)
 
   return {
     version: SCHEMA_VERSION,
@@ -264,16 +249,10 @@ export function seedDatabase(today: ISODate): MockDatabase {
     })),
     agenda: seedAgenda(today, admissions.organizations),
     ...seedRewards(today, admissions.organizations),
-    coupons,
-    redemptions: generateRedemptions(coupons, today, pricing),
     badgeActivations: seedActivations(today, pricing),
     badgeCampaigns: seedCampaigns(today, pricing),
-    payments: seedPayments(catalog.organizations, today),
     pricing,
-    reviewDisputes: seedDisputes(
-      today,
-      catalog.appGuides.map((guide) => guide.name),
-      DEMO_TOURISTS,
-    ),
+    finance: seedFinance(today, admissions.organizations, guideNames, DEMO_TOURISTS),
+    reviewDisputes: seedDisputes(today, guideNames, DEMO_TOURISTS),
   }
 }

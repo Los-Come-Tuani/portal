@@ -2,6 +2,7 @@ import type { AccountFilters, CircuitFilters, ProviderQueueFilters, QueueFilters
 import type { EventFilters } from '../repositories/events.repository'
 import type { OrganizationFilters } from '../repositories/organizations.repository'
 import type { PlaceRequestFilters } from '../repositories/place-requests.repository'
+import type { PaymentFilters, StatementFilters, WithdrawalFilters } from '../repositories/billing.repository'
 import type { CampaignFilters, RedemptionFilters } from '../repositories/coupons.repository'
 import type { DisputeFilters } from '../repositories/moderation.repository'
 import type { VisitFilters } from '../repositories/visits.repository'
@@ -66,7 +67,9 @@ export const queryKeys = {
   },
   billing: {
     all: ['billing'] as const,
-    statements: (organizationId: string | undefined) => ['billing', 'statements', organizationId ?? 'all'] as const,
+    payments: (filters: PaymentFilters) => ['billing', 'payments', filters] as const,
+    withdrawals: (filters: WithdrawalFilters) => ['billing', 'withdrawals', filters] as const,
+    statements: (filters: StatementFilters) => ['billing', 'statements', filters] as const,
     pricing: ['billing', 'pricing'] as const,
   },
   visits: {

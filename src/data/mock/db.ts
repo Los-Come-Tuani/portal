@@ -9,8 +9,6 @@ import type {
   CircuitGroupSession,
   CircuitKind,
   CircuitStatus,
-  Coupon,
-  CouponRedemption,
   LatLng,
   Organization,
   OrganizationApplication,
@@ -23,6 +21,7 @@ import type {
   User,
 } from '../models'
 import type { MockEvent } from './services/agenda'
+import type { MockFinance } from './services/finance'
 import type { MockDispute } from './services/moderation'
 import type { MockCampaign, MockCouponCode } from './services/rewards'
 import type { MockApplication, MockFiles } from './services/applications'
@@ -30,11 +29,6 @@ import type { MockProvider } from './services/providers'
 import { SCHEMA_VERSION, seedDatabase } from './seed'
 
 const STORAGE_KEY = 'kplan.portal.demo'
-
-export interface Payment {
-  statementId: string
-  paidAt: LocalDateTime
-}
 
 /** Un rol del equipo como lo guarda la demo: cuántas personas lo tienen se cuenta al leerlo. */
 export type MockStaffRole = Omit<StaffRole, 'members' | 'requiresTwoFactor'> & { requiresTwoFactor?: boolean }
@@ -134,13 +128,13 @@ export interface MockDatabase {
   /** Las campañas de cupones de F6 y los cupones que entregaron, con las reglas del API. */
   campaigns: MockCampaign[]
   couponCodes: MockCouponCode[]
-  /** El modelo de demo anterior: sólo lo leen los estados de cuenta de la demo. */
-  coupons: Coupon[]
-  redemptions: CouponRedemption[]
+  /** Las activaciones y campañas de insignias de la demo anterior: la agenda las muestra. */
   badgeActivations: BadgeActivation[]
   badgeCampaigns: BadgeCampaign[]
-  payments: Payment[]
+  /** Las tarifas de la demo anterior (activaciones y paquetes de insignias). */
   pricing: Pricing
+  /** Pagos, retiros, tarifas y estados de cuenta de F8, con las reglas del API. */
+  finance: MockFinance
   /** Las reseñas impugnadas (F7), con las reglas del API. */
   reviewDisputes: MockDispute[]
 }
