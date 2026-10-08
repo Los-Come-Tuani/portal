@@ -1,12 +1,18 @@
 import { todayISO, type ISODate, type LocalDateTime } from '@/lib/dates'
+import type { TravelMode } from '@/lib/itinerary'
 import type {
   BadgeActivation,
   BadgeCampaign,
-  Circuit,
+  BookingMode,
+  CircuitCategory,
+  CircuitDifficulty,
   CircuitGroupSession,
+  CircuitKind,
+  CircuitStatus,
   Coupon,
   CouponRedemption,
   EventItem,
+  LatLng,
   Organization,
   OrganizationApplication,
   PlaceProfile,
@@ -44,6 +50,50 @@ export type MockStop = Omit<Stop, 'images' | 'cityId' | 'active' | 'owner' | 'pu
   retired?: boolean
 }
 
+/**
+ * Un circuito oficial como lo guarda la demo: el formato de circuits.json de la app más el estado y
+ * la alcaldía que lo organiza. La duración y las insignias se calculan al leerlo, como en el API.
+ */
+export interface MockCircuit {
+  id: string
+  kind: CircuitKind
+  status: CircuitStatus
+  title: string
+  shortTitle: string
+  subtitle: string
+  category: CircuitCategory
+  /** El nombre de la ciudad, como en los lugares de la demo. */
+  city: string
+  /** La alcaldía que organiza un creativo (`organizations[].id`). */
+  organizerId: string | null
+  rating: number
+  reviewsCount: number
+  stopIds: string[]
+  travelMode: TravelMode
+  legMinutes?: Record<string, number>
+  directions?: Record<string, string>
+  difficulty: CircuitDifficulty
+  priceAdult: number
+  priceChild: number
+  description: string
+  /** Direcciones públicas o claves de lo que se subió en la demo (`files`). */
+  images: string[]
+  recommendations: string
+  meetingPoint: string
+  location: LatLng
+  includes: string
+  notes: string
+  /** `"8:30 a.m."`, como en la app. */
+  startTimes: string[]
+  bonusBadges: number
+  bookingMode: BookingMode
+  availableFrom: ISODate | null
+  availableUntil: ISODate | null
+  version: number
+  createdAt: LocalDateTime
+  publishedAt: LocalDateTime | null
+}
+
 /** Una novedad como la guarda la demo: la foto es una dirección pública o una clave de `files`. */
 export interface MockPost {
   id: string
@@ -72,7 +122,8 @@ export interface MockDatabase {
   placeRequests: PlaceRequest[]
   organizations: Organization[]
   stops: MockStop[]
-  circuits: Circuit[]
+  circuits: MockCircuit[]
+  /** Los horarios de grupo de la app: en el API son las salidas de guía (F7). */
   groupSessions: CircuitGroupSession[]
   profiles: PlaceProfile[]
   posts: MockPost[]

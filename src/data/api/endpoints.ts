@@ -3,8 +3,8 @@
  * demo (src/data/mock) implementa estas mismas rutas.
  *
  * - Las rutas sin prefijo `/api` y con barra final son del API real (docs/autenticacion.md,
- *   docs/roles.md, docs/organizaciones.md, docs/prestadores.md y docs/territorio.md del repo del
- *   API). La sesión viaja en cookies `HttpOnly`.
+ *   docs/roles.md, docs/organizaciones.md, docs/prestadores.md, docs/territorio.md y
+ *   docs/servicios.md del repo del API). La sesión viaja en cookies `HttpOnly`.
  * - El resto (`/api/...`) es el checklist de lo que falta: el API todavía no publica esos
  *   recursos y cada sección se alinea con el API cuando su fase llega (organizaciones y pedidos de
  *   lugar, eventos, cupones, insignias, cobros y la actividad de la agenda).
@@ -115,12 +115,18 @@ export const endpoints = {
     list: '/stop/',
     detail: (stopId: string) => `/stop/${id(stopId)}/`,
   },
-  circuits: {
-    list: '/api/circuits',
-    detail: (circuitId: string) => `/api/circuits/${id(circuitId)}`,
-    /** Los horarios de grupo de un circuito creativo o especial; los publican los guías. */
-    groupSessions: (circuitId: string) => `/api/circuits/${id(circuitId)}/group-sessions`,
+  /**
+   * Los circuitos oficiales del portal (F4, docs/territorio.md): el equipo con `circuits.view` los ve
+   * todos y una alcaldía verificada, los de su ciudad. `DELETE` lo retira para siempre.
+   */
+  officialCircuit: {
+    list: '/official-circuit/',
+    detail: (circuitId: string) => `/official-circuit/${id(circuitId)}/`,
   },
+  /** Los publicados como los ve la app, sin sesión ni paginar. */
+  publishedCircuits: '/circuit/',
+  /** Las próximas salidas de guía de un circuito publicado (F7, docs/servicios.md): las publican los guías. */
+  circuitDepartures: (circuitId: string) => `/circuit/${id(circuitId)}/departure/`,
   events: {
     list: '/api/events',
     detail: (eventId: string) => `/api/events/${id(eventId)}`,

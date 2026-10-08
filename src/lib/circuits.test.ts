@@ -1,21 +1,21 @@
 import { describe, expect, it } from 'vitest'
+import type { AppCircuit, PortalCircuitSeed } from '@/data/mock/catalog'
 import circuitsJson from '@/data/mock/json/circuits.json'
 import portalCircuitsJson from '@/data/mock/json/portal_circuits.json'
 import portalStopsJson from '@/data/mock/json/portal_stops.json'
 import stopsJson from '@/data/mock/json/stops.json'
 import type { MockStop as Stop } from '@/data/mock/db'
-import { circuitKind, type Circuit } from '@/data/models'
 import { badgesNoteText, checkStartTimes, deriveCircuit, durationShortText } from './circuits'
 
 const stops = stopsJson as Stop[]
-const circuits = circuitsJson as Circuit[]
+const circuits = circuitsJson as AppCircuit[]
 
-function derive(value: Circuit) {
+function derive(value: AppCircuit) {
   return deriveCircuit({
     stops: value.stopIds.map((id) => stops.find((stop) => stop.id === id) as Stop),
     travelMode: value.travelMode,
     legMinutes: value.legMinutes,
-    kind: circuitKind(value),
+    kind: value.isCreativeCircuit ? 'creative' : 'private',
     bonusBadges: 0,
     city: value.city,
   })
@@ -39,7 +39,7 @@ describe('campos calculados del circuito', () => {
   })
 
   it('en Ometepe cuenta 3 insignias, no las 4 que dicen los datos', () => {
-    expect(derive(circuits.find((item) => item.id === 'isla-de-ometepe') as Circuit).badges).toBe(3)
+    expect(derive(circuits.find((item) => item.id === 'isla-de-ometepe') as AppCircuit).badges).toBe(3)
   })
 
   it('un especial de K\'Plan suma sus insignias extra a la nota', () => {
@@ -58,7 +58,7 @@ describe('campos calculados del circuito', () => {
 
   it("los especiales de K'Plan de la demo salen sin avisos de horario", () => {
     const all = [...stops, ...(portalStopsJson as Stop[])]
-    for (const value of portalCircuitsJson as Circuit[]) {
+    for (const value of portalCircuitsJson as PortalCircuitSeed[]) {
       const circuitStops = value.stopIds.map((id) => all.find((stop) => stop.id === id) as Stop)
       expect(circuitStops.every((stop) => stop?.city === value.city), value.id).toBe(true)
       for (const check of checkStartTimes({ stops: circuitStops, travelMode: value.travelMode }, value.startTimes)) {
@@ -68,13 +68,13 @@ describe('campos calculados del circuito', () => {
   })
 
   it('marca las horas de salida con avisos de horario, pero no el tramo largo a pie', () => {
-    const leon = circuits.find((item) => item.id === 'leon-colonial') as Circuit
+    const leon = circuits.find((item) => item.id === 'leon-colonial') as AppCircuit
     const leonStops = leon.stopIds.map((id) => stops.find((stop) => stop.id === id) as Stop)
     const [early, published] = checkStartTimes({ stops: leonStops, travelMode: leon.travelMode }, ['7:00 a.m.', '9:00 a.m.'])
     expect(early.blocking.map((warning) => warning.stopId)).toContain('leon-catedral')
     expect(published.blocking).toHaveLength(0)
 
-    const granada = circuits.find((item) => item.id === 'granada-historias-sabores') as Circuit
+    const granada = circuits.find((item) => item.id === 'granada-historias-sabores') as AppCircuit
     const granadaStops = granada.stopIds.map((id) => stops.find((stop) => stop.id === id) as Stop)
     const [check] = checkStartTimes({ stops: granadaStops, travelMode: granada.travelMode }, ['8:30 a.m.'])
     expect(check.warnings).toHaveLength(1)

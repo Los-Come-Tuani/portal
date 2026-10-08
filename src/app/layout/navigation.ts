@@ -8,6 +8,7 @@ import {
   MapPin,
   Medal,
   Receipt,
+  Route,
   TicketPercent,
   Users,
   Wallet,
@@ -102,7 +103,7 @@ export function navigationFor({ role, organization, can }: Session): NavEntry[] 
     return [link(paths.application, 'Mi solicitud', FileCheck2), ...(placeCount > 0 ? [places] : [])]
   }
 
-  if (role === 'alcaldia') return [agenda, places, events, badges, billing]
+  if (role === 'alcaldia') return [agenda, places, link(paths.circuits, 'Circuitos', Route), events, badges, billing]
   return [agenda, places, link(paths.coupons, 'Cupones', TicketPercent), events, badges, billing]
 }
 

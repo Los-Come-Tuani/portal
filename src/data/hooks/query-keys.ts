@@ -1,4 +1,4 @@
-import type { AccountFilters, ProviderQueueFilters, QueueFilters, StopFilters } from '../models'
+import type { AccountFilters, CircuitFilters, ProviderQueueFilters, QueueFilters, StopFilters } from '../models'
 import type { EventFilters } from '../repositories/events.repository'
 import type { OrganizationFilters } from '../repositories/organizations.repository'
 import type { PlaceRequestFilters } from '../repositories/place-requests.repository'
@@ -40,9 +40,11 @@ export const queryKeys = {
   },
   circuits: {
     all: ['circuits'] as const,
-    list: ['circuits', 'list'] as const,
+    list: (filters: CircuitFilters) => ['circuits', 'list', filters] as const,
+    /** Los publicados (ruta pública `circuit/`). */
+    published: ['circuits', 'published'] as const,
     detail: (circuitId: string) => ['circuits', 'detail', circuitId] as const,
-    sessions: (circuitId: string) => ['circuits', 'sessions', circuitId] as const,
+    departures: (circuitId: string) => ['circuits', 'departures', circuitId] as const,
   },
   events: {
     all: ['events'] as const,

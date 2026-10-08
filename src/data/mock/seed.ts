@@ -1,9 +1,8 @@
 import { addDays, toLocalDateTime, type ISODate } from '@/lib/dates'
 import { formatDayMonth } from '@/lib/format'
-import { deriveCircuit } from '@/lib/circuits'
-import { cityLocation, type Circuit, type Coupon, type EventItem } from '../models'
-import { catalog } from './catalog'
-import type { MockDatabase, MockStop } from './db'
+import { cityLocation, CREATIVE_BONUS_BADGES, type Coupon, type EventItem, type Organization } from '../models'
+import { catalog, type AppCircuit } from './catalog'
+import type { MockCircuit, MockDatabase } from './db'
 import { generateRedemptions, seedActivations, seedCampaigns, seedPayments } from './generators/activity'
 import { seedAdmissions, seedPlaceRequests } from './generators/admissions'
 import { seedPeople } from './generators/people'
@@ -11,7 +10,7 @@ import { seedProviders } from './generators/providers'
 import { seedApplications } from './services/applications'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 10
+export const SCHEMA_VERSION = 11
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -33,21 +32,66 @@ const APP_EVENT_ORGANIZERS: Record<string, { organizerId: string | null; feature
   torovenado: { organizerId: 'org-alcaldia-masaya', featured: false },
 }
 
-function seedKplanCircuits(today: ISODate, stops: MockStop[]): Circuit[] {
-  return catalog.portalCircuits.map(({ seasonFromDays, seasonToDays, ...seed }) => ({
-    ...seed,
-    ...deriveCircuit({
-      stops: seed.stopIds.map((id) => stops.find((stop) => stop.id === id) as MockStop),
-      travelMode: seed.travelMode,
-      legMinutes: seed.legMinutes,
+/** Los circuitos de la app y los especiales de la demo, con el estado y la alcaldía del API. */
+function seedCircuits(today: ISODate, organizations: Organization[]): MockCircuit[] {
+  const createdAt = toLocalDateTime(addDays(today, -90), 9 * 60)
+  const common = (circuit: Omit<AppCircuit, 'duration' | 'durationShort' | 'badges' | 'badgesNote'>) => ({
+    id: circuit.id,
+    title: circuit.title,
+    shortTitle: circuit.shortTitle,
+    subtitle: circuit.subtitle,
+    category: circuit.category,
+    city: circuit.city,
+    rating: circuit.rating,
+    reviewsCount: circuit.reviewsCount,
+    stopIds: [...circuit.stopIds],
+    travelMode: circuit.travelMode,
+    ...(circuit.legMinutes ? { legMinutes: { ...circuit.legMinutes } } : {}),
+    difficulty: circuit.difficulty,
+    priceAdult: circuit.priceAdult,
+    priceChild: circuit.priceChild,
+    description: circuit.description,
+    images: [...circuit.images],
+    recommendations: circuit.recommendations,
+    meetingPoint: circuit.meetingPoint,
+    location: { ...circuit.location },
+    includes: circuit.includes,
+    notes: circuit.notes,
+    startTimes: [...circuit.startTimes],
+    version: 1,
+    createdAt,
+  })
+  const app = catalog.circuits.map((circuit): MockCircuit => {
+    const organizer = circuit.isCreativeCircuit
+      ? organizations.find((item) => item.type === 'alcaldia' && (item.name === circuit.organizer || item.city === circuit.city))
+      : undefined
+    return {
+      ...common(circuit),
+      kind: circuit.isCreativeCircuit ? 'creative' : 'private',
+      status: 'published',
+      organizerId: organizer?.id ?? null,
+      bonusBadges: circuit.isCreativeCircuit ? CREATIVE_BONUS_BADGES : 0,
+      bookingMode: circuit.isCreativeCircuit ? 'group' : 'private',
+      availableFrom: null,
+      availableUntil: null,
+      publishedAt: createdAt,
+    }
+  })
+  const specials = catalog.portalCircuits.map(({ seasonFromDays, seasonToDays, ...seed }): MockCircuit => {
+    const seasonal = seasonFromDays !== undefined && seasonToDays !== undefined
+    return {
+      ...common(seed),
       kind: 'kplan',
-      bonusBadges: seed.bonusBadges ?? 0,
-      city: seed.city,
-    }),
-    ...(seasonFromDays !== undefined && seasonToDays !== undefined
-      ? { availableFrom: addDays(today, seasonFromDays), availableUntil: addDays(today, seasonToDays) }
-      : {}),
-  }))
+      status: seed.draft ? 'draft' : 'published',
+      organizerId: null,
+      bonusBadges: seed.bonusBadges,
+      bookingMode: seed.bookingMode,
+      availableFrom: seasonal ? addDays(today, seasonFromDays) : null,
+      availableUntil: seasonal ? addDays(today, seasonToDays) : null,
+      publishedAt: seed.draft ? null : createdAt,
+    }
+  })
+  return [...app, ...specials]
 }
 
 export function seedDatabase(today: ISODate): MockDatabase {
@@ -112,7 +156,7 @@ export function seedDatabase(today: ISODate): MockDatabase {
     placeRequests,
     organizations: admissions.organizations,
     stops: admissions.stops,
-    circuits: [...structuredClone(catalog.circuits), ...seedKplanCircuits(today, admissions.stops)],
+    circuits: seedCircuits(today, admissions.organizations),
     groupSessions: [...structuredClone(catalog.groupSessions), ...structuredClone(catalog.portalGroupSessions)],
     profiles: catalog.profiles.map((profile) => ({ ...structuredClone(profile), updatedAt: now })),
     posts: catalog.posts.map(({ daysAgo, ...post }) => ({

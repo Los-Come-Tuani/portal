@@ -7,9 +7,12 @@ import { cn } from '@/lib/cn'
 type Legs = Record<string, number> | undefined
 
 interface StopsEditorProps {
-  city: string
-  /** Todas las paradas publicadas, para reconocer las que no son de la ciudad. */
+  cityId: string
+  cityName: string
+  /** Los lugares activos de la ciudad, como los ve la app. */
   stops: readonly Stop[]
+  /** El nombre de las paradas que ya no están en la app, para decir cuál quitar. */
+  names?: Readonly<Record<string, string>>
   value: string[]
   legMinutes: Legs
   onChange: (stopIds: string[], legMinutes: Legs) => void
@@ -49,12 +52,12 @@ function Thumb({ stop }: { stop: Stop }) {
 const moverId = (stopId: string, direction: -1 | 1) => `mover-${stopId}-${direction === -1 ? 'arriba' : 'abajo'}`
 
 /** Las paradas en el orden del recorrido, y las demás de la ciudad para agregar. */
-export function StopsEditor({ city, stops, value, legMinutes, onChange, error }: StopsEditorProps) {
+export function StopsEditor({ cityId, cityName, stops, names = {}, value, legMinutes, onChange, error }: StopsEditorProps) {
   const [search, setSearch] = useState('')
   const [cleared, setCleared] = useState<string[]>([])
   const byId = new Map(stops.map((stop) => [stop.id, stop]))
   const available = stops
-    .filter((stop) => stop.city === city && !value.includes(stop.id))
+    .filter((stop) => stop.cityId === cityId && !value.includes(stop.id))
     .filter((stop) => !search || `${stop.name} ${stop.category}`.toLowerCase().includes(search.trim().toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name, 'es'))
 
@@ -91,7 +94,7 @@ export function StopsEditor({ city, stops, value, legMinutes, onChange, error }:
         <ol className="flex flex-col divide-y divide-divider rounded-kp border border-divider" aria-label="Paradas del circuito, en orden">
           {value.map((stopId, index) => {
             const stop = byId.get(stopId)
-            const foreign = stop && stop.city !== city
+            const foreign = stop && stop.cityId !== cityId
             const leg = legMinutes?.[stopId]
             const previous = index > 0 ? byId.get(value[index - 1]) : undefined
             return (
@@ -102,7 +105,7 @@ export function StopsEditor({ city, stops, value, legMinutes, onChange, error }:
                 {stop && <Thumb stop={stop} />}
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 text-body font-semibold text-ink">
-                    <span className="truncate">{stop?.name ?? stopId}</span>
+                    <span className="truncate">{stop?.name ?? names[stopId] ?? 'Una parada'}</span>
                     {stop?.hasBadge && <Medal size={14} className="shrink-0 text-badge-deep" aria-label="da insignia" />}
                   </p>
                   <p className={cn('truncate text-caption', foreign || !stop ? 'text-danger' : 'text-muted')}>
@@ -181,10 +184,10 @@ export function StopsEditor({ city, stops, value, legMinutes, onChange, error }:
 
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-small font-medium text-ink">Paradas de {city}</p>
+          <p className="text-small font-medium text-ink">Paradas de {cityName}</p>
           <Input
             type="search"
-            aria-label={`Buscar paradas de ${city}`}
+            aria-label={`Buscar paradas de ${cityName}`}
             placeholder="Buscar"
             leading={<Search size={16} />}
             value={search}
@@ -193,7 +196,7 @@ export function StopsEditor({ city, stops, value, legMinutes, onChange, error }:
           />
         </div>
         {available.length === 0 ? (
-          <p className="text-small text-muted">{search ? 'Ninguna parada con ese nombre.' : `Ya están todas las paradas de ${city}.`}</p>
+          <p className="text-small text-muted">{search ? 'Ninguna parada con ese nombre.' : `Ya están todas las paradas de ${cityName}.`}</p>
         ) : (
           <ul className="flex max-h-72 flex-col divide-y divide-divider overflow-y-auto rounded-kp border border-divider">
             {available.map((stop) => (

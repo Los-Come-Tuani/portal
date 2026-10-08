@@ -1,13 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { CircuitInput } from '../models'
+import type { CircuitFilters, CircuitInput } from '../models'
 import { circuitsRepository } from '../repositories/circuits.repository'
 import { queryKeys } from './query-keys'
 
-/** El catálogo de circuitos; la agenda también lo usa para nombrar a los grupos. */
+/** Los circuitos oficiales que ve quien entró: el equipo, todos; una alcaldía, los de su ciudad. */
+export function useCircuitList(filters: CircuitFilters = {}, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.circuits.list(filters),
+    queryFn: () => circuitsRepository.list(filters),
+    enabled,
+  })
+}
+
+/** Los publicados, como los ve la app: la agenda los usa para nombrar a los grupos. */
 export function useCircuits() {
   return useQuery({
-    queryKey: queryKeys.circuits.list,
-    queryFn: circuitsRepository.list,
+    queryKey: queryKeys.circuits.published,
+    queryFn: circuitsRepository.published,
     staleTime: 5 * 60_000,
   })
 }
@@ -20,10 +29,11 @@ export function useCircuit(circuitId: string | undefined) {
   })
 }
 
-export function useGroupSessions(circuitId: string | undefined, enabled = true) {
+/** Las próximas salidas de guía de un circuito publicado. */
+export function useDepartures(circuitId: string | undefined, enabled = true) {
   return useQuery({
-    queryKey: queryKeys.circuits.sessions(circuitId ?? ''),
-    queryFn: () => circuitsRepository.groupSessions(circuitId ?? ''),
+    queryKey: queryKeys.circuits.departures(circuitId ?? ''),
+    queryFn: () => circuitsRepository.departures(circuitId ?? ''),
     enabled: !!circuitId && enabled,
   })
 }
@@ -35,15 +45,20 @@ export function useSaveCircuit() {
       id ? circuitsRepository.update(id, input) : circuitsRepository.create(input),
     onSuccess: (circuit) => {
       queryClient.setQueryData(queryKeys.circuits.detail(circuit.id), circuit)
-      queryClient.invalidateQueries({ queryKey: queryKeys.circuits.list })
+      queryClient.invalidateQueries({ queryKey: queryKeys.circuits.all, predicate: (query) => query.queryKey[1] !== 'detail' })
+      // Un lugar en un circuito publicado ya no se retira.
+      queryClient.invalidateQueries({ queryKey: queryKeys.places.all })
     },
   })
 }
 
-export function useDeleteCircuit() {
+export function useRetireCircuit() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (circuitId: string) => circuitsRepository.remove(circuitId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.circuits.all }),
+    mutationFn: (circuitId: string) => circuitsRepository.retire(circuitId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.circuits.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.places.all })
+    },
   })
 }

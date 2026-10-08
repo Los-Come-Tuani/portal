@@ -4,16 +4,16 @@ import { Button, Field, Input, SegmentedControl, Select, Skeleton, Textarea } fr
 import {
   CIRCUIT_CATEGORIES,
   CIRCUIT_DIFFICULTIES,
-  CITIES,
   CREATIVE_BONUS_BADGES,
   KPLAN_BADGE_CATEGORY,
   MAX_BONUS_BADGES,
+  type CircuitCategory,
+  type CircuitDifficulty,
   type CircuitInput,
   type CircuitKind,
-  type Organization,
   type Stop,
 } from '@/data/models'
-import { ImageListField } from '@/features/places/components/ImageListField'
+import { PhotoListField } from '@/features/places/components/PhotoListField'
 import { FormSection } from '@/features/places/components/StopForm'
 import { cn } from '@/lib/cn'
 import { formatMoney } from '@/lib/format'
@@ -43,8 +43,17 @@ interface CircuitFormProps {
   draft: CircuitInput
   errors: CircuitErrors
   update: (patch: Partial<CircuitInput>) => void
+  /** Los lugares activos de la ciudad elegida: de aquí salen las paradas. */
   stops: readonly Stop[]
-  alcaldias: readonly Organization[]
+  /** El nombre de las paradas que ya no están en la app. */
+  stopNames: Readonly<Record<string, string>>
+  /** Las ciudades que el equipo puede elegir; la alcaldía no elige. */
+  cities: readonly { id: string; name: string }[]
+  cityName: string
+  /** La alcaldía que lo organiza: la de quien entró, o la del circuito que ya existe. */
+  organizerName: string | null
+  /** Una alcaldía sólo hace creativos de su ciudad: no elige tipo ni ciudad. */
+  municipalityMode: boolean
   /** Horas de salida con avisos de horario. */
   flaggedTimes: readonly string[]
 }
@@ -54,18 +63,27 @@ function priceValue(text: string): number {
   return Number.isFinite(value) ? value : 0
 }
 
-export function CircuitForm({ draft, errors, update, stops, alcaldias, flaggedTimes }: CircuitFormProps) {
+export function CircuitForm({ draft, errors, update, stops, stopNames, cities, cityName, organizerName, municipalityMode, flaggedTimes }: CircuitFormProps) {
   const kplan = draft.kind === 'kplan'
   const group = draft.kind === 'creative' || (kplan && draft.bookingMode === 'group')
   const cityStops = draft.stopIds
     .map((id) => stops.find((stop) => stop.id === id))
-    .filter((stop): stop is Stop => !!stop && stop.city === draft.city)
-  const cityAlcaldias = alcaldias.filter((item) => item.city === draft.city && item.status === 'active')
+    .filter((stop): stop is Stop => !!stop && stop.cityId === draft.cityId)
   const seasonal = draft.availableFrom !== null || draft.availableUntil !== null
+  const city = cityName || 'la ciudad'
 
   return (
     <div className="flex flex-col gap-6">
       <FormSection title="Qué circuito es">
+        {municipalityMode ? (
+          <p className="flex items-start gap-3 rounded-kp bg-paper px-4 py-3 text-small text-muted">
+            <Landmark size={18} className="mt-0.5 shrink-0 text-ink" aria-hidden="true" />
+            <span>
+              <span className="font-semibold text-ink">Circuito creativo de {city}</span>, organizado por {organizerName ?? 'tu alcaldía'}. Se hace en grupo y da{' '}
+              {CREATIVE_BONUS_BADGES} insignias extra y la medalla de la ciudad.
+            </span>
+          </p>
+        ) : (
         <fieldset>
           <legend className="sr-only">Tipo de circuito</legend>
           <div role="radiogroup" className="grid gap-2">
@@ -89,7 +107,6 @@ export function CircuitForm({ draft, errors, update, stops, alcaldias, flaggedTi
                       update({
                         kind: option.value,
                         ...(option.value !== 'kplan' ? { availableFrom: null, availableUntil: null } : {}),
-                        ...(option.value !== 'creative' ? { organizer: '' } : {}),
                       })
                     }
                     className="sr-only"
@@ -111,8 +128,9 @@ export function CircuitForm({ draft, errors, update, stops, alcaldias, flaggedTi
               )
             })}
           </div>
-          {!kplan && errors.bookingMode && <p className="mt-2 text-caption font-medium text-danger">{errors.bookingMode}</p>}
+          {(errors.kind || (!kplan && errors.bookingMode)) && <p className="mt-2 text-caption font-medium text-danger">{errors.kind ?? errors.bookingMode}</p>}
         </fieldset>
+        )}
 
         {kplan && (
           <p className="rounded-kp bg-paper px-4 py-3 text-small text-muted">
@@ -122,21 +140,24 @@ export function CircuitForm({ draft, errors, update, stops, alcaldias, flaggedTi
           </p>
         )}
 
-        <div className="grid gap-5 sm:grid-cols-3">
-          <Field label="Ciudad" error={errors.city} hint="Todas sus paradas son de esta ciudad.">
-            {(control) => (
-              <Select {...control} value={draft.city} onChange={(event) => update({ city: event.target.value, organizer: '' })}>
-                {CITIES.map((city) => (
-                  <option key={city.name} value={city.name}>
-                    {city.name}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
+        <div className={cn('grid gap-5', municipalityMode ? 'sm:grid-cols-2' : 'sm:grid-cols-3')}>
+          {!municipalityMode && (
+            <Field label="Ciudad" error={errors.cityId} hint="Todas sus paradas son de esta ciudad.">
+              {(control) => (
+                <Select {...control} value={draft.cityId} onChange={(event) => update({ cityId: event.target.value })}>
+                  <option value="">Elige la ciudad</option>
+                  {cities.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+          )}
           <Field label="Categoría" error={errors.category}>
             {(control) => (
-              <Select {...control} value={draft.category} onChange={(event) => update({ category: event.target.value })}>
+              <Select {...control} value={draft.category} onChange={(event) => update({ category: event.target.value as CircuitCategory })}>
                 {CIRCUIT_CATEGORIES.map((category) => (
                   <option key={category} value={category}>
                     {category}
@@ -147,7 +168,7 @@ export function CircuitForm({ draft, errors, update, stops, alcaldias, flaggedTi
           </Field>
           <Field label="Dificultad" error={errors.difficulty}>
             {(control) => (
-              <Select {...control} value={draft.difficulty} onChange={(event) => update({ difficulty: event.target.value })}>
+              <Select {...control} value={draft.difficulty} onChange={(event) => update({ difficulty: event.target.value as CircuitDifficulty })}>
                 {CIRCUIT_DIFFICULTIES.map((difficulty) => (
                   <option key={difficulty} value={difficulty}>
                     {difficulty}
@@ -158,19 +179,11 @@ export function CircuitForm({ draft, errors, update, stops, alcaldias, flaggedTi
           </Field>
         </div>
 
-        {draft.kind === 'creative' && (
-          <Field label="Alcaldía que lo organiza" error={errors.organizer} hint="Sale en la app como organizadora del circuito.">
-            {(control) => (
-              <Select {...control} value={draft.organizer} onChange={(event) => update({ organizer: event.target.value })}>
-                <option value="">{cityAlcaldias.length === 0 ? `No hay alcaldías activas de ${draft.city}` : 'Elige la alcaldía'}</option>
-                {cityAlcaldias.map((item) => (
-                  <option key={item.id} value={item.name}>
-                    {item.name}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
+        {draft.kind === 'creative' && !municipalityMode && (
+          <p className="text-small text-muted">
+            Lo organiza {organizerName ?? `la alcaldía verificada de ${city}`}: sale en la app como organizadora. Sin una alcaldía verificada en la ciudad no se
+            puede crear.
+          </p>
         )}
 
         <Field label="Título" error={errors.title} hint="El que sale arriba en el detalle del circuito.">
@@ -193,13 +206,15 @@ export function CircuitForm({ draft, errors, update, stops, alcaldias, flaggedTi
         <Field label="Descripción" error={errors.description} hint={`${draft.description.length} de 600 letras. Cuenta qué va a vivir el turista.`}>
           {(control) => <Textarea {...control} rows={4} maxLength={600} value={draft.description} onChange={(event) => update({ description: event.target.value })} />}
         </Field>
-        <ImageListField value={draft.images} onChange={(images) => update({ images })} error={errors.images} />
+        <PhotoListField kind="circuit-photo" value={draft.images} onChange={(images) => update({ images })} error={errors.images} />
       </FormSection>
 
-      <FormSection title="Paradas" description={`En el orden en que se recorren, todas de ${draft.city}. La medalla marca las que dan insignia.`}>
+      <FormSection title="Paradas" description={`En el orden en que se recorren, todas de ${city}. La medalla marca las que dan insignia.`}>
         <StopsEditor
-          city={draft.city}
+          cityId={draft.cityId}
+          cityName={city}
           stops={stops}
+          names={stopNames}
           value={draft.stopIds}
           legMinutes={draft.legMinutes}
           onChange={(stopIds, legMinutes) => update({ stopIds, legMinutes })}
@@ -230,7 +245,7 @@ export function CircuitForm({ draft, errors, update, stops, alcaldias, flaggedTi
         {!kplan && (
           <p className="text-small text-muted">
             {group
-              ? 'Los creativos se hacen en grupo: el turista se inscribe en un horario que publica un guía certificado.'
+              ? 'Los creativos se hacen en grupo: el turista reserva un cupo en una salida que publica un guía aprobado.'
               : 'Cada grupo agenda el suyo: elige fecha, hora de salida y cuántas personas van.'}
           </p>
         )}
@@ -308,7 +323,7 @@ export function CircuitForm({ draft, errors, update, stops, alcaldias, flaggedTi
           <p className="flex items-start gap-2.5 text-body text-ink">
             <Medal size={18} className="mt-0.5 shrink-0 text-badge-deep" aria-hidden="true" />
             {draft.kind === 'creative'
-              ? `Las insignias de sus paradas, ${CREATIVE_BONUS_BADGES} insignias extra de "Circuitos creativos" y la medalla de ${draft.city}.`
+              ? `Las insignias de sus paradas, ${CREATIVE_BONUS_BADGES} insignias extra de "Circuitos creativos" y la medalla de ${city}.`
               : 'Las insignias de sus paradas. Los privados no dan insignias extra.'}
           </p>
         )}

@@ -7,8 +7,8 @@ import { addDays, toLocalDateTime, weekdayIndex, type ISODate } from '@/lib/date
 import { planItinerary, type ItineraryPace, type TravelMode } from '@/lib/itinerary'
 import { createRandom, hashSeed, type Random } from '@/lib/random'
 import { parseClock } from '@/lib/time'
-import { USER_CIRCUIT_PREFIX, type Circuit, type DropReason, type VisitEvent } from '../../models'
-import { catalog, catalogStop } from '../catalog'
+import { USER_CIRCUIT_PREFIX, type DropReason, type VisitEvent } from '../../models'
+import { catalog, catalogStop, type AppCircuit } from '../catalog'
 import type { MockStop as Stop } from '../db'
 
 export const VISIT_WINDOW = { pastDays: 60, futureDays: 14 } as const
@@ -96,7 +96,7 @@ function eventsForDay(date: ISODate, offset: number, now: number): VisitEvent[] 
   const nextId = () => `booking-${date.replaceAll('-', '')}-${++serial}`
   const recordedAt = () => toLocalDateTime(addDays(date, -random.int(1, 12)), random.int(7 * 60, 22 * 60))
 
-  const fromCircuit = (circuit: Circuit, start: number, groupSize: number): Booking => ({
+  const fromCircuit = (circuit: AppCircuit, start: number, groupSize: number): Booking => ({
     id: nextId(),
     circuitId: circuit.id,
     stops: circuit.stopIds.map(catalogStop),

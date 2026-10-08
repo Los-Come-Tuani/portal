@@ -118,6 +118,29 @@ export const router = createBrowserRouter([
             ],
           },
           {
+            element: <RequireRole roles={['admin', 'alcaldia']} />,
+            children: [
+              {
+                element: <RequireActiveOrganization />,
+                children: [
+                  {
+                    element: <RequirePermission anyOf={['circuits.view']} />,
+                    children: [
+                      {
+                        path: 'circuitos',
+                        lazy: async () => ({ Component: (await import('@/features/circuits/CircuitsPage')).CircuitsPage }),
+                      },
+                      {
+                        path: 'circuitos/:circuitId',
+                        lazy: async () => ({ Component: (await import('@/features/circuits/CircuitEditorPage')).CircuitEditorPage }),
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
             element: <RequireRole roles={['admin']} />,
             children: [
               {
@@ -159,19 +182,6 @@ export const router = createBrowserRouter([
                     lazy: async () => ({
                       Component: (await import('@/features/admin/guides/GuideApplicationPage')).GuideApplicationPage,
                     }),
-                  },
-                ],
-              },
-              {
-                element: <RequirePermission anyOf={['circuits.view']} />,
-                children: [
-                  {
-                    path: 'circuitos',
-                    lazy: async () => ({ Component: (await import('@/features/circuits/CircuitsPage')).CircuitsPage }),
-                  },
-                  {
-                    path: 'circuitos/:circuitId',
-                    lazy: async () => ({ Component: (await import('@/features/circuits/CircuitEditorPage')).CircuitEditorPage }),
                   },
                 ],
               },

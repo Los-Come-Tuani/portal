@@ -67,7 +67,7 @@ export const isActive = (stop: MockStop) => !stop.draft && !stop.retired
 
 /** En cuántos circuitos publicados está: así no se retira un lugar que la app está recorriendo. */
 export function publishedCircuitsOf(db: MockDatabase, stopId: string): number {
-  return db.circuits.filter((circuit) => !circuit.draft && circuit.stopIds.includes(stopId)).length
+  return db.circuits.filter((circuit) => circuit.status === 'published' && circuit.stopIds.includes(stopId)).length
 }
 
 export function wirePlace(db: MockDatabase, stop: MockStop) {

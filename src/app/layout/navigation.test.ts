@@ -84,3 +84,24 @@ describe('menú del equipo según su rol', () => {
     expect(landingPath(session)).toBe('/')
   })
 })
+
+describe('menú de la alcaldía', () => {
+  function municipality(status: 'active' | 'pending'): Session {
+    return {
+      user: {} as SessionUser,
+      organization: { id: '1', status, stopIds: [] } as unknown as Session['organization'],
+      role: 'alcaldia',
+      isAdmin: false,
+      organizationId: '1',
+      can: () => true,
+    }
+  }
+
+  it('entra a sus lugares y a los circuitos de su ciudad', () => {
+    expect(labels(navigationFor(municipality('active')))).toEqual(['Agenda', 'Lugares', 'Circuitos', 'Eventos', 'Insignias', 'Pagos'])
+  })
+
+  it('mientras su solicitud está pendiente no ve los circuitos', () => {
+    expect(labels(navigationFor(municipality('pending')))).not.toContain('Circuitos')
+  })
+})

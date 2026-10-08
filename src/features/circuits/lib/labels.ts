@@ -1,11 +1,13 @@
 import type { TagTone } from '@/components/ui'
-import { bookingModeOf, seasonState, type Circuit } from '@/data/models'
+import { seasonState, type Circuit } from '@/data/models'
 import type { ISODate } from '@/lib/dates'
 import { formatDayMonth, formatMoney } from '@/lib/format'
 
-/** Si está en la app y hasta cuándo: borrador, temporada o siempre. */
+/** Si está en la app y hasta cuándo: borrador, sacado de la app, retirado, temporada o siempre. */
 export function circuitStatus(circuit: Circuit, today: ISODate): { label: string; tone: TagTone; detail: string | null } {
-  if (circuit.draft) return { label: 'Borrador', tone: 'neutral', detail: 'No está en la app' }
+  if (circuit.status === 'retired') return { label: 'Retirado', tone: 'outline', detail: 'Ya no se edita' }
+  if (circuit.status === 'draft') return { label: 'Borrador', tone: 'neutral', detail: 'No está en la app' }
+  if (circuit.status === 'unpublished') return { label: 'Fuera de la app', tone: 'neutral', detail: 'Se puede volver a publicar' }
   const season = seasonState(circuit, today)
   const from = circuit.availableFrom ? formatDayMonth(circuit.availableFrom) : ''
   const until = circuit.availableUntil ? formatDayMonth(circuit.availableUntil) : ''
@@ -23,5 +25,5 @@ export function circuitStatus(circuit: Circuit, today: ISODate): { label: string
 
 export function bookingLabel(circuit: Circuit): string {
   const price = circuit.priceAdult === 0 ? 'gratis' : formatMoney(circuit.priceAdult)
-  return `${bookingModeOf(circuit) === 'group' ? 'En grupo' : 'Privado'} · ${price}`
+  return `${circuit.bookingMode === 'group' ? 'En grupo' : 'Privado'} · ${price}`
 }

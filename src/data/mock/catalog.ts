@@ -3,8 +3,11 @@
  * `events` y `coupons` son copia de mobile/assets/mock; los demás son
  * propios del portal. `daysFromNow` / `daysAgo` sólo existen en el mock.
  */
+import type { TravelMode } from '@/lib/itinerary'
 import type {
-  Circuit,
+  BookingMode,
+  CircuitCategory,
+  CircuitDifficulty,
   CircuitGroupSession,
   Coupon,
   DocumentStatus,
@@ -59,11 +62,46 @@ export interface PortalEventSeed {
   featured?: boolean
 }
 
-/** Los especiales de K'Plan de la demo: lo calculado se arma al sembrar y la temporada va en días desde hoy. */
-export type PortalCircuitSeed = Omit<
-  Circuit,
-  'duration' | 'durationShort' | 'badges' | 'badgesNote' | 'availableFrom' | 'availableUntil'
-> & { seasonFromDays?: number; seasonToDays?: number }
+/** Un circuito de mobile/assets/mock/circuits.json, en el formato de la app. */
+export interface AppCircuit {
+  id: string
+  title: string
+  shortTitle: string
+  subtitle: string
+  category: CircuitCategory
+  city: string
+  rating: number
+  reviewsCount: number
+  stopIds: string[]
+  travelMode: TravelMode
+  legMinutes?: Record<string, number>
+  duration: string
+  durationShort: string
+  badges: number
+  difficulty: CircuitDifficulty
+  priceAdult: number
+  priceChild: number
+  description: string
+  images: string[]
+  recommendations: string
+  meetingPoint: string
+  location: LatLng
+  includes: string
+  badgesNote: string
+  notes: string
+  startTimes: string[]
+  isCreativeCircuit?: boolean
+  organizer?: string
+}
+
+/** Los especiales de K'Plan de la demo: lo calculado se arma al leerlos y la temporada va en días desde hoy. */
+export type PortalCircuitSeed = Omit<AppCircuit, 'duration' | 'durationShort' | 'badges' | 'badgesNote'> & {
+  bonusBadges: number
+  bookingMode: BookingMode
+  draft?: boolean
+  seasonFromDays?: number
+  seasonToDays?: number
+}
 
 export type PortalCouponSeed = Omit<Coupon, 'validUntil' | 'createdAt'> & { validDays: number; daysAgo: number }
 export type PostSeed = Omit<MockPost, 'publishedAt'> & { daysAgo: number }
@@ -156,7 +194,7 @@ export type AdmissionSeed = Pick<
 
 export const catalog = {
   stops: [...stopsJson, ...portalStopsJson] as MockStop[],
-  circuits: circuitsJson as Circuit[],
+  circuits: circuitsJson as AppCircuit[],
   groupSessions: groupSessionsJson as CircuitGroupSession[],
   portalCircuits: portalCircuitsJson as PortalCircuitSeed[],
   portalGroupSessions: portalCircuitGroupsJson as CircuitGroupSession[],
