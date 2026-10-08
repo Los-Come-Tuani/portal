@@ -77,7 +77,7 @@ function scopeStopIds(place: string, places: readonly Stop[] | undefined): strin
 }
 
 export function useAgendaData(state: AgendaState) {
-  const { isAdmin, organizationId } = useSession()
+  const { isAdmin, organizationId, user, can } = useSession()
   const places = usePlaces()
   const dates = useMemo(() => viewDates(state.view, state.date), [state.view, state.date])
   const from = dates[0]
@@ -86,7 +86,9 @@ export function useAgendaData(state: AgendaState) {
 
   const visits = useVisitEvents({ stopIds, from, to }, places.isSuccess)
   const circuits = useCircuits()
-  const events = useEvents({ organizerId: isAdmin ? undefined : organizationId, from, to })
+  // La agenda cultural la ven el equipo con `content.moderate` y quien programa eventos (institución o alcaldía).
+  const seesEvents = isAdmin ? can('content.moderate') : user.organizationRef?.kind === 'institution' || user.organizationRef?.kind === 'municipality'
+  const events = useEvents({ fromDate: from, toDate: to }, seesEvents)
   const campaigns = useBadgeCampaigns(organizationId)
 
   const groups = useMemo(
@@ -95,10 +97,10 @@ export function useAgendaData(state: AgendaState) {
   )
 
   const scopedEvents = useMemo(() => {
-    const list = (events.data ?? []).filter((event) => event.status === 'published')
+    const list = (events.data ?? []).filter((event) => !event.hidden && event.status !== 'cancelled')
     if (!stopIds) return list
     const cities = new Set(places.data?.filter((stop) => stopIds.includes(stop.id)).map((stop) => stop.city))
-    return list.filter((event) => (event.stopId ? stopIds.includes(event.stopId) : cities.has(event.location.split(',')[0])))
+    return list.filter((event) => (event.pointId ? stopIds.includes(event.pointId) : cities.has(event.city)))
   }, [events.data, stopIds, places.data])
 
   const scopedCampaigns = useMemo(

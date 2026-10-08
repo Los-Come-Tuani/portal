@@ -12,6 +12,8 @@ const FORMATS: Record<UploadKind, string> = {
   'signature-dish-photo': 'una foto JPG, PNG o WebP',
   'place-photo': 'una foto JPG, PNG o WebP',
   'circuit-photo': 'una foto JPG, PNG o WebP',
+  'event-photo': 'una foto JPG, PNG o WebP',
+  'coupon-photo': 'una foto JPG, PNG o WebP',
 }
 
 /** Lo que el API va a rechazar, dicho antes de subir. `null`: el archivo se puede subir. */

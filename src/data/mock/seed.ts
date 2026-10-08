@@ -1,8 +1,8 @@
 import { addDays, toLocalDateTime, type ISODate } from '@/lib/dates'
-import { formatDayMonth } from '@/lib/format'
-import { cityLocation, CREATIVE_BONUS_BADGES, type Coupon, type EventItem, type Organization } from '../models'
+import { CREATIVE_BONUS_BADGES, type Coupon, type Organization } from '../models'
 import { catalog, type AppCircuit } from './catalog'
 import type { MockCircuit, MockDatabase } from './db'
+import { categoryCode, toWireClock, type MockEvent } from './services/agenda'
 import { generateRedemptions, seedActivations, seedCampaigns, seedPayments } from './generators/activity'
 import { seedAdmissions, seedPlaceRequests } from './generators/admissions'
 import { seedPeople } from './generators/people'
@@ -10,7 +10,7 @@ import { seedProviders } from './generators/providers'
 import { seedApplications } from './services/applications'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 11
+export const SCHEMA_VERSION = 12
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -30,6 +30,66 @@ const APP_EVENT_ORGANIZERS: Record<string, { organizerId: string | null; feature
   'hipica-granada': { organizerId: 'org-alcaldia-granada', featured: false },
   'festival-poesia': { organizerId: 'org-alcaldia-granada', featured: false },
   torovenado: { organizerId: 'org-alcaldia-masaya', featured: false },
+}
+
+/**
+ * La agenda cultural con el formato del API: los eventos de la app y los de la demo. En el API sólo
+ * programan las alcaldías (y las instituciones) o el equipo: lo que la demo traía de un comercio
+ * queda como especial de K'Plan.
+ */
+function seedAgenda(today: ISODate, organizations: Organization[]): MockEvent[] {
+  const createdAt = toLocalDateTime(addDays(today, -20), 9 * 60)
+  const municipality = (organizationId: string | null) =>
+    organizations.find((item) => item.id === organizationId && item.type === 'alcaldia')?.id ?? null
+  const base = { description: '', venue: '', cancelled: false, cancellationReason: '', clonedFromId: null, createdAt, hiddenAt: null, hiddenReason: '' }
+  const fromApp = catalog.appEvents.map(
+    (event): MockEvent => ({
+      ...base,
+      id: event.id,
+      name: event.title,
+      description: event.description,
+      category: categoryCode(event.category),
+      city: event.location.split(',')[0].trim(),
+      venue: event.address.split(',')[0].trim(),
+      address: event.address,
+      latitude: event.coordinates.latitude,
+      longitude: event.coordinates.longitude,
+      startDate: event.date,
+      endDate: event.date,
+      startTime: '18:00',
+      endTime: '22:00',
+      entryPrice: event.price,
+      featured: APP_EVENT_ORGANIZERS[event.id]?.featured ?? false,
+      organizerId: municipality(APP_EVENT_ORGANIZERS[event.id]?.organizerId ?? null),
+      pointId: null,
+      images: [...event.images],
+    }),
+  )
+  const fromPortal = catalog.portalEvents.map(({ daysFromNow, city, featured, ...event }): MockEvent => {
+    const date = addDays(today, daysFromNow)
+    return {
+      ...base,
+      id: event.id,
+      name: event.title,
+      description: event.description,
+      category: categoryCode(event.category),
+      city,
+      venue: event.address.split(',')[0].trim(),
+      address: event.address,
+      latitude: event.coordinates.latitude,
+      longitude: event.coordinates.longitude,
+      startDate: date,
+      endDate: date,
+      startTime: toWireClock(event.startTime, '10:00'),
+      endTime: toWireClock(event.endTime, '12:00'),
+      entryPrice: event.price,
+      featured: featured ?? false,
+      organizerId: municipality(event.organizerId),
+      pointId: event.stopId,
+      images: [`https://picsum.photos/seed/${event.id}/800/600`, `https://picsum.photos/seed/${event.id}-2/800/600`],
+    }
+  })
+  return [...fromApp, ...fromPortal]
 }
 
 /** Los circuitos de la app y los especiales de la demo, con el estado y la alcaldía del API. */
@@ -115,30 +175,6 @@ export function seedDatabase(today: ISODate): MockDatabase {
     }),
   ]
 
-  const events: EventItem[] = [
-    ...catalog.appEvents.map((event) => ({
-      ...event,
-      organizerId: APP_EVENT_ORGANIZERS[event.id]?.organizerId ?? null,
-      stopId: null,
-      status: 'published' as const,
-      featured: APP_EVENT_ORGANIZERS[event.id]?.featured ?? false,
-    })),
-    ...catalog.portalEvents.map(({ daysFromNow, city, featured, ...event }) => {
-      const date = addDays(today, daysFromNow)
-      const images = [`https://picsum.photos/seed/${event.id}/800/600`, `https://picsum.photos/seed/${event.id}-2/800/600`]
-      return {
-        ...event,
-        date,
-        dateLabel: formatDayMonth(date),
-        location: cityLocation(city),
-        image: images[0],
-        images,
-        status: 'published' as const,
-        featured: featured ?? false,
-      }
-    }),
-  ]
-
   const people = seedPeople(today)
   const admissions = seedAdmissions(today, people.users, structuredClone(catalog.organizations), structuredClone(catalog.stops))
   const placeRequests = seedPlaceRequests(today, admissions.organizations, admissions.stops)
@@ -163,7 +199,7 @@ export function seedDatabase(today: ISODate): MockDatabase {
       ...post,
       publishedAt: toLocalDateTime(addDays(today, -daysAgo), 10 * 60 + daysAgo * 7),
     })),
-    events,
+    agenda: seedAgenda(today, admissions.organizations),
     coupons,
     redemptions: generateRedemptions(coupons, today, pricing),
     badgeActivations: seedActivations(today, pricing),

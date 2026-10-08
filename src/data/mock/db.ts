@@ -11,7 +11,6 @@ import type {
   CircuitStatus,
   Coupon,
   CouponRedemption,
-  EventItem,
   LatLng,
   Organization,
   OrganizationApplication,
@@ -23,6 +22,7 @@ import type {
   Stop,
   User,
 } from '../models'
+import type { MockEvent } from './services/agenda'
 import type { MockApplication, MockFiles } from './services/applications'
 import type { MockProvider } from './services/providers'
 import { SCHEMA_VERSION, seedDatabase } from './seed'
@@ -127,7 +127,8 @@ export interface MockDatabase {
   groupSessions: CircuitGroupSession[]
   profiles: PlaceProfile[]
   posts: MockPost[]
-  events: EventItem[]
+  /** La agenda cultural (F6), con las reglas del API. */
+  agenda: MockEvent[]
   coupons: Coupon[]
   redemptions: CouponRedemption[]
   badgeActivations: BadgeActivation[]

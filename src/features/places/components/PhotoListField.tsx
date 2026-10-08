@@ -8,8 +8,8 @@ import type { Photo } from '@/data/models'
 interface PhotoListFieldProps {
   value: Photo[]
   onChange: (value: Photo[]) => void
-  /** La clase de archivo del almacenamiento: fotos de lugares o de circuitos. */
-  kind: 'place-photo' | 'circuit-photo'
+  /** La clase de archivo del almacenamiento: fotos de lugares, circuitos, eventos o cupones. */
+  kind: 'place-photo' | 'circuit-photo' | 'event-photo' | 'coupon-photo'
   error?: string
   max?: number
   label?: string

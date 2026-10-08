@@ -104,7 +104,8 @@ export function navigationFor({ role, organization, can }: Session): NavEntry[] 
   }
 
   if (role === 'alcaldia') return [agenda, places, link(paths.circuits, 'Circuitos', Route), events, badges, billing]
-  return [agenda, places, link(paths.coupons, 'Cupones', TicketPercent), events, badges, billing]
+  // Los eventos los programan las instituciones y las alcaldías: el comercio no.
+  return [agenda, places, link(paths.coupons, 'Cupones', TicketPercent), badges, billing]
 }
 
 /** A dónde entra cada quien: la agenda, o el primer módulo que su rol permite. */

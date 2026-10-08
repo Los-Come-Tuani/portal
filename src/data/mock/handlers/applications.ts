@@ -247,7 +247,7 @@ const newApplication = (db: MockDatabase, user: User, organizationId: string, da
 // ── Rutas ─────────────────────────────────────────────────────────────────
 
 const ticketBody = z.object({
-  kind: z.enum(['legal-document', 'signature-dish-photo', 'place-photo', 'circuit-photo']),
+  kind: z.enum(['legal-document', 'signature-dish-photo', 'place-photo', 'circuit-photo', 'event-photo', 'coupon-photo']),
   content_type: z.string(),
   size: z.number().int().positive(),
 })

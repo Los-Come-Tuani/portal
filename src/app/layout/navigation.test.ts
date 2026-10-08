@@ -105,3 +105,17 @@ describe('menú de la alcaldía', () => {
     expect(labels(navigationFor(municipality('pending')))).not.toContain('Circuitos')
   })
 })
+
+describe('menú del comercio', () => {
+  it('ve sus cupones y no los eventos: los programan las instituciones y las alcaldías', () => {
+    const session: Session = {
+      user: {} as SessionUser,
+      organization: { id: '1', status: 'active', stopIds: ['a'] } as unknown as Session['organization'],
+      role: 'negocio',
+      isAdmin: false,
+      organizationId: '1',
+      can: () => false,
+    }
+    expect(labels(navigationFor(session))).toEqual(['Agenda', 'Mi lugar', 'Cupones', 'Insignias', 'Pagos'])
+  })
+})

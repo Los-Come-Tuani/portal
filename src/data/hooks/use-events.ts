@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { EventInput, EventStatus } from '../models'
+import type { CulturalEvent, EventInput } from '../models'
 import { eventsRepository, type EventFilters } from '../repositories/events.repository'
 import { queryKeys } from './query-keys'
 
@@ -11,28 +11,42 @@ export function useEvents(filters: EventFilters = {}, enabled = true) {
   })
 }
 
+export function useEventCategories() {
+  return useQuery({ queryKey: queryKeys.events.categories, queryFn: eventsRepository.categories, staleTime: 30 * 60_000 })
+}
+
+function useEventMutation<T>(mutationFn: (variables: T) => Promise<CulturalEvent>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.events.all }),
+  })
+}
+
 export function useSaveEvent() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, input }: { id?: string; input: EventInput }) =>
-      id ? eventsRepository.update(id, input) : eventsRepository.create(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.events.all }),
-  })
+  return useEventMutation(({ id, input, moderator }: { id?: string; input: EventInput; moderator: boolean }) =>
+    id ? eventsRepository.update(id, input, moderator) : eventsRepository.create(input, moderator),
+  )
 }
 
-export function useDeleteEvent() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (eventId: string) => eventsRepository.remove(eventId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.events.all }),
-  })
+export function useFeatureEvent() {
+  return useEventMutation(({ id, featured }: { id: string; featured: boolean }) => eventsRepository.feature(id, featured))
 }
 
-export function useModerateEvent() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, changes }: { id: string; changes: { status?: EventStatus; featured?: boolean } }) =>
-      eventsRepository.moderate(id, changes),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.events.all }),
-  })
+export function useCancelEvent() {
+  return useEventMutation(({ id, reason }: { id: string; reason: string }) => eventsRepository.cancel(id, reason))
+}
+
+export function useCloneEvent() {
+  return useEventMutation(({ id, startDate, endDate }: { id: string; startDate: string; endDate: string }) =>
+    eventsRepository.clone(id, { startDate, endDate }),
+  )
+}
+
+export function useHideEvent() {
+  return useEventMutation(({ id, reason }: { id: string; reason: string }) => eventsRepository.hide(id, reason))
+}
+
+export function useShowEvent() {
+  return useEventMutation((id: string) => eventsRepository.show(id))
 }

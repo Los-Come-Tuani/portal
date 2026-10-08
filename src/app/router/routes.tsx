@@ -88,8 +88,13 @@ export const router = createBrowserRouter([
                 element: <RequirePermission anyOf={['content.moderate']} />,
                 children: [
                   {
-                    path: 'eventos',
-                    lazy: async () => ({ Component: (await import('@/features/events/EventsPage')).EventsPage }),
+                    element: <RequireRole roles={['admin', 'alcaldia']} />,
+                    children: [
+                      {
+                        path: 'eventos',
+                        lazy: async () => ({ Component: (await import('@/features/events/EventsPage')).EventsPage }),
+                      },
+                    ],
                   },
                   {
                     path: 'insignias',

@@ -49,6 +49,7 @@ export const queryKeys = {
   events: {
     all: ['events'] as const,
     list: (filters: EventFilters) => ['events', 'list', filters] as const,
+    categories: ['catalog', 'event-categories'] as const,
   },
   coupons: {
     all: ['coupons'] as const,

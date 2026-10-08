@@ -11,7 +11,6 @@ import type {
   CircuitGroupSession,
   Coupon,
   DocumentStatus,
-  EventItem,
   GuideServiceRole,
   LatLng,
   NewPlace,
@@ -42,7 +41,20 @@ import staffRolesJson from './json/staff_roles.json'
 import stopsJson from './json/stops.json'
 import usersJson from './json/users.json'
 
-type AppEvent = Omit<EventItem, 'organizerId' | 'startTime' | 'endTime' | 'stopId' | 'status' | 'featured'>
+/** Un evento de mobile/assets/mock/events.json, en el formato de la app. */
+interface AppEvent {
+  id: string
+  title: string
+  /** `"León, León"`. */
+  location: string
+  date: string
+  category: string
+  address: string
+  description: string
+  images: string[]
+  price: number
+  coordinates: LatLng
+}
 type AppCoupon = Pick<Coupon, 'id' | 'title' | 'description' | 'discountLabel' | 'cost' | 'image'>
 
 export interface PortalEventSeed {

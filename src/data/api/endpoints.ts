@@ -65,6 +65,8 @@ export const endpoints = {
     institutionTypes: '/catalog/institution-type/',
     /** Los pilares culturales: la categoría de un lugar. */
     pillars: '/catalog/pillar/',
+    /** Las clases de evento de la agenda. */
+    eventCategories: '/catalog/event-category/',
   },
   /** `POST`: pide una URL firmada para subir un archivo directo al almacenamiento. */
   upload: '/upload/',
@@ -129,10 +131,17 @@ export const endpoints = {
   publishedCircuits: '/circuit/',
   /** Las próximas salidas de guía de un circuito publicado (F7, docs/servicios.md): las publican los guías. */
   circuitDepartures: (circuitId: string) => `/circuit/${id(circuitId)}/departure/`,
-  events: {
-    list: '/api/events',
-    detail: (eventId: string) => `/api/events/${id(eventId)}`,
-    moderation: (eventId: string) => `/api/events/${id(eventId)}/moderation`,
+  /**
+   * La agenda cultural del portal (F6, docs/agenda-y-recompensas.md): el equipo con `content.moderate`
+   * ve todos y los oculta; una institución o una alcaldía verificada programa los suyos.
+   */
+  culturalEvent: {
+    list: '/cultural-event/',
+    detail: (eventId: string) => `/cultural-event/${id(eventId)}/`,
+    cancel: (eventId: string) => `/cultural-event/${id(eventId)}/cancel/`,
+    clone: (eventId: string) => `/cultural-event/${id(eventId)}/clone/`,
+    hide: (eventId: string) => `/cultural-event/${id(eventId)}/hide/`,
+    show: (eventId: string) => `/cultural-event/${id(eventId)}/show/`,
   },
   coupons: {
     list: '/api/coupons',

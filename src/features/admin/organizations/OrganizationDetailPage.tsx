@@ -50,13 +50,15 @@ export function OrganizationDetailPage() {
     !!organization.data,
   )
   const coupons = useCoupons(organizationId)
-  const events = useEvents({ organizerId: organizationId })
+  const session = useSession()
+  // `cultural-event/` no filtra por organizador: se cuentan los suyos entre los que ve el equipo.
+  const events = useEvents({}, session.can('content.moderate'))
   const campaigns = useBadgeCampaigns(organizationId)
   const statements = useStatements(organizationId)
   const save = useSaveOrganization()
   const remove = useRemoveStop()
   const toast = useToast()
-  const canManage = useSession().can('organizations.manage')
+  const canManage = session.can('organizations.manage')
   // La solicitud abierta de esta organización, si la tiene: lleva a revisarla.
   const openRequests = useVerificationQueue({ status: 'open', pageSize: 100 })
   const admission = openRequests.data?.results.find((item) => item.organizationId === organizationId)
@@ -187,7 +189,9 @@ export function OrganizationDetailPage() {
               </div>
               <div>
                 <dt className="text-small text-muted">Eventos</dt>
-                <dd className="text-lead font-semibold text-ink">{plural(events.data?.length ?? 0, 'evento', 'eventos')}</dd>
+                <dd className="text-lead font-semibold text-ink">
+                  {plural(events.data?.filter((event) => event.organizer.id === organizationId).length ?? 0, 'evento', 'eventos')}
+                </dd>
               </div>
               <div>
                 <dt className="text-small text-muted">Campañas de insignias</dt>
