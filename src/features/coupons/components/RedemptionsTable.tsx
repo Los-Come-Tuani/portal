@@ -2,88 +2,111 @@ import { TicketCheck } from 'lucide-react'
 import { useState } from 'react'
 import { Button, EmptyState, ErrorState, SegmentedControl, SkeletonRows, Table, Tag, Td, Th, Tr } from '@/components/ui'
 import { useRedemptions } from '@/data/hooks/use-coupons'
-import type { Coupon, RedemptionStatus } from '@/data/models'
-import { formatDateTime, formatMoney } from '@/lib/format'
+import { COUPON_CODE_STATUS_LABELS, type CouponCodeStatus } from '@/data/models'
+import { formatDate, formatDateTime } from '@/lib/format'
+import { formatCouponCode } from '../lib/code'
 import { useValidateCoupon } from '../validate-coupon-context'
 
-const STATUS: Record<RedemptionStatus, { label: string; tone: 'planned' | 'confirmed' | 'neutral' }> = {
-  pending: { label: 'Por validar', tone: 'planned' },
-  validated: { label: 'Validado', tone: 'confirmed' },
-  expired: { label: 'Vencido', tone: 'neutral' },
+const TONES: Record<CouponCodeStatus, 'planned' | 'confirmed' | 'neutral'> = {
+  valid: 'planned',
+  consumed: 'confirmed',
+  expired: 'neutral',
 }
 
-type Filter = 'all' | RedemptionStatus
+type Filter = 'all' | CouponCodeStatus
 
 const FILTERS = [
   { value: 'all', label: 'Todos' },
-  { value: 'pending', label: 'Por validar' },
-  { value: 'validated', label: 'Validados' },
+  { value: 'valid', label: 'Por usar' },
+  { value: 'consumed', label: 'Usados' },
   { value: 'expired', label: 'Vencidos' },
 ] as const
 
-interface RedemptionsTableProps {
-  organizationId: string | undefined
-  coupons: readonly Coupon[]
-  canValidate: boolean
-}
+const PAGE_SIZE = 25
 
-export function RedemptionsTable({ organizationId, coupons, canValidate }: RedemptionsTableProps) {
+/** Los cupones que los turistas canjearon con sus insignias: el comercio los valida en el mostrador. */
+export function RedemptionsTable({ canValidate }: { canValidate: boolean }) {
   const [filter, setFilter] = useState<Filter>('all')
-  const redemptions = useRedemptions({ organizationId, status: filter === 'all' ? undefined : filter })
+  const [page, setPage] = useState(1)
+  const redemptions = useRedemptions({ status: filter === 'all' ? undefined : filter, page, pageSize: PAGE_SIZE })
   const validateCoupon = useValidateCoupon()
-  const titleOf = (couponId: string) => coupons.find((coupon) => coupon.id === couponId)?.title ?? couponId
 
   return (
     <div className="flex flex-col gap-4">
-      <SegmentedControl label="Filtrar canjes" value={filter} options={FILTERS} onChange={setFilter} size="sm" className="self-start" />
+      <SegmentedControl
+        label="Filtrar cupones entregados"
+        value={filter}
+        options={FILTERS}
+        onChange={(value) => {
+          setFilter(value)
+          setPage(1)
+        }}
+        size="sm"
+        className="self-start"
+      />
       {redemptions.isPending ? (
         <SkeletonRows rows={6} />
       ) : redemptions.isError ? (
         <ErrorState error={redemptions.error} onRetry={() => void redemptions.refetch()} />
-      ) : redemptions.data.length === 0 ? (
-        <EmptyState icon={<TicketCheck size={20} />} title="No hay canjes con este filtro">
-          Cuando un turista pague un cupón con sus insignias, su código aparece aquí.
+      ) : redemptions.data.results.length === 0 ? (
+        <EmptyState icon={<TicketCheck size={20} />} title="No hay cupones con este filtro">
+          Cuando un turista canjee sus insignias por uno de tus cupones, su código aparece aquí.
         </EmptyState>
       ) : (
-        <Table id="canjes" caption="Canjes de cupones">
-          <thead>
-            <tr>
-              <Th>Código</Th>
-              <Th>Cupón</Th>
-              <Th>Turista</Th>
-              <Th>Lo canjeó</Th>
-              <Th>Estado</Th>
-              <Th align="right">Tarifa K'Plan</Th>
-              {canValidate && <Th className="w-0" />}
-            </tr>
-          </thead>
-          <tbody>
-            {redemptions.data.slice(0, 80).map((redemption) => (
-              <Tr key={redemption.id}>
-                <Td className="font-mono text-small font-semibold whitespace-nowrap">{redemption.code}</Td>
-                <Td className="max-w-[16rem] truncate">{titleOf(redemption.couponId)}</Td>
-                <Td className="whitespace-nowrap">{redemption.touristName}</Td>
-                <Td className="whitespace-nowrap text-muted">{formatDateTime(redemption.claimedAt)}</Td>
-                <Td>
-                  <Tag tone={STATUS[redemption.status].tone}>{STATUS[redemption.status].label}</Tag>
-                  {redemption.validatedAt && (
-                    <span className="ml-2 text-caption whitespace-nowrap text-muted">{formatDateTime(redemption.validatedAt)}</span>
-                  )}
-                </Td>
-                <Td align="right">{redemption.fee > 0 ? formatMoney(redemption.fee) : '—'}</Td>
-                {canValidate && (
-                  <Td className="py-2">
-                    {redemption.status === 'pending' && (
-                      <Button size="sm" variant="secondary" onClick={() => validateCoupon.open(redemption.code)}>
-                        Validar
-                      </Button>
-                    )}
+        <>
+          <Table id="cupones-entregados" caption="Cupones entregados">
+            <thead>
+              <tr>
+                <Th>Código</Th>
+                <Th>Cupón</Th>
+                <Th>Turista</Th>
+                <Th>Lo canjeó</Th>
+                <Th>Estado</Th>
+                <Th>Vale hasta</Th>
+                {canValidate && <Th className="w-0" />}
+              </tr>
+            </thead>
+            <tbody>
+              {redemptions.data.results.map((coupon) => (
+                <Tr key={coupon.id}>
+                  <Td className="font-mono text-small font-semibold whitespace-nowrap">{formatCouponCode(coupon.code)}</Td>
+                  <Td className="max-w-[16rem] truncate">{coupon.title}</Td>
+                  <Td className="whitespace-nowrap">{coupon.touristName}</Td>
+                  <Td className="whitespace-nowrap text-muted">{formatDateTime(coupon.redeemedAt)}</Td>
+                  <Td>
+                    <Tag tone={TONES[coupon.status]}>{COUPON_CODE_STATUS_LABELS[coupon.status]}</Tag>
+                    {coupon.consumedAt && <span className="ml-2 text-caption whitespace-nowrap text-muted">{formatDateTime(coupon.consumedAt)}</span>}
                   </Td>
-                )}
-              </Tr>
-            ))}
-          </tbody>
-        </Table>
+                  <Td className="whitespace-nowrap text-muted">{formatDate(coupon.expiresAt.slice(0, 10))}</Td>
+                  {canValidate && (
+                    <Td className="py-2">
+                      {coupon.status === 'valid' && (
+                        <Button size="sm" variant="secondary" onClick={() => validateCoupon.open(coupon.code)}>
+                          Validar
+                        </Button>
+                      )}
+                    </Td>
+                  )}
+                </Tr>
+              ))}
+            </tbody>
+          </Table>
+          {redemptions.data.pages > 1 && (
+            <div className="flex items-center justify-between gap-4 text-small text-muted">
+              <span>
+                Página {redemptions.data.current} de {redemptions.data.pages}
+              </span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="secondary" disabled={!redemptions.data.hasPrevious} onClick={() => setPage((value) => value - 1)}>
+                  Anterior
+                </Button>
+                <Button size="sm" variant="secondary" disabled={!redemptions.data.hasNext} onClick={() => setPage((value) => value + 1)}>
+                  Siguiente
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

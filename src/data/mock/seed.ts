@@ -3,6 +3,7 @@ import { CREATIVE_BONUS_BADGES, type Coupon, type Organization } from '../models
 import { catalog, type AppCircuit } from './catalog'
 import type { MockCircuit, MockDatabase } from './db'
 import { categoryCode, toWireClock, type MockEvent } from './services/agenda'
+import { CODE_ALPHABET, type MockCampaign, type MockCouponCode } from './services/rewards'
 import { generateRedemptions, seedActivations, seedCampaigns, seedPayments } from './generators/activity'
 import { seedAdmissions, seedPlaceRequests } from './generators/admissions'
 import { seedPeople } from './generators/people'
@@ -10,7 +11,7 @@ import { seedProviders } from './generators/providers'
 import { seedApplications } from './services/applications'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 12
+export const SCHEMA_VERSION = 13
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -90,6 +91,67 @@ function seedAgenda(today: ISODate, organizations: Organization[]): MockEvent[] 
     }
   })
   return [...fromApp, ...fromPortal]
+}
+
+const DEMO_TOURISTS = ['Ana Pérez', 'Luis Martínez', 'Sofía Castillo', 'Daniel Rocha', 'Valeria Gómez', 'Marco Silva', 'Emma Johnson', 'Lucas Müller']
+
+/** Del texto de la app (`"10% de descuento"`, `"Gratis"`) al tipo de beneficio del API. */
+function benefitOf(label: string): { benefitType: string; benefitAmount: number | null } {
+  const percent = /(\d+)\s*%/.exec(label)
+  if (percent) return { benefitType: 'descuento_porcentaje', benefitAmount: Number(percent[1]) }
+  const amount = /C\$\s*(\d+)/i.exec(label)
+  if (amount) return { benefitType: 'descuento_monto', benefitAmount: Number(amount[1]) }
+  if (/gratis/i.test(label)) return { benefitType: 'producto_gratis', benefitAmount: null }
+  return { benefitType: 'regalo', benefitAmount: null }
+}
+
+/**
+ * Las campañas de cupones de los comercios con el formato del API (los cupones de K'Plan de la app no
+ * existen en el API) y unos cupones entregados: por usar, usados y vencidos.
+ */
+function seedRewards(today: ISODate, organizations: Organization[]): { campaigns: MockCampaign[]; couponCodes: MockCouponCode[] } {
+  const businesses = new Set(organizations.filter((item) => item.type === 'negocio').map((item) => item.id))
+  const campaigns = catalog.portalCoupons
+    .filter((coupon) => coupon.organizationId && businesses.has(coupon.organizationId))
+    .map(
+      (coupon): MockCampaign => ({
+        id: coupon.id,
+        businessId: coupon.organizationId as string,
+        title: coupon.title,
+        description: coupon.description,
+        terms: coupon.terms,
+        ...benefitOf(coupon.discountLabel),
+        costBadges: coupon.cost,
+        stockTotal: coupon.maxRedemptions ?? 100,
+        image: coupon.image || null,
+        expiresAt: toLocalDateTime(addDays(today, coupon.validDays - coupon.daysAgo), 23 * 60 + 59),
+        withdrawnAt: coupon.status === 'paused' ? toLocalDateTime(addDays(today, -2), 10 * 60) : null,
+        withdrawnReason: '',
+        createdAt: toLocalDateTime(addDays(today, -coupon.daysAgo), 9 * 60),
+      }),
+    )
+  let serial = 0
+  const code = () => {
+    serial += 1
+    return Array.from({ length: 8 }, (_, index) => CODE_ALPHABET[(serial * 7 + index * 13 + serial * index * 5) % CODE_ALPHABET.length]).join('')
+  }
+  const couponCodes = campaigns.flatMap((campaign, campaignIndex) =>
+    Array.from({ length: 4 }, (_, index): MockCouponCode => {
+      const daysAgo = index * 6 + campaignIndex
+      const redeemedAt = toLocalDateTime(addDays(today, -daysAgo), 11 * 60 + index * 37)
+      return {
+        id: `${campaign.id}-cupon-${index + 1}`,
+        code: code(),
+        campaignId: campaign.id,
+        touristName: DEMO_TOURISTS[(campaignIndex + index) % DEMO_TOURISTS.length],
+        redeemedAt,
+        // El primero sigue por usar; el segundo se usó; el último venció.
+        consumedAt: index === 1 || index === 2 ? toLocalDateTime(addDays(today, -daysAgo), 13 * 60) : null,
+        expiresAt: index === 3 ? toLocalDateTime(addDays(today, -1), 23 * 60 + 59) : toLocalDateTime(addDays(today, 30 - daysAgo), 23 * 60 + 59),
+      }
+    }),
+  )
+  return { campaigns, couponCodes }
 }
 
 /** Los circuitos de la app y los especiales de la demo, con el estado y la alcaldía del API. */
@@ -200,6 +262,7 @@ export function seedDatabase(today: ISODate): MockDatabase {
       publishedAt: toLocalDateTime(addDays(today, -daysAgo), 10 * 60 + daysAgo * 7),
     })),
     agenda: seedAgenda(today, admissions.organizations),
+    ...seedRewards(today, admissions.organizations),
     coupons,
     redemptions: generateRedemptions(coupons, today, pricing),
     badgeActivations: seedActivations(today, pricing),

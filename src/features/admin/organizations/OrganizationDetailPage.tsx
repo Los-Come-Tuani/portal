@@ -6,7 +6,7 @@ import { Button, ButtonLink, ConfirmDialog, ErrorState, IconButton, Panel, Skele
 import { errorMessage } from '@/data/api/errors'
 import { useBadgeCampaigns } from '@/data/hooks/use-badges'
 import { useStatements } from '@/data/hooks/use-billing'
-import { useCoupons } from '@/data/hooks/use-coupons'
+import { useCampaigns } from '@/data/hooks/use-coupons'
 import { useEvents } from '@/data/hooks/use-events'
 import { useOrganization, useRemoveStop, useSaveOrganization } from '@/data/hooks/use-organizations'
 import { usePlaces } from '@/data/hooks/use-places'
@@ -49,8 +49,8 @@ export function OrganizationDetailPage() {
     { ownerKind: organization.data?.type === 'negocio' ? 'business' : 'municipality', ownerId: organizationId },
     !!organization.data,
   )
-  const coupons = useCoupons(organizationId)
   const session = useSession()
+  const coupons = useCampaigns({ businessId: organizationId }, session.can('content.moderate') && organization.data?.type === 'negocio')
   // `cultural-event/` no filtra por organizador: se cuentan los suyos entre los que ve el equipo.
   const events = useEvents({}, session.can('content.moderate'))
   const campaigns = useBadgeCampaigns(organizationId)

@@ -23,6 +23,7 @@ import type {
   User,
 } from '../models'
 import type { MockEvent } from './services/agenda'
+import type { MockCampaign, MockCouponCode } from './services/rewards'
 import type { MockApplication, MockFiles } from './services/applications'
 import type { MockProvider } from './services/providers'
 import { SCHEMA_VERSION, seedDatabase } from './seed'
@@ -129,6 +130,10 @@ export interface MockDatabase {
   posts: MockPost[]
   /** La agenda cultural (F6), con las reglas del API. */
   agenda: MockEvent[]
+  /** Las campañas de cupones de F6 y los cupones que entregaron, con las reglas del API. */
+  campaigns: MockCampaign[]
+  couponCodes: MockCouponCode[]
+  /** El modelo de demo anterior: sólo lo leen los estados de cuenta de la demo. */
   coupons: Coupon[]
   redemptions: CouponRedemption[]
   badgeActivations: BadgeActivation[]

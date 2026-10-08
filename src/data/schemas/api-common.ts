@@ -1,5 +1,12 @@
 import { z } from 'zod'
+import { nowLocalDateTime, todayISO, type ISODate, type LocalDateTime } from '@/lib/dates'
 import type { Page } from '../models'
+
+/** Un instante del API (`2026-10-08T15:00:00Z`) en la hora de Managua, como lo muestra el portal. */
+export const toLocalDateTime = (instant: string): LocalDateTime => nowLocalDateTime(new Date(instant))
+
+/** El día de Managua de un instante del API. */
+export const toLocalDate = (instant: string): ISODate => todayISO(new Date(instant))
 
 /** Lo que se repite en las respuestas del API: fotos por su clave, la ciudad y las páginas. */
 

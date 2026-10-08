@@ -2,7 +2,7 @@ import type { AccountFilters, CircuitFilters, ProviderQueueFilters, QueueFilters
 import type { EventFilters } from '../repositories/events.repository'
 import type { OrganizationFilters } from '../repositories/organizations.repository'
 import type { PlaceRequestFilters } from '../repositories/place-requests.repository'
-import type { RedemptionFilters } from '../repositories/coupons.repository'
+import type { CampaignFilters, RedemptionFilters } from '../repositories/coupons.repository'
 import type { VisitFilters } from '../repositories/visits.repository'
 
 /** Todas las llaves de caché en un lugar, para invalidar sin adivinar. */
@@ -54,8 +54,9 @@ export const queryKeys = {
   },
   coupons: {
     all: ['coupons'] as const,
-    list: (organizationId: string | undefined) => ['coupons', 'list', organizationId ?? 'all'] as const,
+    campaigns: (filters: CampaignFilters) => ['coupons', 'campaigns', filters] as const,
     redemptions: (filters: RedemptionFilters) => ['coupons', 'redemptions', filters] as const,
+    benefitTypes: ['catalog', 'benefit-types'] as const,
   },
   badges: {
     all: ['badges'] as const,

@@ -1,47 +1,51 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { CouponInput } from '../models'
-import { couponsRepository, type RedemptionFilters } from '../repositories/coupons.repository'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { BenefitType, CampaignInput, CouponCampaign } from '../models'
+import { couponsRepository, type CampaignFilters, type RedemptionFilters } from '../repositories/coupons.repository'
 import { queryKeys } from './query-keys'
 
-export function useCoupons(organizationId?: string, enabled = true) {
+export function useCampaigns(filters: CampaignFilters = {}, enabled = true) {
   return useQuery({
-    queryKey: queryKeys.coupons.list(organizationId),
-    queryFn: () => couponsRepository.list(organizationId),
+    queryKey: queryKeys.coupons.campaigns(filters),
+    queryFn: () => couponsRepository.list(filters),
     enabled,
   })
 }
 
-export function useSaveCoupon() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, input }: { id?: string; input: CouponInput }) =>
-      id ? couponsRepository.update(id, input) : couponsRepository.create(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.coupons.all }),
-  })
+export function useBenefitTypes() {
+  return useQuery({ queryKey: queryKeys.coupons.benefitTypes, queryFn: couponsRepository.benefitTypes, staleTime: 30 * 60_000 })
 }
 
-export function useDeleteCoupon() {
+function useCampaignMutation<T>(mutationFn: (variables: T) => Promise<CouponCampaign>) {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (couponId: string) => couponsRepository.remove(couponId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.coupons.all }),
-  })
+  return useMutation({ mutationFn, onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.coupons.all }) })
+}
+
+export function useSaveCampaign() {
+  return useCampaignMutation(({ current, input, benefitType }: { current: CouponCampaign | null; input: CampaignInput; benefitType?: BenefitType }) =>
+    current ? couponsRepository.update(current, input) : couponsRepository.create(input, benefitType),
+  )
+}
+
+export function useWithdrawCampaign() {
+  return useCampaignMutation(({ id, reason }: { id: string; reason: string }) => couponsRepository.withdraw(id, reason))
 }
 
 export function useRedemptions(filters: RedemptionFilters = {}, enabled = true) {
   return useQuery({
     queryKey: queryKeys.coupons.redemptions(filters),
-    queryFn: () => couponsRepository.listRedemptions(filters),
+    queryFn: () => couponsRepository.redemptions(filters),
+    placeholderData: keepPreviousData,
     enabled,
   })
 }
 
-/** Busca un código sin validarlo, para confirmar qué cupón es. */
-export function useLookupRedemption() {
-  return useMutation({ mutationFn: (code: string) => couponsRepository.lookup(code) })
+/** Busca un código entre los vigentes sin consumirlo, para confirmar qué cupón es. */
+export function useFindCoupon() {
+  return useMutation({ mutationFn: (code: string) => couponsRepository.findValid(code) })
 }
 
-export function useValidateRedemption() {
+/** Valida el código en el mostrador: el cupón queda usado. */
+export function useConsumeCoupon() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (code: string) => couponsRepository.validate(code),

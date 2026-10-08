@@ -67,6 +67,8 @@ export const endpoints = {
     pillars: '/catalog/pillar/',
     /** Las clases de evento de la agenda. */
     eventCategories: '/catalog/event-category/',
+    /** Lo que puede dar un cupón. */
+    benefitTypes: '/catalog/benefit-type/',
   },
   /** `POST`: pide una URL firmada para subir un archivo directo al almacenamiento. */
   upload: '/upload/',
@@ -145,14 +147,19 @@ export const endpoints = {
     hide: (eventId: string) => `/cultural-event/${id(eventId)}/hide/`,
     show: (eventId: string) => `/cultural-event/${id(eventId)}/show/`,
   },
-  coupons: {
-    list: '/api/coupons',
-    detail: (couponId: string) => `/api/coupons/${id(couponId)}`,
+  /**
+   * Las campañas de cupones del comercio (F6): hasta tres activas; el equipo con `content.moderate`
+   * ve todas y las retira.
+   */
+  couponCampaign: {
+    list: '/coupon-campaign/',
+    detail: (campaignId: string) => `/coupon-campaign/${id(campaignId)}/`,
+    withdraw: (campaignId: string) => `/coupon-campaign/${id(campaignId)}/withdraw/`,
   },
-  redemptions: {
-    list: '/api/coupon-redemptions',
-    byCode: (code: string) => `/api/coupon-redemptions/${id(code)}`,
-    validate: (code: string) => `/api/coupon-redemptions/${id(code)}/validate`,
+  /** Los cupones que entregó el comercio y la validación en el mostrador (consume el código). */
+  couponRedemption: {
+    list: '/coupon-redemption/',
+    validate: '/coupon-redemption/validate/',
   },
   badges: {
     activations: '/api/badge-activations',
