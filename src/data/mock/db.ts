@@ -22,7 +22,7 @@ import type {
 } from '../models'
 import type { MockEvent } from './services/agenda'
 import type { MockFinance } from './services/finance'
-import type { MockDispute, MockReport, MockSanction } from './services/moderation'
+import type { MockDispute, MockNotification, MockReport, MockSanction } from './services/moderation'
 import type { MockCampaign, MockCouponCode } from './services/rewards'
 import type { MockApplication, MockFiles } from './services/applications'
 import type { MockProvider } from './services/providers'
@@ -139,6 +139,8 @@ export interface MockDatabase {
   reviewDisputes: MockDispute[]
   reports: MockReport[]
   sanctions: MockSanction[]
+  /** La bandeja de avisos de cada cuenta (F8). */
+  notifications: MockNotification[]
 }
 
 let database: MockDatabase | null = null

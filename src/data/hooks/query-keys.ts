@@ -90,6 +90,12 @@ export const queryKeys = {
     all: ['place-requests'] as const,
     list: (filters: PlaceRequestFilters) => ['place-requests', 'list', filters] as const,
   },
+  /** La bandeja de avisos de quien entró (F8). */
+  notifications: {
+    all: ['notifications'] as const,
+    unread: ['notifications', 'unread'] as const,
+    latest: ['notifications', 'latest'] as const,
+  },
   /** La moderación del equipo: reseñas impugnadas, reportes y sanciones (F7 y F8). */
   moderation: {
     all: ['moderation'] as const,

@@ -2,7 +2,17 @@ import { z } from 'zod'
 import { addDays, nowLocalDateTime, todayISO, toLocalDateTime } from '@/lib/dates'
 import { endpoints } from '../../api/endpoints'
 import { fail, paginate, parseBody, requireUser, route } from '../http'
-import { findDispute, REPORT_REASONS, sanctionActive, wireDispute, wireReport, wireSanction, type MockSanction } from '../services/moderation'
+import {
+  findDispute,
+  REPORT_REASONS,
+  sanctionActive,
+  sanctionNotice,
+  wireDispute,
+  wireNotification,
+  wireReport,
+  wireSanction,
+  type MockSanction,
+} from '../services/moderation'
 
 const sanctionBody = z.object({
   user_id: z.string().min(1),
@@ -12,8 +22,31 @@ const sanctionBody = z.object({
   report_id: z.string().nullish(),
 })
 
-/** La moderación del equipo, con las mismas rutas y reglas que el API. */
+/** La moderación del equipo y la bandeja de avisos, con las mismas rutas y reglas que el API. */
 export const moderationRoutes = [
+  route('GET', endpoints.notification.list, (context) => {
+    const { db, query } = context
+    const user = requireUser(context)
+    const unread = query.get('unread') === 'true'
+    const shown = db.notifications
+      .filter((item) => item.userId === user.id && (!unread || !item.read))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map(wireNotification)
+    return paginate(shown, query)
+  }),
+  route('POST', endpoints.notification.read(':id'), (context) => {
+    const user = requireUser(context)
+    const notification = context.db.notifications.find((item) => item.id === context.params.id && item.userId === user.id)
+    if (!notification) throw fail.notFound('No encontramos ese aviso.')
+    notification.read = true
+    return wireNotification(notification)
+  }),
+  route('POST', endpoints.notification.readAll, (context) => {
+    const user = requireUser(context)
+    for (const item of context.db.notifications) if (item.userId === user.id) item.read = true
+    return undefined
+  }),
+
   route(
     'GET',
     endpoints.reviewDispute.list,
@@ -117,6 +150,7 @@ export const moderationRoutes = [
         liftedAt: null,
       }
       db.sanctions.push(sanction)
+      db.notifications.push(sanctionNotice(sanction))
       // Suspender o expulsar deja la cuenta sin acceso; la demo no distingue la expulsión.
       if (input.kind !== 'warning') user.status = 'suspended'
       return wireSanction(sanction, now)

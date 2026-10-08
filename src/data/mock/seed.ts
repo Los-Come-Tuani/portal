@@ -4,7 +4,7 @@ import { catalog, type AppCircuit } from './catalog'
 import type { MockCircuit, MockDatabase } from './db'
 import { categoryCode, toWireClock, type MockEvent } from './services/agenda'
 import { seedFinance } from './services/finance'
-import { seedDisputes, seedReports } from './services/moderation'
+import { sanctionNotice, seedDisputes, seedReports, type MockSanction } from './services/moderation'
 import { CODE_ALPHABET, type MockCampaign, type MockCouponCode } from './services/rewards'
 import { seedActivations, seedCampaigns } from './generators/activity'
 import { seedAdmissions, seedPlaceRequests } from './generators/admissions'
@@ -13,7 +13,7 @@ import { seedProviders } from './generators/providers'
 import { seedApplications } from './services/applications'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 16
+export const SCHEMA_VERSION = 17
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -227,6 +227,24 @@ export function seedDatabase(today: ISODate): MockDatabase {
   const placeRequests = seedPlaceRequests(today, admissions.organizations, admissions.stops)
   const verification = seedApplications(admissions.applications, admissions.organizations, admissions.users)
   const guideNames = catalog.appGuides.map((guide) => guide.name)
+  // Una advertencia para el primer comercio: así la campana de avisos de la demo tiene algo que mostrar.
+  const warned = admissions.users.find((user) => user.role === 'negocio' && user.status === 'active')
+  const warnings: MockSanction[] = warned
+    ? [
+        {
+          id: 'sancion-demo',
+          userId: warned.id,
+          userName: warned.name,
+          kind: 'warning',
+          reason: 'Validaste un cupón sin que el turista estuviera en tu local. La próxima vez se suspende la cuenta.',
+          startsAt: toLocalDateTime(addDays(today, -1), 17 * 60),
+          endsAt: null,
+          createdBy: "Equipo de K'Plan",
+          reportId: null,
+          liftedAt: null,
+        },
+      ]
+    : []
 
   return {
     version: SCHEMA_VERSION,
@@ -263,6 +281,7 @@ export function seedDatabase(today: ISODate): MockDatabase {
       },
       DEMO_TOURISTS,
     ),
-    sanctions: [],
+    sanctions: warnings,
+    notifications: warnings.map(sanctionNotice),
   }
 }

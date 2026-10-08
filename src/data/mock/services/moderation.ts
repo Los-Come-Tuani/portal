@@ -188,6 +188,51 @@ export function wireSanction(sanction: MockSanction, now: LocalDateTime) {
   }
 }
 
+// ── La bandeja de avisos ──
+
+export interface MockNotification {
+  id: string
+  userId: string
+  kind: string
+  title: string
+  body: string
+  data: Record<string, string>
+  read: boolean
+  createdAt: LocalDateTime
+}
+
+export function wireNotification(notification: MockNotification) {
+  return {
+    id: notification.id,
+    kind: notification.kind,
+    title: notification.title,
+    body: notification.body,
+    data: notification.data,
+    read: notification.read,
+    created_at: wireInstant(notification.createdAt),
+  }
+}
+
+const SANCTION_TITLES: Record<SanctionKind, string> = {
+  warning: 'Recibiste una advertencia',
+  suspension: 'Tu cuenta está suspendida',
+  expulsion: 'Tu cuenta fue expulsada',
+}
+
+/** Como el API: la persona sancionada recibe un aviso `cuenta` con el motivo. */
+export function sanctionNotice(sanction: MockSanction): MockNotification {
+  return {
+    id: `aviso-${sanction.id}`,
+    userId: sanction.userId,
+    kind: 'cuenta',
+    title: SANCTION_TITLES[sanction.kind],
+    body: sanction.reason,
+    data: {},
+    read: false,
+    createdAt: sanction.startsAt,
+  }
+}
+
 /** Unos reportes de ejemplo: una persona, una reseña, un lugar y un evento. */
 export function seedReports(
   today: ISODate,

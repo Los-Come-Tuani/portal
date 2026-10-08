@@ -3,11 +3,12 @@
  * demo (src/data/mock) implementa estas mismas rutas.
  *
  * - Las rutas sin prefijo `/api` y con barra final son del API real (docs/autenticacion.md,
- *   docs/roles.md, docs/organizaciones.md, docs/prestadores.md, docs/territorio.md y
- *   docs/servicios.md del repo del API). La sesión viaja en cookies `HttpOnly`.
+ *   docs/roles.md, docs/organizaciones.md, docs/prestadores.md, docs/territorio.md,
+ *   docs/agenda-y-recompensas.md, docs/servicios.md, docs/finanzas.md y docs/avisos.md del repo
+ *   del API). La sesión viaja en cookies `HttpOnly`.
  * - El resto (`/api/...`) es el checklist de lo que falta: el API todavía no publica esos
- *   recursos y cada sección se alinea con el API cuando su fase llega (organizaciones y pedidos de
- *   lugar, eventos, cupones, insignias, cobros y la actividad de la agenda).
+ *   recursos (la lista de organizaciones, los pedidos de lugar, las activaciones y campañas de
+ *   insignias de la demo anterior y la actividad de la agenda).
  */
 const id = (value: string) => encodeURIComponent(value)
 
@@ -214,6 +215,12 @@ export const endpoints = {
   reviewDispute: {
     list: '/review-dispute/',
     resolve: (disputeId: string) => `/review-dispute/${id(disputeId)}/resolve/`,
+  },
+  /** La bandeja de avisos de la cuenta (F8): cualquier sesión. */
+  notification: {
+    list: '/notification/',
+    read: (notificationId: string) => `/notification/${id(notificationId)}/read/`,
+    readAll: '/notification/read-all/',
   },
   /** Los reportes (F8): la bandeja la ven `content.moderate` o `users.manage`. */
   report: {
