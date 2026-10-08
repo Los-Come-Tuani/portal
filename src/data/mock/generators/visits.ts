@@ -7,8 +7,9 @@ import { addDays, toLocalDateTime, weekdayIndex, type ISODate } from '@/lib/date
 import { planItinerary, type ItineraryPace, type TravelMode } from '@/lib/itinerary'
 import { createRandom, hashSeed, type Random } from '@/lib/random'
 import { parseClock } from '@/lib/time'
-import { USER_CIRCUIT_PREFIX, type Circuit, type DropReason, type Stop, type VisitEvent } from '../../models'
+import { USER_CIRCUIT_PREFIX, type Circuit, type DropReason, type VisitEvent } from '../../models'
 import { catalog, catalogStop } from '../catalog'
+import type { MockStop as Stop } from '../db'
 
 export const VISIT_WINDOW = { pastDays: 60, futureDays: 14 } as const
 

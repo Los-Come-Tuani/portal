@@ -4,7 +4,7 @@ import { slugify, uniqueSlug } from '@/lib/slug'
 import { endpoints } from '../../api/endpoints'
 import { PERMISSIONS, type User } from '../../models'
 import type { MockDatabase, MockStaffRole } from '../db'
-import { fail, MockHttpError, parseBody, requireUser, route, type MockContext } from '../http'
+import { fail, MockHttpError, paginate, parseBody, requireUser, route, type MockContext } from '../http'
 import { hasPermission } from '../services/access'
 import { CITIES, cityByName } from '../services/application-catalog'
 import type { MockProvider } from '../services/providers'
@@ -36,8 +36,6 @@ function activeSuperAdmins(db: MockDatabase): User[] {
 const field = (status: number, message: string, name: string) => new MockHttpError(status, message, { [name]: message })
 
 // ── El directorio de cuentas, con el formato del API (docs/roles.md) ────
-
-const DEFAULT_PAGE_SIZE = 20
 
 /** Como el API: un guía cuya solicitud sigue en revisión todavía no tiene grupo, ni papel. */
 function apiRoleOf(user: User, provider: MockProvider | undefined): string | null {
@@ -106,8 +104,6 @@ export const userRoutes = [
       const role = query.get('role')
       const status = query.get('status')
       const search = fold(query.get('search')?.trim() ?? '')
-      const pageSize = Math.min(100, Math.max(1, Number(query.get('page_size')) || DEFAULT_PAGE_SIZE))
-      const requested = Math.max(1, Number(query.get('page')) || 1)
       const shown = db.users
         .filter((item) => canSee(context, item))
         .filter((item) => !search || fold(`${item.name} ${item.email}`).includes(search))
@@ -115,15 +111,7 @@ export const userRoutes = [
         .map((item) => wireAccount(db, item))
         .filter((item) => !role || item.role === role)
         .filter((item) => !status || item.status === status)
-      const pages = Math.max(1, Math.ceil(shown.length / pageSize))
-      return {
-        next: requested < pages,
-        previous: requested > 1,
-        elements: shown.length,
-        pages,
-        current: requested,
-        results: shown.slice((requested - 1) * pageSize, requested * pageSize),
-      }
+      return paginate(shown, query)
     },
     { permissions: ['users.view', 'staff.manage'] },
   ),

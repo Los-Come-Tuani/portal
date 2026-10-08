@@ -9,9 +9,12 @@ export interface MockCity {
   name: string
   latitude: number
   longitude: number
-  /** Ninguna está activa hasta que se incorpora a la plataforma. */
+  /** Ya se incorporó a la plataforma: tiene lugares en la app. */
   active: boolean
 }
+
+/** Las que activa el contenido de ejemplo del API (`seedcontent`): las que tienen lugares en la demo. */
+const ACTIVE_CODES = new Set(['esteli', 'leon', 'masaya', 'granada', 'matagalpa'])
 
 export const CITIES: MockCity[] = [
   ['esteli', 'Estelí', 13.0917, -86.3547],
@@ -30,7 +33,7 @@ export const CITIES: MockCity[] = [
   name: String(name),
   latitude: Number(latitude),
   longitude: Number(longitude),
-  active: false,
+  active: ACTIVE_CODES.has(String(code)),
 }))
 
 export interface MockOption {

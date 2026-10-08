@@ -3,7 +3,8 @@ import circuitsJson from '@/data/mock/json/circuits.json'
 import portalCircuitsJson from '@/data/mock/json/portal_circuits.json'
 import portalStopsJson from '@/data/mock/json/portal_stops.json'
 import stopsJson from '@/data/mock/json/stops.json'
-import { circuitKind, type Circuit, type Stop } from '@/data/models'
+import type { MockStop as Stop } from '@/data/mock/db'
+import { circuitKind, type Circuit } from '@/data/models'
 import { badgesNoteText, checkStartTimes, deriveCircuit, durationShortText } from './circuits'
 
 const stops = stopsJson as Stop[]

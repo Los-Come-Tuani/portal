@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ApiError, errorMessageWithWait, formFieldName, normalizeFieldErrors, parseRetryAfter, waitText } from './errors'
+import { ApiError, errorMessageWithWait, formFieldName, normalizeFieldErrors, parseRetryAfter, renameFieldErrors, waitText } from './errors'
 
 describe('formFieldName', () => {
   it('quita de dónde viaja el dato y pasa a camelCase', () => {
@@ -35,6 +35,23 @@ describe('normalizeFieldErrors', () => {
 
   it('se queda con el primer mensaje cuando dos campos terminan igual', () => {
     expect(normalizeFieldErrors({ 'body.email': 'Primero', 'query.email': 'Segundo' })).toEqual({ email: 'Primero' })
+  })
+})
+
+describe('renameFieldErrors', () => {
+  it('lleva los campos del API a los del formulario, también los anidados', () => {
+    const error = new ApiError(400, 'Revisa los campos', { pillar: 'No existe', 'stops.0.pointId': 'Inactiva', title: 'Corto' }, null)
+    const renamed = renameFieldErrors(error, { pillar: 'category', stops: 'stopIds' }) as ApiError
+    expect(renamed).toBeInstanceOf(ApiError)
+    expect(renamed.status).toBe(400)
+    expect(renamed.fieldErrors).toEqual({ category: 'No existe', stopIds: 'Inactiva', title: 'Corto' })
+  })
+
+  it('deja igual lo que no es un error de la API o no trae campos', () => {
+    const plain = new Error('x')
+    const bare = new ApiError(409, 'Conflicto')
+    expect(renameFieldErrors(plain, { a: 'b' })).toBe(plain)
+    expect(renameFieldErrors(bare, { a: 'b' })).toBe(bare)
   })
 })
 

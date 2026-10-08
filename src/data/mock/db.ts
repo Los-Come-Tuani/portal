@@ -11,7 +11,7 @@ import type {
   OrganizationApplication,
   PlaceProfile,
   PlaceRequest,
-  Post,
+  PostStatus,
   Pricing,
   StaffRole,
   Stop,
@@ -31,6 +31,30 @@ export interface Payment {
 /** Un rol del equipo como lo guarda la demo: cuántas personas lo tienen se cuenta al leerlo. */
 export type MockStaffRole = Omit<StaffRole, 'members' | 'requiresTwoFactor'> & { requiresTwoFactor?: boolean }
 
+/**
+ * Un lugar como lo guarda la demo: el formato de stops.json de la app. Su dueño sale de
+ * `organizations[].stopIds` y lo demás del API (ciudad, circuitos publicados) se arma al leerlo.
+ */
+export type MockStop = Omit<Stop, 'images' | 'cityId' | 'active' | 'owner' | 'publishedCircuits'> & {
+  /** Direcciones públicas o claves de lo que se subió en la demo (`files`). */
+  images: string[]
+  /** El lugar nuevo de un pedido o una solicitud sin aprobar: todavía no está en la app. */
+  draft?: boolean
+  /** Lo retiró su alcaldía o el equipo. */
+  retired?: boolean
+}
+
+/** Una novedad como la guarda la demo: la foto es una dirección pública o una clave de `files`. */
+export interface MockPost {
+  id: string
+  stopId: string
+  title: string
+  body: string
+  image: string
+  publishedAt: LocalDateTime
+  status: PostStatus
+}
+
 /** Todo lo que guarda el backend de demo, persistido en localStorage. */
 export interface MockDatabase {
   version: number
@@ -47,11 +71,11 @@ export interface MockDatabase {
   files: MockFiles
   placeRequests: PlaceRequest[]
   organizations: Organization[]
-  stops: Stop[]
+  stops: MockStop[]
   circuits: Circuit[]
   groupSessions: CircuitGroupSession[]
   profiles: PlaceProfile[]
-  posts: Post[]
+  posts: MockPost[]
   events: EventItem[]
   coupons: Coupon[]
   redemptions: CouponRedemption[]

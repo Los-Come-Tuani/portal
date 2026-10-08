@@ -12,9 +12,9 @@ import { TopDroppedPlaces } from './components/TopDroppedPlaces'
 /** El inicio de todos los roles es la agenda de llegadas. */
 export function DashboardPage() {
   useDocumentTitle('Agenda')
-  const { isAdmin, role, organizationId } = useSession()
+  const { isAdmin, role } = useSession()
   const state = useAgendaState()
-  const places = usePlaces(isAdmin ? {} : { organizationId })
+  const places = usePlaces()
 
   const onePlace = state.place !== ALL_PLACES && !state.place.startsWith(CITY_PREFIX) ? state.place : null
   const cityStops = state.place.startsWith(CITY_PREFIX)

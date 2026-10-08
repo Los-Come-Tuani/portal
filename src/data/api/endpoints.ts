@@ -2,11 +2,12 @@
  * El contrato con la API: todas las rutas en un solo lugar. El backend de
  * demo (src/data/mock) implementa estas mismas rutas.
  *
- * - `auth`, `catalog`, `upload`, `organizationApplication` y `verificationRequest` son rutas
- *   reales del API (docs/autenticacion.md y docs/organizaciones.md del repo del API): sin
- *   prefijo `/api` y con barra final. La sesión viaja en cookies `HttpOnly`.
+ * - Las rutas sin prefijo `/api` y con barra final son del API real (docs/autenticacion.md,
+ *   docs/roles.md, docs/organizaciones.md, docs/prestadores.md y docs/territorio.md del repo del
+ *   API). La sesión viaja en cookies `HttpOnly`.
  * - El resto (`/api/...`) es el checklist de lo que falta: el API todavía no publica esos
- *   recursos y cada sección se alinea con el API cuando su fase llega (F4 en adelante).
+ *   recursos y cada sección se alinea con el API cuando su fase llega (organizaciones y pedidos de
+ *   lugar, eventos, cupones, insignias, cobros y la actividad de la agenda).
  */
 const id = (value: string) => encodeURIComponent(value)
 
@@ -62,6 +63,8 @@ export const endpoints = {
     cities: '/catalog/city/',
     businessTypes: '/catalog/business-type/',
     institutionTypes: '/catalog/institution-type/',
+    /** Los pilares culturales: la categoría de un lugar. */
+    pillars: '/catalog/pillar/',
   },
   /** `POST`: pide una URL firmada para subir un archivo directo al almacenamiento. */
   upload: '/upload/',
@@ -86,23 +89,31 @@ export const endpoints = {
     approve: (requestId: string) => `/verification-request/${id(requestId)}/approve/`,
     reject: (requestId: string) => `/verification-request/${id(requestId)}/reject/`,
   },
+  /** La lista de organizaciones del portal: el API todavía no la publica. */
   organizations: {
     list: '/api/organizations',
     detail: (organizationId: string) => `/api/organizations/${id(organizationId)}`,
-    /** POST agrega lugares sin dueño; no se reemplaza la lista entera. */
-    stops: (organizationId: string) => `/api/organizations/${id(organizationId)}/stops`,
-    stop: (organizationId: string, stopId: string) => `/api/organizations/${id(organizationId)}/stops/${id(stopId)}`,
   },
+  /**
+   * Los lugares del portal (F4, docs/territorio.md): el equipo con `places.view` los ve todos y una
+   * organización verificada, los suyos.
+   */
+  place: {
+    list: '/place/',
+    detail: (placeId: string) => `/place/${id(placeId)}/`,
+    /** `PUT { kind, id }` le da dueño; `{}` lo devuelve al equipo. */
+    owner: (placeId: string) => `/place/${id(placeId)}/owner/`,
+    profile: (placeId: string) => `/place/${id(placeId)}/profile/`,
+  },
+  /** Las novedades de un lugar (`place_id` filtra). */
+  post: {
+    list: '/post/',
+    detail: (postId: string) => `/post/${id(postId)}/`,
+  },
+  /** Los lugares activos como los ve la app, sin sesión: el editor de circuitos elige de aquí sus paradas. */
   stops: {
-    list: '/api/stops',
-    /** Pública: los lugares de una ciudad que todavía no administra ni pidió nadie. */
-    available: '/api/stops/available',
-    detail: (stopId: string) => `/api/stops/${id(stopId)}`,
-    profile: (stopId: string) => `/api/stops/${id(stopId)}/profile`,
-  },
-  posts: {
-    list: '/api/posts',
-    detail: (postId: string) => `/api/posts/${id(postId)}`,
+    list: '/stop/',
+    detail: (stopId: string) => `/stop/${id(stopId)}/`,
   },
   circuits: {
     list: '/api/circuits',
@@ -135,10 +146,12 @@ export const endpoints = {
     pay: (statementId: string) => `/api/billing/statements/${id(statementId)}/pay`,
   },
   pricing: '/api/pricing',
-  /** Organizaciones aprobadas que piden administrar otro lugar. */
+  /** Organizaciones aprobadas que piden administrar otro lugar: el API todavía no lo tiene. */
   placeRequests: {
     list: '/api/place-requests',
     decision: (requestId: string) => `/api/place-requests/${id(requestId)}/decision`,
+    /** Los lugares de una ciudad que todavía no administra ni pidió nadie. */
+    availableStops: '/api/stops/available',
   },
   /**
    * La cola de guías y traductores (F5): quien revisa acepta o rechaza cada documento y pide

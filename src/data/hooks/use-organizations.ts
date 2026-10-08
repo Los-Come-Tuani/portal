@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { OrganizationInput } from '../models'
+import type { Organization, OrganizationInput } from '../models'
 import { organizationsRepository, type OrganizationFilters } from '../repositories/organizations.repository'
+import { placesRepository } from '../repositories/places.repository'
 import { queryKeys } from './query-keys'
 
 export function useOrganizations(filters: OrganizationFilters = {}, enabled = true) {
@@ -35,18 +36,25 @@ export function useSaveOrganization() {
   })
 }
 
+/** Le asigna a una organización varios lugares sin dueño, uno por uno (`PUT place/{id}/owner/`). */
 export function useAssignStops() {
   const onSuccess = useInvalidateOrganizations()
   return useMutation({
-    mutationFn: ({ id, stopIds }: { id: string; stopIds: string[] }) => organizationsRepository.assignStops(id, stopIds),
+    mutationFn: async ({ organization, stopIds }: { organization: Organization; stopIds: string[] }) => {
+      for (const stopId of stopIds) await placesRepository.setOwner(stopId, ownerRef(organization))
+    },
     onSuccess,
   })
 }
 
+/** Le quita un lugar: vuelve a ser del equipo. */
 export function useRemoveStop() {
   const onSuccess = useInvalidateOrganizations()
-  return useMutation({
-    mutationFn: ({ id, stopId }: { id: string; stopId: string }) => organizationsRepository.removeStop(id, stopId),
-    onSuccess,
-  })
+  return useMutation({ mutationFn: (stopId: string) => placesRepository.setOwner(stopId, null), onSuccess })
 }
+
+/** El portal todavía no distingue instituciones: una organización es un comercio o una alcaldía. */
+const ownerRef = (organization: Organization) => ({
+  kind: organization.type === 'negocio' ? ('business' as const) : ('municipality' as const),
+  id: organization.id,
+})

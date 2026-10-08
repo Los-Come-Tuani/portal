@@ -2,8 +2,8 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { Controller, useWatch, type UseFormReturn } from 'react-hook-form'
 import { Field, Input, Select, Skeleton, Textarea } from '@/components/ui'
 import { STOP_CATEGORIES, type StopInput } from '@/data/models'
+import { PhotoListField } from './PhotoListField'
 import { DurationField, HoursField } from './ScheduleFields'
-import { ImageListField } from './ImageListField'
 
 const MapPicker = lazy(() => import('./MapPicker'))
 
@@ -95,7 +95,7 @@ export function StopForm({ form }: { form: UseFormReturn<StopInput> }) {
           control={control}
           name="images"
           render={({ field, fieldState }) => (
-            <ImageListField value={field.value} onChange={field.onChange} error={fieldState.error?.message} />
+            <PhotoListField kind="place-photo" value={field.value} onChange={field.onChange} error={fieldState.error?.message} />
           )}
         />
       </FormSection>

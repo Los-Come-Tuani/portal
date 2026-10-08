@@ -4,7 +4,7 @@ import { Button, Dialog, EmptyState, Field, Input, SegmentedControl, Select, Ske
 import { ApiError, errorMessage } from '@/data/api/errors'
 import { useCreatePlaceRequest } from '@/data/hooks/use-place-requests'
 import { useAvailablePlaces } from '@/data/hooks/use-places'
-import { STOP_CATEGORIES, type StopCategory } from '@/data/models'
+import { coverUrl, STOP_CATEGORIES, type StopCategory } from '@/data/models'
 import { placeRequestInputSchema } from '@/data/schemas/place-request.schema'
 import { cn } from '@/lib/cn'
 
@@ -21,7 +21,7 @@ interface Draft {
 
 const EMPTY: Draft = { kind: 'claim', stopId: '', name: '', category: 'Gastronomía', address: '', note: '' }
 
-/** Una organización aprobada pide administrar otro lugar; el equipo lo aprueba. */
+/** Una organización aprobada pide administrar otro lugar; el equipo lo aprueba. Solo existe en la demo. */
 export function AddPlaceDialog({ open, city, onClose }: { open: boolean; city: string; onClose: () => void }) {
   return (
     <Dialog
@@ -136,7 +136,7 @@ function AddPlaceForm({ city, onDone }: { city: string; onDone: () => void }) {
                     onChange={() => update({ stopId: stop.id })}
                     className="size-4 shrink-0 cursor-pointer accent-ink"
                   />
-                  <img src={stop.images[0]} alt="" loading="lazy" className="size-10 shrink-0 rounded-sm bg-placeholder object-cover" />
+                  <img src={coverUrl(stop.images)} alt="" loading="lazy" className="size-10 shrink-0 rounded-sm bg-placeholder object-cover" />
                   <span className="min-w-0">
                     <span className="block text-body font-semibold text-ink">{stop.name}</span>
                     <span className="block truncate text-small text-muted">

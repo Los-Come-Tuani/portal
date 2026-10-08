@@ -13,10 +13,6 @@ export const organizationInputSchema = z.object({
   contactPhone: phoneSchema.refine((value) => value !== '', { error: 'Escribe un teléfono' }),
 })
 
-export const assignStopsSchema = z.object({
-  stopIds: z.array(z.string().min(1)).min(1, { error: 'Elige al menos un lugar' }),
-})
-
 export const pricingInputSchema = z.object({
   couponFee: z.number({ error: 'Escribe la tarifa' }).int().min(0).max(10_000),
   badgeActivationMonthly: z.number({ error: 'Escribe el precio' }).int().min(0).max(100_000),

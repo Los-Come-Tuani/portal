@@ -18,10 +18,10 @@ import {
   type OrganizationDocumentType,
   type PlaceRequest,
   type ReviewEvent,
-  type Stop,
   type User,
 } from '../../models'
 import { catalog, type AdmissionSeed } from '../catalog'
+import type { MockStop } from '../db'
 import { documentScans } from './document-scans'
 
 const HOUR = 60
@@ -200,7 +200,7 @@ function approvedSeed(organization: Organization, user: User | undefined): Admis
   }
 }
 
-function cityCenter(stops: readonly Stop[], city: string) {
+function cityCenter(stops: readonly MockStop[], city: string) {
   const inCity = stops.filter((stop) => stop.city === city)
   if (inCity.length === 0) return { latitude: 12.1328, longitude: -86.2504 }
   return {
@@ -210,10 +210,10 @@ function cityCenter(stops: readonly Stop[], city: string) {
 }
 
 /** Una organización aprobada pidió un lugar nuevo: queda como borrador suyo hasta que se decida. */
-export function seedPlaceRequests(today: ISODate, organizations: Organization[], stops: Stop[]): PlaceRequest[] {
+export function seedPlaceRequests(today: ISODate, organizations: Organization[], stops: MockStop[]): PlaceRequest[] {
   const finca = organizations.find((organization) => organization.id === 'org-finca-el-mirador')
   if (!finca) return []
-  const stop: Stop = {
+  const stop: MockStop = {
     id: 'matagalpa-sendero-del-cafetal',
     name: 'Sendero del cafetal',
     category: 'Naturaleza',
@@ -254,12 +254,12 @@ export function seedAdmissions(
   today: ISODate,
   users: User[],
   organizations: Organization[],
-  stops: Stop[],
-): { applications: OrganizationApplication[]; users: User[]; organizations: Organization[]; stops: Stop[] } {
+  stops: MockStop[],
+): { applications: OrganizationApplication[]; users: User[]; organizations: Organization[]; stops: MockStop[] } {
   const staff = new Map(users.filter((user) => user.role === 'admin').map((user) => [user.id, user.name]))
   const newUsers: User[] = []
   const newOrganizations: Organization[] = []
-  const drafts: Stop[] = []
+  const drafts: MockStop[] = []
 
   const approved = organizations
     .filter((organization) => organization.status === 'active')
@@ -276,7 +276,7 @@ export function seedAdmissions(
     const createdAt = application.submittedAt.slice(0, 10)
 
     if (seed.newPlace) {
-      const stop: Stop = {
+      const stop: MockStop = {
         id: slugify(`${seed.city}-${seed.newPlace.name}`),
         name: seed.newPlace.name,
         category: seed.newPlace.category,

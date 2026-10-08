@@ -50,7 +50,7 @@ export function EventsPage() {
   const [editing, setEditing] = useState<EventItem | 'new' | null>(null)
   const [deleting, setDeleting] = useState<EventItem | null>(null)
   const events = useEvents({ organizerId: isAdmin ? organizer || undefined : organizationId })
-  const places = usePlaces({ organizationId }, !isAdmin)
+  const places = usePlaces({}, !isAdmin)
   const organizations = useOrganizations({}, isAdmin)
   const remove = useDeleteEvent()
   const moderate = useModerateEvent()

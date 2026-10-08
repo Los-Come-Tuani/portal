@@ -11,7 +11,7 @@ export function stopToForm(stop: Stop): StopInput {
     duration: stop.duration,
     description: stop.description,
     tip: stop.tip,
-    images: [...stop.images],
+    images: stop.images.map((photo) => ({ ...photo })),
     coordinates: { ...stop.coordinates },
   }
 }

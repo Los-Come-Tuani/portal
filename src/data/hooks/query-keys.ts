@@ -1,9 +1,8 @@
-import type { AccountFilters, ProviderQueueFilters, QueueFilters } from '../models'
+import type { AccountFilters, ProviderQueueFilters, QueueFilters, StopFilters } from '../models'
 import type { EventFilters } from '../repositories/events.repository'
 import type { OrganizationFilters } from '../repositories/organizations.repository'
 import type { PlaceRequestFilters } from '../repositories/place-requests.repository'
 import type { RedemptionFilters } from '../repositories/coupons.repository'
-import type { StopFilters } from '../repositories/places.repository'
 import type { VisitFilters } from '../repositories/visits.repository'
 
 /** Todas las llaves de caché en un lugar, para invalidar sin adivinar. */
@@ -32,9 +31,12 @@ export const queryKeys = {
   places: {
     all: ['places'] as const,
     list: (filters: StopFilters) => ['places', 'list', filters] as const,
+    page: (filters: StopFilters & { page: number; pageSize: number }) => ['places', 'page', filters] as const,
+    /** Los lugares activos de una ciudad (ruta pública `stop/`). */
+    city: (cityCode: string) => ['places', 'city', cityCode] as const,
     detail: (stopId: string) => ['places', 'detail', stopId] as const,
     profile: (stopId: string) => ['places', 'profile', stopId] as const,
-    posts: (stopId: string | undefined) => ['places', 'posts', stopId ?? 'all'] as const,
+    posts: (stopId: string) => ['places', 'posts', stopId] as const,
   },
   circuits: {
     all: ['circuits'] as const,

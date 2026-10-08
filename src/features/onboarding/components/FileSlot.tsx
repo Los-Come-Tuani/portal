@@ -14,10 +14,7 @@ interface FileSlotProps {
   error?: string
 }
 
-const ACCEPT: Record<UploadKind, string> = {
-  'legal-document': UPLOAD_RULES['legal-document'].contentTypes.join(','),
-  'signature-dish-photo': UPLOAD_RULES['signature-dish-photo'].contentTypes.join(','),
-}
+const acceptOf = (kind: UploadKind) => UPLOAD_RULES[kind].contentTypes.join(',')
 
 const IS_IMAGE = /\.(jpe?g|png|webp)$/i
 
@@ -61,7 +58,7 @@ export function FileSlot({ kind, label, value, onChange, error }: FileSlotProps)
     <input
       id={inputId}
       type="file"
-      accept={ACCEPT[kind]}
+      accept={acceptOf(kind)}
       className="sr-only"
       aria-describedby={shown ? errorId : undefined}
       onChange={(event) => {

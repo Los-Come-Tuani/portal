@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, Medal, Plus, Search, X } from 'lucide-react'
 import { useState } from 'react'
 import { IconButton, Input } from '@/components/ui'
-import type { Stop } from '@/data/models'
+import { coverUrl, type Stop } from '@/data/models'
 import { cn } from '@/lib/cn'
 
 type Legs = Record<string, number> | undefined
@@ -38,8 +38,9 @@ function hours(stop: Stop): string {
 }
 
 function Thumb({ stop }: { stop: Stop }) {
-  return stop.images[0] ? (
-    <img src={stop.images[0]} alt="" loading="lazy" className="size-10 shrink-0 rounded-sm bg-placeholder object-cover" />
+  const cover = coverUrl(stop.images)
+  return cover ? (
+    <img src={cover} alt="" loading="lazy" className="size-10 shrink-0 rounded-sm bg-placeholder object-cover" />
   ) : (
     <span className="size-10 shrink-0 rounded-sm bg-paper" aria-hidden="true" />
   )

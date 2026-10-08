@@ -78,7 +78,7 @@ function scopeStopIds(place: string, places: readonly Stop[] | undefined): strin
 
 export function useAgendaData(state: AgendaState) {
   const { isAdmin, organizationId } = useSession()
-  const places = usePlaces(isAdmin ? {} : { organizationId })
+  const places = usePlaces()
   const dates = useMemo(() => viewDates(state.view, state.date), [state.view, state.date])
   const from = dates[0]
   const to = dates[dates.length - 1]

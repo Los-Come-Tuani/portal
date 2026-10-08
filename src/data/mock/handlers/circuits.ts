@@ -4,10 +4,10 @@ import { plural } from '@/lib/format'
 import { uniqueSlug } from '@/lib/slug'
 import { parseClock } from '@/lib/time'
 import { endpoints } from '../../api/endpoints'
-import type { Circuit, CircuitInput, GroupSessionView, Stop } from '../../models'
+import type { Circuit, CircuitInput, GroupSessionView } from '../../models'
 import { circuitInputSchema } from '../../schemas/circuit.schema'
 import { catalog } from '../catalog'
-import type { MockDatabase } from '../db'
+import type { MockDatabase, MockStop } from '../db'
 import { fail, parseBody, requireUser, route, type MockContext } from '../http'
 import { hasPermission } from '../services/access'
 
@@ -28,7 +28,7 @@ function joinedIn(db: MockDatabase, circuitId: string): number {
 function toCircuit(db: MockDatabase, input: CircuitInput, existing?: Circuit): Omit<Circuit, 'id'> {
   const invalid = (field: string, message: string) => fail.invalid('Revisa los campos marcados', { [field]: message })
 
-  const stops: Stop[] = input.stopIds.map((stopId) => {
+  const stops: MockStop[] = input.stopIds.map((stopId) => {
     const stop = db.stops.find((item) => item.id === stopId && !item.draft)
     if (!stop) throw invalid('stopIds', 'Una de las paradas ya no está en la app')
     if (stop.city !== input.city) throw invalid('stopIds', `${stop.name} es de ${stop.city}: todas las paradas son de ${input.city}`)

@@ -16,11 +16,10 @@ import type {
   OrganizationApplication,
   OrganizationDocumentType,
   PlaceProfile,
-  Post,
   StaffRole,
-  Stop,
   User,
 } from '../models'
+import type { MockPost, MockStop } from './db'
 import circuitsJson from './json/circuits.json'
 import groupSessionsJson from './json/circuit_groups.json'
 import appCouponsJson from './json/coupons.json'
@@ -67,7 +66,7 @@ export type PortalCircuitSeed = Omit<
 > & { seasonFromDays?: number; seasonToDays?: number }
 
 export type PortalCouponSeed = Omit<Coupon, 'validUntil' | 'createdAt'> & { validDays: number; daysAgo: number }
-export type PostSeed = Omit<Post, 'publishedAt'> & { daysAgo: number }
+export type PostSeed = Omit<MockPost, 'publishedAt'> & { daysAgo: number }
 export type ProfileSeed = Omit<PlaceProfile, 'updatedAt'>
 
 export type UserSeed = Omit<User, 'createdAt' | 'lastSeenAt' | 'serviceRole'> & {
@@ -156,7 +155,7 @@ export type AdmissionSeed = Pick<
 }
 
 export const catalog = {
-  stops: [...stopsJson, ...portalStopsJson] as Stop[],
+  stops: [...stopsJson, ...portalStopsJson] as MockStop[],
   circuits: circuitsJson as Circuit[],
   groupSessions: groupSessionsJson as CircuitGroupSession[],
   portalCircuits: portalCircuitsJson as PortalCircuitSeed[],
@@ -177,7 +176,7 @@ export const catalog = {
 
 const stopIndex = new Map(catalog.stops.map((stop) => [stop.id, stop]))
 
-export function catalogStop(stopId: string): Stop {
+export function catalogStop(stopId: string): MockStop {
   const stop = stopIndex.get(stopId)
   if (!stop) throw new Error(`La parada ${stopId} no está en el catálogo`)
   return stop

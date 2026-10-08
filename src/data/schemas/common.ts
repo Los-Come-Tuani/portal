@@ -11,7 +11,10 @@ export const isoDateSchema = z.string().refine(isISODate, { error: 'Elige una fe
 
 export const imageUrlSchema = z.url({ error: 'Pega una dirección que empiece con https://' })
 
-/** Nicaragua, con las islas del Caribe. */
+/** Una foto ya subida (o que el objeto ya tenía): se manda su clave. */
+export const photoSchema = z.object({ key: z.string().min(1), url: z.string().nullable() })
+
+/** Nicaragua, con las islas del Caribe: los mismos límites que el API. */
 export const latLngSchema = z.object({
   latitude: z
     .number({ error: 'Marca el punto en el mapa' })
@@ -20,7 +23,7 @@ export const latLngSchema = z.object({
   longitude: z
     .number({ error: 'Marca el punto en el mapa' })
     .min(-87.7, { error: 'Marca el punto en el mapa, dentro de Nicaragua' })
-    .max(-82.5, { error: 'Marca el punto en el mapa, dentro de Nicaragua' }),
+    .max(-82.6, { error: 'Marca el punto en el mapa, dentro de Nicaragua' }),
 })
 
 export const optionalEmailSchema = z.union([z.literal(''), z.email({ error: 'Escribe un correo válido' })])

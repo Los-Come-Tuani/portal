@@ -1,9 +1,9 @@
 import { addDays, toLocalDateTime, type ISODate } from '@/lib/dates'
 import { formatDayMonth } from '@/lib/format'
 import { deriveCircuit } from '@/lib/circuits'
-import { cityLocation, type Circuit, type Coupon, type EventItem, type Stop } from '../models'
+import { cityLocation, type Circuit, type Coupon, type EventItem } from '../models'
 import { catalog } from './catalog'
-import type { MockDatabase } from './db'
+import type { MockDatabase, MockStop } from './db'
 import { generateRedemptions, seedActivations, seedCampaigns, seedPayments } from './generators/activity'
 import { seedAdmissions, seedPlaceRequests } from './generators/admissions'
 import { seedPeople } from './generators/people'
@@ -11,7 +11,7 @@ import { seedProviders } from './generators/providers'
 import { seedApplications } from './services/applications'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 9
+export const SCHEMA_VERSION = 10
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -33,11 +33,11 @@ const APP_EVENT_ORGANIZERS: Record<string, { organizerId: string | null; feature
   torovenado: { organizerId: 'org-alcaldia-masaya', featured: false },
 }
 
-function seedKplanCircuits(today: ISODate, stops: Stop[]): Circuit[] {
+function seedKplanCircuits(today: ISODate, stops: MockStop[]): Circuit[] {
   return catalog.portalCircuits.map(({ seasonFromDays, seasonToDays, ...seed }) => ({
     ...seed,
     ...deriveCircuit({
-      stops: seed.stopIds.map((id) => stops.find((stop) => stop.id === id) as Stop),
+      stops: seed.stopIds.map((id) => stops.find((stop) => stop.id === id) as MockStop),
       travelMode: seed.travelMode,
       legMinutes: seed.legMinutes,
       kind: 'kplan',

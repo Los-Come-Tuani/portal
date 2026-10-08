@@ -21,7 +21,7 @@ type Pending =
 export function BadgesPage() {
   useDocumentTitle('Insignias')
   const { isAdmin, organizationId } = useSession()
-  const places = usePlaces(isAdmin ? {} : { organizationId })
+  const places = usePlaces()
   const activations = useBadgeActivations(organizationId)
   const campaigns = useBadgeCampaigns(organizationId)
   const organizations = useOrganizations({}, isAdmin)

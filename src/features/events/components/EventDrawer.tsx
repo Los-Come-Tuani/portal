@@ -4,7 +4,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Button, Dialog, Field, Input, Select, Skeleton, Switch, Textarea, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useSaveEvent } from '@/data/hooks/use-events'
-import { CITIES, cityLocation, EVENT_CATEGORIES, type EventInput, type EventItem, type Stop } from '@/data/models'
+import { CITIES, cityLocation, coverUrl, EVENT_CATEGORIES, type EventInput, type EventItem, type Stop } from '@/data/models'
 import { eventInputSchema } from '@/data/schemas/event.schema'
 import { ImageListField } from '@/features/places/components/ImageListField'
 import { addDays, todayISO } from '@/lib/dates'
@@ -87,7 +87,7 @@ function EventForm({
           location: cityLocation(firstPlace?.city ?? defaultCity.name),
           address: firstPlace?.address ?? '',
           description: '',
-          images: firstPlace ? [firstPlace.images[0]] : [],
+          images: firstPlace && coverUrl(firstPlace.images) ? [coverUrl(firstPlace.images) as string] : [],
           price: 0,
           coordinates: firstPlace?.coordinates ?? { latitude: 11.9304, longitude: -85.9564 },
           organizerId: null,

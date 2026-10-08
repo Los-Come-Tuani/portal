@@ -1,9 +1,9 @@
 import { nowLocalDateTime } from '@/lib/dates'
 import { uniqueSlug } from '@/lib/slug'
 import { endpoints } from '../../api/endpoints'
-import { readinessGaps, type PlaceRequest, type Stop } from '../../models'
+import { readinessGaps, type PlaceRequest } from '../../models'
 import { placeRequestDecisionSchema, placeRequestInputSchema } from '../../schemas/place-request.schema'
-import type { MockDatabase } from '../db'
+import type { MockDatabase, MockStop } from '../db'
 import { fail, parseBody, requireUser, route } from '../http'
 import { hasPermission, isAdmin } from '../services/access'
 import { assertStopFree, ownerOf } from '../services/ownership'
@@ -40,7 +40,7 @@ export const placeRequestRoutes = [
       if (!organization || organization.status !== 'active') throw fail.conflict('Tu organización tiene que estar aprobada para pedir otro lugar')
       const input = parseBody(placeRequestInputSchema, context.body)
       const now = nowLocalDateTime()
-      let stop: Stop
+      let stop: MockStop
       if (input.kind === 'claim') {
         if (db.placeRequests.some((item) => item.organizationId === organization.id && item.stopId === input.stopId && item.status === 'pending')) {
           throw fail.invalid('Revisa el lugar', { stopId: 'Ya pediste este lugar: el equipo lo está revisando' })

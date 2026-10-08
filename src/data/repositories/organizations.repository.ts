@@ -32,8 +32,4 @@ export const organizationsRepository = {
   },
   update: (organizationId: string, input: OrganizationInput) =>
     http.put<Organization>(endpoints.organizations.detail(organizationId), { body: input }),
-  assignStops: (organizationId: string, stopIds: string[]) =>
-    http.post<Organization>(endpoints.organizations.stops(organizationId), { body: { stopIds } }),
-  removeStop: (organizationId: string, stopId: string) =>
-    http.delete<Organization>(endpoints.organizations.stop(organizationId, stopId)),
 }

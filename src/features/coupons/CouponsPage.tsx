@@ -36,7 +36,7 @@ export function CouponsPage() {
   const [editing, setEditing] = useState<Coupon | 'new' | null>(null)
   const scope = isAdmin ? owner || undefined : organizationId
   const coupons = useCoupons(scope)
-  const places = usePlaces({ organizationId }, !isAdmin)
+  const places = usePlaces({}, !isAdmin)
   const organizations = useOrganizations({ type: 'negocio' }, isAdmin)
   const pricing = usePricing()
   const monthStart = `${monthKey(todayISO())}-01`

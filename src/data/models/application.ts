@@ -47,7 +47,7 @@ export interface CatalogOption {
 // ── Archivos ──────────────────────────────────────────────────────────────
 
 /** Las clases de archivo que acepta el almacenamiento (`POST /upload/`). */
-export type UploadKind = 'legal-document' | 'signature-dish-photo'
+export type UploadKind = 'legal-document' | 'signature-dish-photo' | 'place-photo' | 'circuit-photo'
 
 export interface UploadRule {
   contentTypes: readonly string[]
@@ -60,6 +60,8 @@ const MEGABYTE = 1024 * 1024
 export const UPLOAD_RULES: Record<UploadKind, UploadRule> = {
   'legal-document': { contentTypes: ['application/pdf', 'image/jpeg', 'image/png'], maxBytes: 10 * MEGABYTE },
   'signature-dish-photo': { contentTypes: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 5 * MEGABYTE },
+  'place-photo': { contentTypes: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 5 * MEGABYTE },
+  'circuit-photo': { contentTypes: ['image/jpeg', 'image/png', 'image/webp'], maxBytes: 5 * MEGABYTE },
 }
 
 /** Un archivo ya subido: su clave se manda con la solicitud; la URL de lectura vence en minutos. */

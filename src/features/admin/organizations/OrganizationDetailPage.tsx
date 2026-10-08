@@ -12,6 +12,7 @@ import { useOrganization, useRemoveStop, useSaveOrganization } from '@/data/hook
 import { usePlaces } from '@/data/hooks/use-places'
 import { useVerificationQueue } from '@/data/hooks/use-verification'
 import {
+  coverUrl,
   ORGANIZATION_STATUS_LABELS,
   ORGANIZATION_TYPE_LABELS,
   type Organization,
@@ -44,7 +45,10 @@ const CONFIRM_TEXT: Record<OrganizationStatus, string> = {
 export function OrganizationDetailPage() {
   const { organizationId = '' } = useParams()
   const organization = useOrganization(organizationId)
-  const places = usePlaces({ organizationId })
+  const places = usePlaces(
+    { ownerKind: organization.data?.type === 'negocio' ? 'business' : 'municipality', ownerId: organizationId },
+    !!organization.data,
+  )
   const coupons = useCoupons(organizationId)
   const events = useEvents({ organizerId: organizationId })
   const campaigns = useBadgeCampaigns(organizationId)
@@ -149,15 +153,15 @@ export function OrganizationDetailPage() {
                 {places.data?.map((stop) => (
                   <li key={stop.id} className="flex items-center gap-2 pr-3 hover:bg-canvas">
                     <Link to={paths.place(stop.id)} className="group flex min-w-0 flex-1 items-center gap-4 py-3 pl-5">
-                      {stop.images[0] ? (
-                        <img src={stop.images[0]} alt="" loading="lazy" className="size-12 rounded-sm bg-placeholder object-cover" />
+                      {coverUrl(stop.images) ? (
+                        <img src={coverUrl(stop.images)} alt="" loading="lazy" className="size-12 rounded-sm bg-placeholder object-cover" />
                       ) : (
                         <span className="flex size-12 items-center justify-center rounded-sm bg-paper text-caption text-muted">Sin foto</span>
                       )}
                       <span className="min-w-0 flex-1">
                         <span className="flex flex-wrap items-center gap-2 text-body font-semibold text-ink">
                           {stop.name}
-                          {stop.draft && <Tag tone="outline">Borrador</Tag>}
+                          {!stop.active && <Tag tone="outline">Fuera de la app</Tag>}
                         </span>
                         <span className="block text-small text-muted">
                           {stop.category}
@@ -166,7 +170,7 @@ export function OrganizationDetailPage() {
                       </span>
                       <ArrowRight size={16} className="text-muted group-hover:text-ink" aria-hidden="true" />
                     </Link>
-                    {canManage && !stop.draft && (
+                    {canManage && stop.active && (
                       <IconButton size="sm" tone="danger" label={`Quitarle ${stop.name}`} icon={<X size={16} />} onClick={() => setRemoving(stop)} />
                     )}
                   </li>
@@ -251,7 +255,7 @@ export function OrganizationDetailPage() {
         onConfirm={() =>
           removing &&
           remove.mutate(
-            { id: org.id, stopId: removing.id },
+            removing.id,
             {
               onSuccess: () => {
                 toast({ title: `${removing.name} quedó sin dueño` })

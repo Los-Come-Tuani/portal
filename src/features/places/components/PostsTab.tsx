@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ImageIcon, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { ImageIcon, ImagePlus, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import {
   Button,
@@ -17,9 +17,10 @@ import {
   Textarea,
   useToast,
 } from '@/components/ui'
-import { errorMessage } from '@/data/api/errors'
+import { ApiError, errorMessage } from '@/data/api/errors'
+import { uploadFile } from '@/data/api/upload'
 import { useDeletePost, usePosts, useSavePost } from '@/data/hooks/use-places'
-import type { Post, PostInput } from '@/data/models'
+import type { Photo, Post, PostInput } from '@/data/models'
 import { postInputSchema } from '@/data/schemas/profile.schema'
 import { formatDateTime } from '@/lib/format'
 
@@ -56,8 +57,8 @@ export function PostsTab({ stopId }: { stopId: string }) {
         <ul className="divide-y divide-divider rounded-kp border border-divider bg-surface">
           {posts.data.map((post) => (
             <li key={post.id} className="flex items-start gap-4 p-4">
-              {post.image ? (
-                <img src={post.image} alt="" loading="lazy" className="size-16 shrink-0 rounded-sm bg-placeholder object-cover" />
+              {post.image?.url ? (
+                <img src={post.image.url} alt="" loading="lazy" className="size-16 shrink-0 rounded-sm bg-placeholder object-cover" />
               ) : (
                 <span className="flex size-16 shrink-0 items-center justify-center rounded-sm bg-paper text-muted">
                   <ImageIcon size={18} aria-hidden="true" />
@@ -129,15 +130,15 @@ function PostForm({ post, stopId, onDone }: { post: Post | null; stopId: string;
     register,
     control,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<PostInput>({
     resolver: zodResolver(postInputSchema),
     defaultValues: post
       ? { stopId: post.stopId, title: post.title, body: post.body, image: post.image, status: post.status }
-      : { stopId, title: '', body: '', image: '', status: 'published' },
+      : { stopId, title: '', body: '', image: null, status: 'published' },
   })
   const body = useWatch({ control, name: 'body' }) ?? ''
-  const image = useWatch({ control, name: 'image' })
 
   const submit = handleSubmit((input) =>
     save.mutate(
@@ -147,7 +148,12 @@ function PostForm({ post, stopId, onDone }: { post: Post | null; stopId: string;
           toast({ title: post ? 'Novedad actualizada' : 'Novedad publicada' })
           onDone()
         },
-        onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
+        onError: (error) => {
+          if (error instanceof ApiError && Object.keys(error.fieldErrors).length > 0) {
+            Object.entries(error.fieldErrors).forEach(([field, message]) => setError(field as keyof PostInput, { message }))
+          }
+          toast({ title: errorMessage(error), tone: 'error' })
+        },
       },
     ),
   )
@@ -160,12 +166,11 @@ function PostForm({ post, stopId, onDone }: { post: Post | null; stopId: string;
       <Field label="Texto" error={errors.body?.message} hint={`${body.length} de 500 letras`}>
         {(field) => <Textarea {...field} rows={5} maxLength={500} {...register('body')} />}
       </Field>
-      <Field label="Foto" optional error={errors.image?.message} hint="Dirección web de la imagen (https://…).">
-        {(field) => <Input {...field} type="url" placeholder="https://" {...register('image')} />}
-      </Field>
-      {image && !errors.image && (
-        <img src={image} alt="" className="aspect-[3/2] w-full rounded-kp bg-placeholder object-cover" />
-      )}
+      <Controller
+        control={control}
+        name="image"
+        render={({ field, fieldState }) => <PostPhotoField value={field.value} onChange={field.onChange} error={fieldState.error?.message} />}
+      />
       <Controller
         control={control}
         name="status"
@@ -187,5 +192,65 @@ function PostForm({ post, stopId, onDone }: { post: Post | null; stopId: string;
         </Button>
       </div>
     </form>
+  )
+}
+
+/** Una sola foto: se sube al elegirla y viaja por su clave; si la subida falla, el formulario sigue. */
+function PostPhotoField({ value, onChange, error }: { value: Photo | null; onChange: (value: Photo | null) => void; error?: string }) {
+  const input = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [problem, setProblem] = useState<string | null>(null)
+
+  const pick = async (files: FileList | null) => {
+    const file = files?.[0]
+    if (input.current) input.current.value = ''
+    if (!file) return
+    setProblem(null)
+    setUploading(true)
+    try {
+      const stored = await uploadFile('place-photo', file)
+      onChange({ key: stored.key, url: URL.createObjectURL(file) })
+    } catch (failure) {
+      setProblem(errorMessage(failure))
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="text-small font-medium text-ink">
+        Foto <span className="font-normal text-muted">(opcional)</span>
+      </legend>
+      {value &&
+        (value.url ? (
+          <img src={value.url} alt="" className="aspect-[3/2] w-full rounded-kp bg-placeholder object-cover" />
+        ) : (
+          <span className="flex aspect-[3/2] w-full items-center justify-center rounded-kp bg-paper text-small text-muted">Sin vista previa</span>
+        ))}
+      <input
+        ref={input}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="sr-only"
+        aria-label="Elegir la foto de la novedad"
+        onChange={(event) => void pick(event.target.files)}
+      />
+      <div className="flex flex-wrap gap-2">
+        <Button variant="secondary" size="sm" icon={<ImagePlus size={15} />} loading={uploading} onClick={() => input.current?.click()}>
+          {value ? 'Cambiar foto' : 'Agregar foto'}
+        </Button>
+        {value && (
+          <Button variant="ghost" size="sm" icon={<Trash2 size={15} />} onClick={() => onChange(null)}>
+            Quitar foto
+          </Button>
+        )}
+      </div>
+      {(problem || error) && (
+        <p role="alert" className="text-caption font-medium text-danger">
+          {problem ?? error}
+        </p>
+      )}
+    </fieldset>
   )
 }

@@ -97,6 +97,21 @@ export function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
   throw fail.invalid('Revisa los campos marcados', fieldErrors)
 }
 
+/** Como `paginate` del API: `{ next, previous, elements, pages, current, results }`, hasta 100 por página. */
+export function paginate<T>(items: readonly T[], query: URLSearchParams, defaultSize = 20) {
+  const pageSize = Math.min(100, Math.max(1, Number(query.get('page_size')) || defaultSize))
+  const current = Math.max(1, Number(query.get('page')) || 1)
+  const pages = Math.max(1, Math.ceil(items.length / pageSize))
+  return {
+    next: current < pages,
+    previous: current > 1,
+    elements: items.length,
+    pages,
+    current,
+    results: items.slice((current - 1) * pageSize, current * pageSize),
+  }
+}
+
 export function requireUser(context: MockContext): User {
   if (!context.user) throw fail.unauthorized()
   return context.user

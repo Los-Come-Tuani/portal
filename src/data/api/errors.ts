@@ -58,6 +58,20 @@ export function normalizeFieldErrors(raw: unknown): Record<string, string> {
   return result
 }
 
+/**
+ * Los errores por campo con los nombres del formulario cuando no coinciden con los del API:
+ * `{ pillar: 'category' }` lleva `pillar` a `category`; `stops.0.pointId` se busca también por `stops`.
+ */
+export function renameFieldErrors(error: unknown, names: Readonly<Record<string, string>>): unknown {
+  if (!(error instanceof ApiError) || Object.keys(error.fieldErrors).length === 0) return error
+  const fieldErrors: Record<string, string> = {}
+  for (const [field, message] of Object.entries(error.fieldErrors)) {
+    const name = names[field] ?? names[field.split('.')[0]] ?? field
+    if (!(name in fieldErrors)) fieldErrors[name] = message
+  }
+  return new ApiError(error.status, error.message, fieldErrors, error.retryAfter)
+}
+
 /** `Retry-After` llega en segundos; una fecha HTTP no se usa en esta API. */
 export function parseRetryAfter(value: string | null | undefined): number | null {
   if (!value) return null

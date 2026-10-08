@@ -1,6 +1,6 @@
-import { expandPermissions, type Organization, type Permission, type SessionUser, type Stop, type User } from '../../models'
+import { expandPermissions, type Organization, type Permission, type SessionUser, type User } from '../../models'
 import type { ApiSessionUser } from '../../schemas/session.schema'
-import type { MockDatabase } from '../db'
+import type { MockDatabase, MockStop } from '../db'
 import { fail } from '../http'
 import { demoTwoFactor } from './demo-two-factor'
 
@@ -83,7 +83,7 @@ export function ownStopIds(db: MockDatabase, user: User): Set<string> | null {
   return new Set(organization?.stopIds ?? [])
 }
 
-export function findOwnStop(db: MockDatabase, user: User, stopId: string): Stop {
+export function findOwnStop(db: MockDatabase, user: User, stopId: string): MockStop {
   const stop = db.stops.find((item) => item.id === stopId)
   const allowed = ownStopIds(db, user)
   if (!stop || (allowed && !allowed.has(stopId))) throw fail.notFound('No encontramos ese lugar')

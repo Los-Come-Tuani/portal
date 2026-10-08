@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { AMENITIES, type AmenityId } from '../models/place-profile'
-import { imageUrlSchema, optionalEmailSchema, optionalUrlSchema, phoneSchema } from './common'
+import { optionalEmailSchema, optionalUrlSchema, phoneSchema, photoSchema } from './common'
 
 const amenityIds = AMENITIES.map((amenity) => amenity.id) as [AmenityId, ...AmenityId[]]
 
@@ -29,6 +29,6 @@ export const postInputSchema = z.object({
   stopId: z.string().min(1, { error: 'Elige el lugar' }),
   title: z.string().trim().min(4, { error: 'Escribe un título' }).max(80),
   body: z.string().trim().min(20, { error: 'Cuenta un poco más (al menos 20 letras)' }).max(500),
-  image: z.union([z.literal(''), imageUrlSchema]),
+  image: photoSchema.nullable(),
   status: z.enum(['published', 'hidden']),
 })

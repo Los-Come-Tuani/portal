@@ -60,7 +60,7 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
   const [deleting, setDeleting] = useState(false)
   useDocumentTitle(circuit?.shortTitle ?? 'Nuevo circuito')
 
-  const stops = useMemo(() => (places.data ?? []).filter((stop) => !stop.draft), [places.data])
+  const stops = useMemo(() => (places.data ?? []).filter((stop) => stop.active), [places.data])
   const ordered = draft.stopIds.map((id) => stops.find((stop) => stop.id === id)).filter((stop): stop is Stop => !!stop && stop.city === draft.city)
   const flaggedTimes = checkStartTimes({ stops: ordered, travelMode: draft.travelMode, legMinutes: draft.legMinutes }, draft.startTimes)
     .filter((check) => check.blocking.length > 0)
