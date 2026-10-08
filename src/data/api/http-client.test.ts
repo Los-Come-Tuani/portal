@@ -243,6 +243,21 @@ describe('sesión vencida', () => {
     expect(sessionMarker.isSet()).toBe(true)
   })
 
+  it('un rechazo de Google tampoco intenta renovar una sesión anterior', async () => {
+    sessionMarker.set()
+    const { calls, fetchFn } = fakeFetch((call) =>
+      call.path === CSRF ? empty(204, { 'x-csrftoken': 't1' }) : json(401, { detail: 'El token de Google no es válido.' }),
+    )
+    const { request } = clientWith(fetchFn)
+
+    await expect(request('POST', endpoints.auth.google, { body: { id_token: 'token' } })).rejects.toMatchObject({
+      status: 401,
+      message: 'El token de Google no es válido.',
+    })
+    expect(calls.some((call) => call.path === REFRESH)).toBe(false)
+    expect(sessionMarker.isSet()).toBe(true)
+  })
+
   it('sin una sesión recordada, un 401 no intenta renovar', async () => {
     const { calls, fetchFn } = fakeFetch(() => json(401, { detail: 'No autenticado.' }))
     const { request } = clientWith(fetchFn)

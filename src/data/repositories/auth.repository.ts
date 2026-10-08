@@ -3,6 +3,12 @@ import { http } from '../api/http-client'
 import type { ChangePasswordInput, LoginInput, LoginResult, ResetPasswordInput, SessionUser } from '../models'
 import { apiChallengeSchema, apiLoginResponseSchema, apiSessionUserSchema, toSessionUser } from '../schemas/session.schema'
 
+function loginResult(data: unknown): LoginResult {
+  const challenge = apiChallengeSchema.safeParse(data)
+  if (challenge.success) return { status: 'two-factor', expiresIn: challenge.data.expires_in }
+  return { status: 'authenticated', user: toSessionUser(apiLoginResponseSchema.parse(data).user) }
+}
+
 /**
  * Identidad y sesión contra el API. La sesión vive en cookies `HttpOnly`: aquí nunca se ve ni
  * se guarda un token.
@@ -10,10 +16,12 @@ import { apiChallengeSchema, apiLoginResponseSchema, apiSessionUserSchema, toSes
 export const authRepository = {
   /** `two-factor`: la contraseña era correcta pero falta el código del segundo factor. */
   async login(input: LoginInput): Promise<LoginResult> {
-    const data = await http.post<unknown>(endpoints.auth.login, { body: input })
-    const challenge = apiChallengeSchema.safeParse(data)
-    if (challenge.success) return { status: 'two-factor', expiresIn: challenge.data.expires_in }
-    return { status: 'authenticated', user: toSessionUser(apiLoginResponseSchema.parse(data).user) }
+    return loginResult(await http.post<unknown>(endpoints.auth.login, { body: input }))
+  },
+
+  /** Google solo enlaza una cuenta ya activada de negocio, alcaldía o equipo. */
+  async loginWithGoogle(idToken: string): Promise<LoginResult> {
+    return loginResult(await http.post<unknown>(endpoints.auth.google, { body: { id_token: idToken } }))
   },
 
   /** Termina el inicio de sesión con el código de la app de autenticación o uno de recuperación. */

@@ -17,6 +17,8 @@ export const endpoints = {
     /** `GET`: devuelve el token CSRF en la cabecera `x-csrftoken`. */
     csrf: '/auth/csrf/',
     login: '/auth/web/login/',
+    /** Enlaza una cuenta existente del portal con el token de identidad de Google. */
+    google: '/auth/web/google/',
     /** Segundo paso del inicio de sesión cuando la cuenta tiene 2FA. */
     twoFactor: '/auth/web/two-factor/',
     refresh: '/auth/web/refresh/',

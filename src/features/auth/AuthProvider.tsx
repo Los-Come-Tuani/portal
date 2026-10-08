@@ -78,6 +78,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [openSession],
   )
 
+  const loginWithGoogle = useCallback(
+    async (idToken: string): Promise<LoginOutcome> => {
+      const result = await authRepository.loginWithGoogle(idToken)
+      if (result.status === 'two-factor') return 'two-factor'
+      await openSession(result.user)
+      return 'authenticated'
+    },
+    [openSession],
+  )
+
   const verifyTwoFactor = useCallback(
     async (code: string) => openSession(await authRepository.verifyTwoFactor(code)),
     [openSession],
@@ -107,8 +117,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [endSession])
 
   const value = useMemo(
-    () => ({ status, user, organization, login, verifyTwoFactor, acceptSession, refreshUser, logout, endSession }),
-    [status, user, organization, login, verifyTwoFactor, acceptSession, refreshUser, logout, endSession],
+    () => ({ status, user, organization, login, loginWithGoogle, verifyTwoFactor, acceptSession, refreshUser, logout, endSession }),
+    [status, user, organization, login, loginWithGoogle, verifyTwoFactor, acceptSession, refreshUser, logout, endSession],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

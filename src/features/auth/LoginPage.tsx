@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowRight } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
@@ -13,6 +13,7 @@ import { twoFactorLoginSchema } from '@/data/schemas/auth.schema'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { AuthLayout } from './AuthLayout'
 import { DEMO_ACCOUNTS } from './demo-accounts'
+import { GoogleSignInButton } from './GoogleSignInButton'
 import { useAuth } from './use-auth'
 
 type Step = 'credentials' | 'two-factor'
@@ -33,9 +34,10 @@ export function LoginPage() {
 }
 
 function CredentialsStep({ onTwoFactor }: { onTwoFactor: () => void }) {
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
+  const [googleSubmitting, setGoogleSubmitting] = useState(false)
   const {
     register,
     handleSubmit,
@@ -58,6 +60,21 @@ function CredentialsStep({ onTwoFactor }: { onTwoFactor: () => void }) {
     setValue('password', 'demo')
     void submit()
   }
+
+  const continueWithGoogle = useCallback(
+    async (credential: string) => {
+      setError(null)
+      setGoogleSubmitting(true)
+      try {
+        if ((await loginWithGoogle(credential)) === 'two-factor') onTwoFactor()
+      } catch (caught) {
+        setError(errorMessageWithWait(caught))
+      } finally {
+        setGoogleSubmitting(false)
+      }
+    },
+    [loginWithGoogle, onTwoFactor],
+  )
 
   return (
     <>
@@ -96,6 +113,18 @@ function CredentialsStep({ onTwoFactor }: { onTwoFactor: () => void }) {
           ¿Te invitaron al equipo? Activa tu cuenta
         </button>
       </form>
+
+      {!env.useMocks && env.googleClientId && (
+        <div className="mt-7">
+          <div className="mb-5 flex items-center gap-3" aria-hidden="true">
+            <span className="h-px flex-1 bg-divider" />
+            <span className="text-caption font-medium text-muted">o continúa con</span>
+            <span className="h-px flex-1 bg-divider" />
+          </div>
+          <GoogleSignInButton disabled={isSubmitting || googleSubmitting} onCredential={continueWithGoogle} />
+          <p className="mt-2 text-caption text-muted">Solo enlaza una cuenta del portal que ya esté activada.</p>
+        </div>
+      )}
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-panel border border-divider bg-canvas px-4 py-4">
         <p className="text-small text-muted">

@@ -187,6 +187,7 @@ export function toApiError({ status, data, headers }: TransportResponse): ApiErr
  */
 const OWN_401: ReadonlySet<string> = new Set([
   endpoints.auth.login,
+  endpoints.auth.google,
   endpoints.auth.twoFactor,
   endpoints.auth.refresh,
   endpoints.auth.logout,

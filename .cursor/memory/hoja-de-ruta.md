@@ -29,6 +29,10 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
     (`src/data/api/api.integration.test.ts`, ver README). Se verificó además en un navegador
     (Edge, con `playwright-core` desde una carpeta temporal) contra el API real y en demo: entrar,
     recargar, 2FA completo, recuperar contraseña, cerrar sesiones.
+  - Google Identity Services: botón en `/entrar`, Client ID público en
+    `VITE_GOOGLE_CLIENT_ID` y `POST /auth/web/google/`. Solo enlaza una cuenta existente,
+    activa y verificada de una organización o del equipo; no registra cuentas desde el portal.
+    Conserva el segundo factor. Pruebas del cargador y del cliente HTTP.
 - **Hecho: lado del portal de F2** (el API ya entrega los permisos funcionales y los roles):
   - `models/access.ts`: los 17 IDs del API, con los de solo ver (`*.view`), etiquetas del
     catálogo y `IMPLIED_BY` / `isImplied` / `expandPermissions` (quien revisa, decide o
@@ -224,10 +228,7 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
    - Con menos de dos paradas, `body.stops` dice "Este campo necesita al menos 2 elemento(s).":
      legible, pero podría decir "Un circuito necesita al menos dos paradas".
    - El límite de inicios de sesión corta los scripts de contrato que entran con varias cuentas.
-3. **Google en el portal** (opcional): el API ya acepta `POST /auth/web/google/`; falta el botón con
-   Google Identity Services. Solo aplica a roles públicos, así que no sirve para el equipo ni las
-   organizaciones: no hay prisa.
-4. Decisiones abiertas: cómo distinguir `institucion` de `alcaldia` en el portal (hoy iguales).
+3. Decisiones abiertas: cómo distinguir `institucion` de `alcaldia` en el portal (hoy iguales).
 
 ## Cómo probar contra el API real en esta máquina
 
