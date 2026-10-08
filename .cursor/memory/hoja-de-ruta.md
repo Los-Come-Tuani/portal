@@ -161,19 +161,23 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
     alcaldía programa, corrige, cancela con motivo y clona con fechas nuevas; `content.moderate`
     programa especiales de K'Plan, destaca y oculta con motivo o muestra. Clases de
     `catalog/event-category/`, fotos `event-photo`. La ciudad no cambia al corregir (`PATCH` no la
-    acepta). El comercio ya no tiene Eventos (el API le da 403). Modelo `CulturalEvent`.
+    acepta): el formulario la muestra como texto. El comercio ya no tiene Eventos (el API le da
+    403). La ficha de una organización cuenta sus eventos con `organizer_id`. Modelo
+    `CulturalEvent`.
   - Insignias: el QR de `place/{id}/qr/` en la sección "Código QR" del lugar (`QrPoster`);
     `BadgesPage` lista los lugares con insignia y su QR, y `places.manage` la enciende ahí. Las
     activaciones y campañas de insignias de la demo salieron de la pantalla.
   - Cupones (`coupon-campaign/`, `coupon-redemption/`, `catalog/benefit-type/`): hasta tres
     activas, corregir sin tocar beneficio ni costo, retirar con motivo; `content.moderate` ve y
-    retira. Validar busca el código entre los vigentes (`status=valid`, todas las páginas) sin
-    gastarlo y lo consume con `validate/`. Código de ocho caracteres sin I, O, 0 ni 1.
+    retira (sólo las activas: el API da 409 con agotadas, vencidas o retiradas). Validar busca
+    el código con `coupon-redemption/?code=` sin gastarlo, dice si ya se usó, venció o no es del
+    comercio, y si vale lo consume con `validate/`. Código de ocho caracteres sin I, O, 0 ni 1.
   - Reseñas impugnadas (`/resenas`, `review-dispute/`, `content.moderate`).
   - Finanzas: `/cobros` (pagos de reservas `payment/` y estados de cuenta `billing/statement/`),
     `/retiros` (`guide-withdrawal/`; el número completo sólo con `billing.manage`), `/tarifas`
-    (`pricing/`) y `/pagos` del comercio (sus estados de cuenta). La alcaldía ya no tiene "Pagos"
-    (403). `AdminPending` cuenta pagos, retiros y estados por cobrar.
+    (`pricing/`) y `/pagos` del comercio (sus estados de cuenta y las tarifas vigentes de
+    `pricing/`: insignia al mes y cupón validado). La alcaldía ya no tiene "Pagos" (403).
+    `AdminPending` cuenta pagos, retiros y estados por cobrar.
   - Reportes (`/reportes`, `report/`), Sanciones (`/sanciones`, `sanction/`) y "Sancionar" con
     sus sanciones en la ficha de "Todos los usuarios" (`UserSheet`).
   - Campana de avisos (`NotificationBell` en `Topbar`): no leídos de `notification/` cada minuto,
@@ -183,7 +187,9 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
   - Demo (`SCHEMA_VERSION` 17): `mock/services/agenda.ts`, `rewards.ts`, `finance.ts` y
     `moderation.ts`, con las mismas rutas y reglas. Se retiraron `services/statements.ts` (con el
     cobro del alta asistida) y los canjes y pagos del modelo anterior.
-  - Pruebas: 223 unitarias. El contrato se probó contra el API local con un script temporal de
+  - Pruebas: 227 unitarias; `mock/handlers/demo-contract.test.ts` comprueba que la demo responde
+    como el API (filtros `code` y `organizer_id`, `pricing/` del comercio, 409 al retirar una
+    campaña agotada). El contrato se probó contra el API local con un script temporal de
     vitest (borrado): agenda (alcaldía, equipo y 403 del comercio), cupones (publicar, 400 con
     150 %, corregir, 404 con un código ajeno, retirar, 409 al corregir una retirada), finanzas
     (equipo, comercio, 403 de la alcaldía en estados de cuenta), sanciones (suspender una turista
@@ -213,16 +219,8 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
    Un `429` en `GET /auth/profile/` al cargar la página lleva a la pantalla de entrada sin cerrar la
    sesión (`AuthProvider`); conviene mostrar un error con "Reintentar" en vez del login.
 2. **Anotado para el API** (no se tocó):
-   - Que la sesión traiga la ciudad de la organización (el portal la saca de sus lugares).
-   - Una consulta de un cupón sin consumirlo (un filtro `code` en `coupon-redemption/` o
-     `GET coupon-redemption/{code}/`): hoy el mostrador recorre todos los vigentes del comercio.
-   - Un filtro `organizer_id` en `cultural-event/` (el detalle de una organización cuenta sus
-     eventos entre todos) y que `PATCH cultural-event/` acepte `city_id` o lo diga en el contrato.
-   - `pricing/` sólo lo ve `billing.view`: el comercio no puede ver en su portal cuánto paga por
-     cupón validado o por la insignia.
-   - Los estados de cuenta son sólo de comercios: si la alcaldía o la institución deben pagar
-     algo, falta en el API.
-   - Si una campaña agotada (`sold_out`) se puede retirar: el portal sólo ofrece retirar activas.
+   - Decidido por el usuario, no pedirlo: la sesión no trae la ciudad de la organización (el
+     portal la saca de sus lugares) y los estados de cuenta son sólo de comercios.
    - Con menos de dos paradas, `body.stops` dice "Este campo necesita al menos 2 elemento(s).":
      legible, pero podría decir "Un circuito necesita al menos dos paradas".
    - El límite de inicios de sesión corta los scripts de contrato que entran con varias cuentas.
