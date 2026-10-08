@@ -13,12 +13,17 @@ interface ValidateCouponDialogProps {
   onClose: () => void
 }
 
-type Step = { name: 'enter' } | { name: 'confirm'; found: CouponCode } | { name: 'missing' } | { name: 'done'; coupon: CouponCode }
+type Step =
+  | { name: 'enter' }
+  | { name: 'confirm'; found: CouponCode }
+  | { name: 'unusable'; found: CouponCode }
+  | { name: 'missing' }
+  | { name: 'done'; coupon: CouponCode }
 
 /**
- * La validación en el mostrador: primero se busca el código entre los cupones por usar del comercio
- * (sin gastarlo) y, al confirmar, `coupon-redemption/validate/` lo consume. Se monta de nuevo cada
- * vez que se abre (ver ValidateCouponProvider), así arranca limpio.
+ * La validación en el mostrador: primero se busca el código entre los cupones del comercio (sin
+ * gastarlo) y, si todavía vale, al confirmar `coupon-redemption/validate/` lo consume. Se monta de
+ * nuevo cada vez que se abre (ver ValidateCouponProvider), así arranca limpio.
  */
 export function ValidateCouponDialog({ open, initialCode, onClose }: ValidateCouponDialogProps) {
   const [code, setCode] = useState(() => formatCouponCode(initialCode))
@@ -29,7 +34,9 @@ export function ValidateCouponDialog({ open, initialCode, onClose }: ValidateCou
   const search = (event?: FormEvent) => {
     event?.preventDefault()
     if (!isCompleteCode(code)) return
-    find.mutate(code, { onSuccess: (found) => setStep(found ? { name: 'confirm', found } : { name: 'missing' }) })
+    find.mutate(code, {
+      onSuccess: (found) => setStep(!found ? { name: 'missing' } : found.status === 'valid' ? { name: 'confirm', found } : { name: 'unusable', found }),
+    })
   }
 
   const validate = () => consume.mutate(code, { onSuccess: (coupon) => setStep({ name: 'done', coupon }) })
@@ -65,14 +72,21 @@ export function ValidateCouponDialog({ open, initialCode, onClose }: ValidateCou
             </Button>
             <Button onClick={onClose}>Listo</Button>
           </>
-        ) : (
+        ) : step.name === 'confirm' ? (
           <>
             <Button variant="ghost" onClick={restart}>
               Otro código
             </Button>
             <Button loading={consume.isPending} onClick={validate}>
-              {step.name === 'missing' ? "Comprobarlo con K'Plan" : 'Validar y entregar'}
+              Validar y entregar
             </Button>
+          </>
+        ) : (
+          <>
+            <Button variant="ghost" onClick={onClose}>
+              Cerrar
+            </Button>
+            <Button onClick={restart}>Otro código</Button>
           </>
         )
       }
@@ -123,20 +137,28 @@ export function ValidateCouponDialog({ open, initialCode, onClose }: ValidateCou
         </div>
       )}
 
-      {step.name === 'missing' && (
-        <div className="flex flex-col gap-3 text-body text-muted">
-          <p>
-            <span className="font-mono font-semibold text-ink">{code}</span> no está entre tus cupones por usar: puede que ya se haya usado, que venció o
-            que sea de otro comercio.
-          </p>
-          {consume.error ? (
-            <p role="alert" className="text-small font-medium text-danger">
-              {errorMessage(consume.error)}
+      {step.name === 'unusable' && (
+        <div className="flex flex-col gap-3 text-body text-muted" role="alert">
+          <p className="text-lead font-semibold text-ink">{step.found.title}</p>
+          {step.found.status === 'consumed' ? (
+            <p>
+              <span className="font-mono font-semibold text-ink">{formatCouponCode(step.found.code)}</span> ya se usó
+              {step.found.consumedAt ? ` el ${formatDateTime(step.found.consumedAt)}` : ''}. No se puede entregar otra vez.
             </p>
           ) : (
-            <p className="text-small">Si el turista insiste, compruébalo con K'Plan: si todavía vale, queda validado.</p>
+            <p>
+              <span className="font-mono font-semibold text-ink">{formatCouponCode(step.found.code)}</span> venció el{' '}
+              {formatDate(step.found.expiresAt.slice(0, 10))}. Ya no se puede entregar.
+            </p>
           )}
         </div>
+      )}
+
+      {step.name === 'missing' && (
+        <p className="text-body text-muted" role="alert">
+          <span className="font-mono font-semibold text-ink">{code}</span> no es un cupón de tu comercio. Revisa que el turista te haya dado bien el
+          código.
+        </p>
       )}
 
       {step.name === 'done' && (

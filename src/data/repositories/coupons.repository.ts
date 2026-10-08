@@ -29,6 +29,8 @@ export interface CampaignFilters {
 export interface RedemptionFilters {
   status?: CouponCodeStatus
   campaignId?: string
+  /** El código exacto (normalizado), en cualquier estado. */
+  code?: string
   page?: number
   pageSize?: number
 }
@@ -41,10 +43,10 @@ async function campaign(request: Promise<unknown>): Promise<CouponCampaign> {
   }
 }
 
-const redemptionPage = async ({ status, campaignId, page = 1, pageSize = 20 }: RedemptionFilters): Promise<Page<CouponCode>> =>
+const redemptionPage = async ({ status, campaignId, code, page = 1, pageSize = 20 }: RedemptionFilters): Promise<Page<CouponCode>> =>
   toCouponCodePage(
     apiCouponCodePageSchema.parse(
-      await http.get<unknown>(endpoints.couponRedemption.list, { query: { status, campaign_id: campaignId, page, page_size: pageSize } }),
+      await http.get<unknown>(endpoints.couponRedemption.list, { query: { status, campaign_id: campaignId, code, page, page_size: pageSize } }),
     ),
   )
 
@@ -77,13 +79,14 @@ export const couponsRepository = {
   redemptions: redemptionPage,
 
   /**
-   * Busca un código entre los cupones por usar del comercio, sin consumirlo: el API sólo valida
-   * (y consume) en `validate/`. `null` si no está entre los vigentes.
+   * Busca un código entre los cupones del comercio, sin consumirlo: el API sólo consume en
+   * `validate/`. Devuelve el cupón en el estado que tenga, o `null` si no es de este comercio.
    */
-  findValid: async (code: string): Promise<CouponCode | null> => {
+  find: async (code: string): Promise<CouponCode | null> => {
     const wanted = normalizeCouponCode(code)
-    const valid = await allPages((page, pageSize) => redemptionPage({ status: 'valid', page, pageSize }))
-    return valid.find((item) => normalizeCouponCode(item.code) === wanted) ?? null
+    if (!wanted) return null
+    const { results } = await redemptionPage({ code: wanted, pageSize: 1 })
+    return results[0] ?? null
   },
 
   /** Lo consume en el mostrador: `404` si es de otro comercio, `409` si ya se usó o venció. */

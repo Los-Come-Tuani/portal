@@ -52,7 +52,7 @@ export function OrganizationDetailPage() {
   const session = useSession()
   const coupons = useCampaigns({ businessId: organizationId }, session.can('content.moderate') && organization.data?.type === 'negocio')
   // `cultural-event/` no filtra por organizador: se cuentan los suyos entre los que ve el equipo.
-  const events = useEvents({}, session.can('content.moderate'))
+  const events = useEvents({ organizerId: organizationId }, session.can('content.moderate') && !!organization.data && organization.data.type !== 'negocio')
   const campaigns = useBadgeCampaigns(organizationId)
   const statements = useStatements(
     { businessId: organizationId, status: 'pending', pageSize: 100 },
@@ -192,7 +192,7 @@ export function OrganizationDetailPage() {
               <div>
                 <dt className="text-small text-muted">Eventos</dt>
                 <dd className="text-lead font-semibold text-ink">
-                  {plural(events.data?.filter((event) => event.organizer.id === organizationId).length ?? 0, 'evento', 'eventos')}
+                  {plural(events.data?.length ?? 0, 'evento', 'eventos')}
                 </dd>
               </div>
               <div>

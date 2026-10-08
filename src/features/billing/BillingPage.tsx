@@ -1,8 +1,9 @@
 ﻿import { ChevronDown, Receipt } from 'lucide-react'
 import { useState } from 'react'
 import { EmptyState, ErrorState, PageHeader, Pager, SkeletonRows, Tag } from '@/components/ui'
-import { useStatements } from '@/data/hooks/use-billing'
+import { useStatements, useTariffs } from '@/data/hooks/use-billing'
 import { MONTHLY_STATEMENT_STATUS_LABELS } from '@/data/models'
+import { TARIFF_CODES } from '@/data/schemas/finance-api.schema'
 import { STATEMENT_TONES, statementMonth } from '@/features/admin/finance/lib/statements'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { formatDateTime, formatMoney } from '@/lib/format'
@@ -24,6 +25,8 @@ export function BillingPage() {
         title="Pagos"
         description="Lo que le pagas a K'Plan, mes por mes: la insignia de tu lugar y los cupones que validaste. El equipo de K'Plan te contacta para cobrarlo."
       />
+
+      <TariffsPanel />
 
       {statements.isPending ? (
         <SkeletonRows rows={4} />
@@ -70,5 +73,35 @@ export function BillingPage() {
         </>
       )}
     </div>
+  )
+}
+
+/** Las tarifas vigentes (`pricing/`): lo que se suma a cada estado de cuenta. */
+function TariffsPanel() {
+  const tariffs = useTariffs()
+  if (!tariffs.data) return null
+  const value = (code: string) => tariffs.data.find((tariff) => tariff.code === code)?.value
+  const rows = [
+    { code: TARIFF_CODES.badge, label: 'Insignia de tu lugar', value: value(TARIFF_CODES.badge), unit: 'al mes' },
+    { code: TARIFF_CODES.coupon, label: 'Cada cupón que validas', value: value(TARIFF_CODES.coupon), unit: 'por cupón' },
+  ].filter((row) => row.value !== undefined)
+  if (rows.length === 0) return null
+
+  return (
+    <section aria-labelledby="tariffs-title" className="rounded-kp border border-divider bg-surface px-5 py-4">
+      <h2 id="tariffs-title" className="text-body font-semibold text-ink">
+        Tarifas vigentes
+      </h2>
+      <dl className="mt-3 grid gap-x-8 gap-y-2 text-small sm:grid-cols-2">
+        {rows.map((row) => (
+          <div key={row.code} className="flex items-baseline justify-between gap-4">
+            <dt className="text-muted">{row.label}</dt>
+            <dd className="text-ink">
+              <span className="font-semibold tabular-nums">{formatMoney(row.value ?? 0)}</span> {row.unit}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   )
 }

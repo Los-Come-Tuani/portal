@@ -207,21 +207,25 @@ function EventFields({
             </Select>
           )}
         </Field>
-        <Field
-          label="Ciudad donde ocurre"
-          error={errors.cityId?.message}
-          hint={event ? 'La ciudad no se cambia: si se muda, cancélalo y programa otro.' : 'Puede ser otra que la tuya: una función que viaja a otra ciudad.'}
-        >
-          {(field) => (
-            <Select {...field} value={cityId} disabled={!!event} onChange={(change) => chooseCity(change.target.value)}>
-              {activeCities.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
+        {event ? (
+          <div className="flex flex-col gap-1">
+            <p className="text-small font-medium text-ink">Ciudad donde ocurre</p>
+            <p className="rounded-kp bg-paper px-4 py-2.5 text-body text-ink">{city?.name ?? 'Sin ciudad'}</p>
+            <p className="text-small text-muted">La ciudad no se cambia: si se muda, cancélalo y programa otro.</p>
+          </div>
+        ) : (
+          <Field label="Ciudad donde ocurre" error={errors.cityId?.message} hint="Puede ser otra que la tuya: una función que viaja a otra ciudad.">
+            {(field) => (
+              <Select {...field} value={cityId} onChange={(change) => chooseCity(change.target.value)}>
+                {activeCities.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+        )}
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">

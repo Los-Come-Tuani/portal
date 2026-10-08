@@ -18,7 +18,13 @@ const TARIFF_FIELDS = { commission_rate: 'comision_reserva', badge_monthly: 'ins
 
 /** Las finanzas, con las mismas rutas y permisos que el API (docs/finanzas.md). */
 export const billingRoutes = [
-  route('GET', endpoints.pricing, ({ db }) => db.finance.tariffs.map(wireTariff), { permissions: ['billing.view'] }),
+  // El comercio también las lee: son lo que paga cada mes. Cambiarlas sigue siendo de `billing.manage`.
+  route('GET', endpoints.pricing, (context) => {
+    const { db } = context
+    const user = requireUser(context)
+    if (!hasPermission(db, user, ['billing.view']) && actorOrganization(db, user)?.type !== 'negocio') throw fail.forbidden()
+    return db.finance.tariffs.map(wireTariff)
+  }),
   route(
     'PUT',
     endpoints.pricing,

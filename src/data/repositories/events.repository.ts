@@ -12,6 +12,8 @@ export interface EventFilters {
   fromDate?: string
   toDate?: string
   cityId?: string
+  /** La institución o la alcaldía que los organiza. */
+  organizerId?: string
   search?: string
 }
 
@@ -40,6 +42,7 @@ export const eventsRepository = {
               from_date: filters.fromDate,
               to_date: filters.toDate,
               city_id: filters.cityId,
+              organizer_id: filters.organizerId,
               search: filters.search,
               page,
               page_size: pageSize,

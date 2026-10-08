@@ -74,7 +74,9 @@ export const eventRoutes = [
     const from = query.get('from_date')
     const to = query.get('to_date')
     const search = query.get('search')?.trim().toLowerCase() ?? ''
+    const organizerId = query.get('organizer_id')
     const shown = visibleEvents(db, requireUser(context))
+      .filter((event) => !organizerId || event.organizerId === organizerId)
       .filter((event) => !status || eventStatus(event) === status)
       .filter((event) => !cityId || wireCity(event.city).id === cityId)
       .filter((event) => !category || event.category === category)

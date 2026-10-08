@@ -41,7 +41,7 @@ export function useRedemptions(filters: RedemptionFilters = {}, enabled = true) 
 
 /** Busca un código entre los vigentes sin consumirlo, para confirmar qué cupón es. */
 export function useFindCoupon() {
-  return useMutation({ mutationFn: (code: string) => couponsRepository.findValid(code) })
+  return useMutation({ mutationFn: (code: string) => couponsRepository.find(code) })
 }
 
 /** Valida el código en el mostrador: el cupón queda usado. */
