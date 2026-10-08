@@ -88,6 +88,8 @@ export function navigationFor({ role, organization, can }: Session): NavEntry[] 
         can('users.view') && { to: paths.users, label: 'Todos los usuarios', end: true },
         can('staff.manage') && { to: paths.staff, label: 'Equipo interno' },
         can('staff.manage') && { to: paths.staffRoles, label: 'Roles y permisos' },
+        can('content.moderate', 'users.manage') && { to: paths.reports, label: 'Reportes' },
+        can('users.view') && { to: paths.sanctions, label: 'Sanciones' },
       ]),
       group('finanzas', 'Finanzas', Wallet, [
         can('billing.view') && { to: paths.collections, label: 'Cobros' },

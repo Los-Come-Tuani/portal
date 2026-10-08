@@ -22,7 +22,7 @@ import type {
 } from '../models'
 import type { MockEvent } from './services/agenda'
 import type { MockFinance } from './services/finance'
-import type { MockDispute } from './services/moderation'
+import type { MockDispute, MockReport, MockSanction } from './services/moderation'
 import type { MockCampaign, MockCouponCode } from './services/rewards'
 import type { MockApplication, MockFiles } from './services/applications'
 import type { MockProvider } from './services/providers'
@@ -135,8 +135,10 @@ export interface MockDatabase {
   pricing: Pricing
   /** Pagos, retiros, tarifas y estados de cuenta de F8, con las reglas del API. */
   finance: MockFinance
-  /** Las reseñas impugnadas (F7), con las reglas del API. */
+  /** Las reseñas impugnadas (F7), los reportes y las sanciones (F8), con las reglas del API. */
   reviewDisputes: MockDispute[]
+  reports: MockReport[]
+  sanctions: MockSanction[]
 }
 
 let database: MockDatabase | null = null

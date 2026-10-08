@@ -215,6 +215,17 @@ export const endpoints = {
     list: '/review-dispute/',
     resolve: (disputeId: string) => `/review-dispute/${id(disputeId)}/resolve/`,
   },
+  /** Los reportes (F8): la bandeja la ven `content.moderate` o `users.manage`. */
+  report: {
+    list: '/report/',
+    reasons: '/report/reason/',
+    resolve: (reportId: string) => `/report/${id(reportId)}/resolve/`,
+  },
+  /** Las sanciones (F8): las ve `users.view`; crearlas y levantarlas pide `users.manage`. */
+  sanction: {
+    list: '/sanction/',
+    lift: (sanctionId: string) => `/sanction/${id(sanctionId)}/lift/`,
+  },
   visitEvents: '/api/visit-events',
   /** Sólo existe en el modo demo. */
   demoReset: '/api/demo/reset',

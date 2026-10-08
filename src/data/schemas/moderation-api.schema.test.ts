@@ -1,5 +1,66 @@
 import { describe, expect, it } from 'vitest'
-import { apiDisputePageSchema, apiDisputeSchema, toDispute, toDisputePage } from './moderation-api.schema'
+import { apiDisputePageSchema, apiDisputeSchema, apiReportSchema, apiSanctionSchema, sanctionBody, toDispute, toDisputePage, toReport, toSanction } from './moderation-api.schema'
+
+describe('un reporte de la bandeja', () => {
+  it('trae a qué apunta, el motivo y quién lo hizo', () => {
+    const report = toReport(
+      apiReportSchema.parse({
+        id: 'r1',
+        target: { kind: 'user', id: 'u1', label: 'Pedro' },
+        reason: { code: 'otro', label: 'Otro', requires_text: true },
+        note: 'Me escribió fuera del chat.',
+        reporter: 'Ana',
+        status: 'pending',
+        created_at: '2026-10-07T15:00:00Z',
+        resolved_at: null,
+        resolution_note: '',
+      }),
+    )
+    expect(report).toMatchObject({ target: { kind: 'user', id: 'u1', label: 'Pedro' }, reason: { requiresText: true }, reporter: 'Ana', resolvedAt: null })
+  })
+
+  it('una reseña borrada llega sin id', () => {
+    expect(
+      apiReportSchema.safeParse({
+        id: 'r2',
+        target: { kind: 'review', id: null, label: '' },
+        reason: { code: 'acoso', label: 'Acoso', requires_text: false },
+        note: '',
+        reporter: 'Ana',
+        status: 'dismissed',
+        created_at: '2026-10-07T15:00:00Z',
+        resolved_at: '2026-10-08T15:00:00Z',
+        resolution_note: 'Ya no existe.',
+      }).success,
+    ).toBe(true)
+  })
+})
+
+describe('una sanción', () => {
+  it('pasa con su vigencia y sin fecha de fin si dura hasta que se levante', () => {
+    const sanction = toSanction(
+      apiSanctionSchema.parse({
+        id: 's1',
+        user_id: 'u1',
+        user_name: 'Pedro',
+        kind: 'suspension',
+        reason: 'Acoso a turistas.',
+        starts_at: '2026-10-07T15:00:00Z',
+        ends_at: null,
+        created_by: 'Equipo',
+        report_id: 'r1',
+        lifted_at: null,
+        active: true,
+      }),
+    )
+    expect(sanction).toMatchObject({ kind: 'suspension', endsAt: null, reportId: 'r1', active: true })
+  })
+
+  it('los días sólo viajan en una suspensión, y el reporte si lo hay', () => {
+    expect(sanctionBody({ userId: 'u1', kind: 'suspension', reason: ' Acoso. ', days: 7, reportId: 'r1' })).toEqual({ user_id: 'u1', kind: 'suspension', reason: 'Acoso.', days: 7, report_id: 'r1' })
+    expect(sanctionBody({ userId: 'u1', kind: 'warning', reason: 'Primera vez.', days: 7, reportId: null })).toEqual({ user_id: 'u1', kind: 'warning', reason: 'Primera vez.' })
+  })
+})
 
 const apiDispute = {
   id: '0198-impugnacion',

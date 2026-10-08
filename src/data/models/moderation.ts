@@ -40,3 +40,70 @@ export interface ReviewDispute {
   resolvedAt: LocalDateTime | null
   note: string
 }
+
+// ── Reportes y sanciones (F8, docs/avisos.md) ─────────────────────────────
+
+export type ReportStatus = 'pending' | 'handled' | 'dismissed'
+
+export const REPORT_STATUS_LABELS: Record<ReportStatus, string> = {
+  pending: 'Por revisar',
+  handled: 'Se actuó',
+  dismissed: 'No procede',
+}
+
+export type ReportTargetKind = 'user' | 'review' | 'place' | 'event'
+
+export const REPORT_TARGET_LABELS: Record<ReportTargetKind, string> = {
+  user: 'Persona',
+  review: 'Reseña',
+  place: 'Lugar',
+  event: 'Evento',
+}
+
+/** Lo que alguien reportó: una persona, una reseña, un lugar o un evento. */
+export interface Report {
+  id: string
+  /** `label`: el nombre de la persona, del lugar o del evento, o un extracto de la reseña. */
+  target: { kind: ReportTargetKind; id: string | null; label: string }
+  reason: { code: string; label: string; requiresText: boolean }
+  note: string
+  reporter: string
+  status: ReportStatus
+  createdAt: LocalDateTime
+  resolvedAt: LocalDateTime | null
+  resolutionNote: string
+}
+
+export type SanctionKind = 'warning' | 'suspension' | 'expulsion'
+
+export const SANCTION_KIND_LABELS: Record<SanctionKind, string> = {
+  warning: 'Advertencia',
+  suspension: 'Suspensión',
+  expulsion: 'Expulsión',
+}
+
+/** Una sanción del equipo: suspender o expulsar corta de inmediato las sesiones de la persona. */
+export interface Sanction {
+  id: string
+  userId: string
+  userName: string
+  kind: SanctionKind
+  reason: string
+  startsAt: LocalDateTime
+  /** `null`: hasta que se levante (o para siempre, en una expulsión). */
+  endsAt: LocalDateTime | null
+  createdBy: string
+  reportId: string | null
+  liftedAt: LocalDateTime | null
+  /** Sigue vigente. */
+  active: boolean
+}
+
+export interface SanctionInput {
+  userId: string
+  kind: SanctionKind
+  reason: string
+  /** Sólo la suspensión: cuántos días dura; `null`, hasta que se levante. */
+  days: number | null
+  reportId: string | null
+}

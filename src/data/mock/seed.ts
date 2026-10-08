@@ -4,7 +4,7 @@ import { catalog, type AppCircuit } from './catalog'
 import type { MockCircuit, MockDatabase } from './db'
 import { categoryCode, toWireClock, type MockEvent } from './services/agenda'
 import { seedFinance } from './services/finance'
-import { seedDisputes } from './services/moderation'
+import { seedDisputes, seedReports } from './services/moderation'
 import { CODE_ALPHABET, type MockCampaign, type MockCouponCode } from './services/rewards'
 import { seedActivations, seedCampaigns } from './generators/activity'
 import { seedAdmissions, seedPlaceRequests } from './generators/admissions'
@@ -13,7 +13,7 @@ import { seedProviders } from './generators/providers'
 import { seedApplications } from './services/applications'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 15
+export const SCHEMA_VERSION = 16
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -254,5 +254,15 @@ export function seedDatabase(today: ISODate): MockDatabase {
     pricing,
     finance: seedFinance(today, admissions.organizations, guideNames, DEMO_TOURISTS),
     reviewDisputes: seedDisputes(today, guideNames, DEMO_TOURISTS),
+    reports: seedReports(
+      today,
+      {
+        user: admissions.users.filter((user) => user.role === 'guia').map((user) => ({ id: user.id, name: user.name }))[0] ?? null,
+        place: admissions.stops.map((stop) => ({ id: stop.id, name: stop.name }))[0] ?? null,
+        event: catalog.portalEvents.map((event) => ({ id: event.id, name: event.title }))[0] ?? null,
+      },
+      DEMO_TOURISTS,
+    ),
+    sanctions: [],
   }
 }

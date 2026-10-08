@@ -4,7 +4,7 @@ import type { OrganizationFilters } from '../repositories/organizations.reposito
 import type { PlaceRequestFilters } from '../repositories/place-requests.repository'
 import type { PaymentFilters, StatementFilters, WithdrawalFilters } from '../repositories/billing.repository'
 import type { CampaignFilters, RedemptionFilters } from '../repositories/coupons.repository'
-import type { DisputeFilters } from '../repositories/moderation.repository'
+import type { DisputeFilters, ReportFilters, SanctionFilters } from '../repositories/moderation.repository'
 import type { VisitFilters } from '../repositories/visits.repository'
 
 /** Todas las llaves de caché en un lugar, para invalidar sin adivinar. */
@@ -94,6 +94,8 @@ export const queryKeys = {
   moderation: {
     all: ['moderation'] as const,
     disputes: (filters: DisputeFilters) => ['moderation', 'disputes', filters] as const,
+    reports: (filters: ReportFilters) => ['moderation', 'reports', filters] as const,
+    sanctions: (filters: SanctionFilters) => ['moderation', 'sanctions', filters] as const,
   },
   /** La cola de guías y traductores (F5). */
   providers: {

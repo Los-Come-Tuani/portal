@@ -55,11 +55,17 @@ describe('menú del equipo según su rol', () => {
       'Contenido > Circuitos',
       'Contenido > Insignias',
     ])
-    expect(labels(navigationFor(teamMember('content.moderate')))).toEqual(['Contenido > Cupones', 'Contenido > Eventos', 'Contenido > Reseñas impugnadas'])
+    // Moderar también abre la bandeja de reportes.
+    expect(labels(navigationFor(teamMember('content.moderate')))).toEqual([
+      'Contenido > Cupones',
+      'Contenido > Eventos',
+      'Contenido > Reseñas impugnadas',
+      'Reportes',
+    ])
   })
 
   it('ver usuarios no da acceso al equipo ni a los roles, y administrar el equipo sí', () => {
-    expect(labels(navigationFor(teamMember('users.view')))).toEqual(['Todos los usuarios'])
+    expect(labels(navigationFor(teamMember('users.view')))).toEqual(['Usuarios > Todos los usuarios', 'Usuarios > Sanciones'])
     expect(labels(navigationFor(teamMember('staff.manage')))).toEqual([
       'Usuarios > Equipo interno',
       'Usuarios > Roles y permisos',
@@ -68,6 +74,8 @@ describe('menú del equipo según su rol', () => {
       'Usuarios > Todos los usuarios',
       'Usuarios > Equipo interno',
       'Usuarios > Roles y permisos',
+      'Usuarios > Reportes',
+      'Usuarios > Sanciones',
     ])
   })
 

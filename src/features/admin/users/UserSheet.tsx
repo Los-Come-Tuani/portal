@@ -1,9 +1,10 @@
-import { ArrowRight, KeyRound, Mail, Pencil } from 'lucide-react'
+import { ArrowRight, Gavel, KeyRound, Mail, Pencil } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { Avatar, Button, ConfirmDialog, Dialog, Field, Input, Tag, useToast } from '@/components/ui'
 import { ApiError, errorMessage } from '@/data/api/errors'
+import { useSanctions } from '@/data/hooks/use-moderation'
 import { useRenameAccount, useSendPasswordReset, useSetAccountStatus } from '@/data/hooks/use-users'
 import {
   ORGANIZATION_KIND_LABELS,
@@ -15,6 +16,8 @@ import {
   type ProviderRequestSummary,
   type RequestStatus,
 } from '@/data/models'
+import { SanctionDialog } from '@/features/admin/moderation/SanctionDialog'
+import { SanctionList } from '@/features/admin/moderation/SanctionList'
 import { useSession } from '@/features/auth/use-auth'
 import { cn } from '@/lib/cn'
 import { nowLocalDateTime } from '@/lib/dates'
@@ -52,6 +55,10 @@ export function UserSheet({ account, application, onClose, onChange }: UserSheet
   const suspended = account?.status === 'suspended'
   // Una invitación sin aceptar, una cuenta sin activar o que se está cerrando no tienen acceso que cambiar.
   const canToggle = canManage && (account?.status === 'active' || suspended)
+  // Una cuenta de superusuario sólo la sanciona otro superusuario: el API responde 403 y lo dice.
+  const canSanction = canManage && account?.status !== 'pending' && account?.status !== 'closing'
+  const [sanctioning, setSanctioning] = useState(false)
+  const sanctions = useSanctions({ userId: account?.id, pageSize: 10 }, !!account && session.can('users.view'))
 
   const close = () => {
     setRenaming(false)
@@ -99,6 +106,11 @@ export function UserSheet({ account, application, onClose, onChange }: UserSheet
             <Button variant="ghost" icon={<KeyRound size={16} />} loading={reset.isPending} onClick={sendReset} className="mr-auto">
               Mandar código de contraseña
             </Button>
+            {canSanction && (
+              <Button variant="secondary" icon={<Gavel size={16} />} onClick={() => setSanctioning(true)}>
+                Sancionar
+              </Button>
+            )}
             {canToggle &&
               (suspended ? (
                 <Button onClick={() => setConfirming(true)}>Reactivar cuenta</Button>
@@ -198,8 +210,17 @@ export function UserSheet({ account, application, onClose, onChange }: UserSheet
               to={session.can('staff.manage') ? paths.staff : undefined}
             />
           )}
+          {sanctions.data && sanctions.data.results.length > 0 && (
+            <section className="flex flex-col gap-2" aria-labelledby="sanciones-de-la-cuenta">
+              <h3 id="sanciones-de-la-cuenta" className="text-small font-semibold text-muted">
+                Sanciones
+              </h3>
+              <SanctionList sanctions={sanctions.data.results} />
+            </section>
+          )}
         </div>
       )}
+      <SanctionDialog user={sanctioning && account ? { id: account.id, name: account.name } : null} onClose={() => setSanctioning(false)} />
 
       <ConfirmDialog
         open={confirming}

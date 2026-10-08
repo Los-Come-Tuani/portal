@@ -206,11 +206,24 @@ export const router = createBrowserRouter([
                 ],
               },
               {
+                element: <RequirePermission anyOf={['content.moderate', 'users.manage']} />,
+                children: [
+                  {
+                    path: 'reportes',
+                    lazy: async () => ({ Component: (await import('@/features/admin/moderation/ReportsPage')).ReportsPage }),
+                  },
+                ],
+              },
+              {
                 element: <RequirePermission anyOf={['users.view']} />,
                 children: [
                   {
                     path: 'usuarios',
                     lazy: async () => ({ Component: (await import('@/features/admin/users/UsersPage')).UsersPage }),
+                  },
+                  {
+                    path: 'sanciones',
+                    lazy: async () => ({ Component: (await import('@/features/admin/moderation/SanctionsPage')).SanctionsPage }),
                   },
                 ],
               },
