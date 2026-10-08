@@ -38,6 +38,12 @@ export const endpoints = {
     userRole: '/auth/user-role/',
     /** Suspende o reactiva una cuenta. */
     userStatus: '/auth/user-status/',
+    /** Le manda a una persona un código para crear otra contraseña. */
+    userPasswordReset: '/auth/user-password-reset/',
+    /** El directorio de cuentas ("Todos los usuarios"), paginado. */
+    accounts: '/auth/account/',
+    /** Una cuenta del directorio: `GET` y `PATCH` (solo el nombre). */
+    account: (userId: string) => `/auth/account/${id(userId)}/`,
     /** Manda un código de seis dígitos al correo: quien se postula verifica así que es suyo. */
     registerCode: '/auth/register-code/',
     /** Comprueba el código sin gastarlo, para avanzar en el formulario. */
@@ -133,12 +139,6 @@ export const endpoints = {
   placeRequests: {
     list: '/api/place-requests',
     decision: (requestId: string) => `/api/place-requests/${id(requestId)}/decision`,
-  },
-  /** Todas las cuentas (pantalla "Todos los usuarios"): el API todavía no tiene este directorio. */
-  users: {
-    list: '/api/users',
-    detail: (userId: string) => `/api/users/${id(userId)}`,
-    passwordReset: (userId: string) => `/api/users/${id(userId)}/password-reset`,
   },
   /**
    * La cola de guías y traductores (F5): quien revisa acepta o rechaza cada documento y pide

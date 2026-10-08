@@ -1,25 +1,25 @@
-import { ArrowRight, KeyRound, Mail, Phone } from 'lucide-react'
+import { ArrowRight, KeyRound, Mail, Pencil } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Avatar, Button, ConfirmDialog, Dialog, Tag, useToast } from '@/components/ui'
-import { errorMessage } from '@/data/api/errors'
-import { useSendPasswordReset, useUpdateUser } from '@/data/hooks/use-users'
+import { Avatar, Button, ConfirmDialog, Dialog, Field, Input, Tag, useToast } from '@/components/ui'
+import { ApiError, errorMessage } from '@/data/api/errors'
+import { useRenameAccount, useSendPasswordReset, useSetAccountStatus } from '@/data/hooks/use-users'
 import {
+  ORGANIZATION_KIND_LABELS,
   PROVIDER_STAGE_LABELS,
+  PROVIDER_STATUS_LABELS,
   REQUEST_STATUS_LABELS,
-  USER_STATUS_LABELS,
-  type Organization,
+  servicesLabel,
+  type Account,
   type ProviderRequestSummary,
   type RequestStatus,
-  type StaffRole,
-  type User,
 } from '@/data/models'
 import { useSession } from '@/features/auth/use-auth'
 import { cn } from '@/lib/cn'
 import { nowLocalDateTime } from '@/lib/dates'
-import { formatDate, formatDateTime } from '@/lib/format'
-import { SUSPEND_EFFECT, USER_STATUS_TONES, userKind, usesApp } from './status'
+import { formatDate } from '@/lib/format'
+import { ACCOUNT_STATUS_TONES, accountKind, accountStatusLabel, suspendEffect, usesApp } from './status'
 
 const APPLICATION_DOT: Record<RequestStatus, string> = {
   submitted: 'border border-ink/40',
@@ -29,125 +29,152 @@ const APPLICATION_DOT: Record<RequestStatus, string> = {
 }
 
 interface UserSheetProps {
-  user: User | null
-  organization: Organization | undefined
-  staffRole: StaffRole | undefined
+  account: Account | null
   /** Su solicitud de guía o traductor más reciente. */
   application: ProviderRequestSummary | undefined
   onClose: () => void
+  /** La cuenta como quedó después de corregirle el nombre. */
+  onChange: (account: Account) => void
 }
 
-export function UserSheet({ user, organization, staffRole, application, onClose }: UserSheetProps) {
+export function UserSheet({ account, application, onClose, onChange }: UserSheetProps) {
   const session = useSession()
-  const update = useUpdateUser()
+  const setStatus = useSetAccountStatus()
   const reset = useSendPasswordReset()
   const toast = useToast()
   const [confirming, setConfirming] = useState(false)
+  const [renaming, setRenaming] = useState(false)
 
-  const isSelf = user?.id === session.user.id
-  const canManage = !!user && !isSelf && (user.role === 'admin' ? session.can('staff.manage') : session.can('users.manage'))
-  const suspended = user?.status === 'suspended'
+  const isSelf = account?.id === session.user.id
+  // Suspender, reactivar y mandar el código piden `users.manage`, también para el equipo.
+  const canManage = !!account && !isSelf && session.can('users.manage')
+  const canRename = !!account && !isSelf && (account.role === 'admin' ? session.can('staff.manage') : session.can('users.manage'))
+  const suspended = account?.status === 'suspended'
+  // Una invitación sin aceptar, una cuenta sin activar o que se está cerrando no tienen acceso que cambiar.
+  const canToggle = canManage && (account?.status === 'active' || suspended)
+
+  const close = () => {
+    setRenaming(false)
+    onClose()
+  }
 
   const changeStatus = () => {
-    if (!user) return
+    if (!account) return
     const status = suspended ? 'active' : 'suspended'
-    update.mutate(
-      { id: user.id, input: { status } },
+    setStatus.mutate(
+      { id: account.id, status },
       {
         onSuccess: () => {
           setConfirming(false)
-          toast({ title: status === 'suspended' ? `Suspendiste la cuenta de ${user.name}` : `Reactivaste la cuenta de ${user.name}` })
-          onClose()
+          toast({ title: status === 'suspended' ? `Suspendiste la cuenta de ${account.name}` : `Reactivaste la cuenta de ${account.name}` })
+          close()
         },
-        onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
+        onError: (error) => {
+          setConfirming(false)
+          toast({ title: errorMessage(error), tone: 'error' })
+        },
       },
     )
   }
 
   const sendReset = () => {
-    if (!user) return
-    reset.mutate(user.id, {
-      onSuccess: () => toast({ title: 'Enlace enviado', description: `Le llegó a ${user.email} para crear una contraseña nueva.` }),
+    if (!account) return
+    reset.mutate(account.id, {
+      onSuccess: () => toast({ title: 'Código enviado', description: `Le llegó a ${account.email} para crear una contraseña nueva.` }),
       onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
     })
   }
 
   return (
     <Dialog
-      open={user !== null}
-      onClose={onClose}
+      open={account !== null}
+      onClose={close}
       variant="sheet"
-      title={user?.name ?? ''}
-      description={user ? `${userKind(user)} · ${usesApp(user) ? 'usa la app' : 'entra al portal'}` : undefined}
+      title={account?.name ?? ''}
+      description={account ? `${accountKind(account)}${account.role === null ? '' : ` · ${usesApp(account) ? 'usa la app' : 'entra al portal'}`}` : undefined}
       footer={
-        user &&
+        account &&
         (canManage ? (
           <>
             <Button variant="ghost" icon={<KeyRound size={16} />} loading={reset.isPending} onClick={sendReset} className="mr-auto">
-              Enviar enlace de contraseña
+              Mandar código de contraseña
             </Button>
-            {suspended ? (
-              <Button onClick={() => setConfirming(true)}>Reactivar cuenta</Button>
-            ) : (
-              <Button variant="danger" onClick={() => setConfirming(true)}>
-                Suspender cuenta
-              </Button>
-            )}
+            {canToggle &&
+              (suspended ? (
+                <Button onClick={() => setConfirming(true)}>Reactivar cuenta</Button>
+              ) : (
+                <Button variant="danger" onClick={() => setConfirming(true)}>
+                  Suspender cuenta
+                </Button>
+              ))}
           </>
         ) : (
           <p className="mr-auto text-small text-muted">
-            {isSelf ? 'Es tu cuenta: los cambios los hace otra persona con permiso.' : 'Tu rol puede verla, pero no cambiarla.'}
+            {isSelf ? 'Es tu cuenta: tus datos se cambian en Seguridad y tu perfil.' : 'Tu rol puede verla, pero no cambiarla.'}
           </p>
         ))
       }
     >
-      {user && (
+      {account && (
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-4">
-            <Avatar name={user.name} size="lg" />
+            <Avatar name={account.name} size="lg" />
             <div className="flex flex-wrap items-center gap-2">
-              <Tag tone={USER_STATUS_TONES[user.status]}>{USER_STATUS_LABELS[user.status]}</Tag>
-              {staffRole && <Tag tone="ink">{staffRole.name}</Tag>}
+              <Tag tone={ACCOUNT_STATUS_TONES[account.status]}>{accountStatusLabel(account.status)}</Tag>
+              {account.staffRole && <Tag tone="ink">{account.staffRole.name}</Tag>}
+              {account.superuser && <Tag tone="ink">Superusuario</Tag>}
             </div>
+            {canRename && !renaming && (
+              <Button size="sm" variant="ghost" icon={<Pencil size={15} />} onClick={() => setRenaming(true)} className="ml-auto">
+                Corregir nombre
+              </Button>
+            )}
           </div>
+
+          {renaming && (
+            <RenameForm
+              key={account.id}
+              account={account}
+              onDone={(renamed) => {
+                setRenaming(false)
+                if (renamed) onChange(renamed)
+              }}
+            />
+          )}
 
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-body">
             <div className="col-span-2">
               <dt className="text-small text-muted">Correo</dt>
               <dd className="flex items-center gap-2 text-ink">
                 <Mail size={15} className="text-muted" aria-hidden="true" />
-                <a href={`mailto:${user.email}`} className="truncate underline decoration-outline underline-offset-4 hover:decoration-ink">
-                  {user.email}
+                <a href={`mailto:${account.email}`} className="truncate underline decoration-outline underline-offset-4 hover:decoration-ink">
+                  {account.email}
                 </a>
               </dd>
             </div>
             <div>
-              <dt className="text-small text-muted">Teléfono</dt>
-              <dd className="flex items-center gap-2 text-ink tabular-nums">
-                <Phone size={15} className="text-muted" aria-hidden="true" />
-                {user.phone || 'No lo dejó'}
-              </dd>
-            </div>
-            <div>
               <dt className="text-small text-muted">Ciudad</dt>
-              <dd className="text-ink">{user.city ?? '—'}</dd>
+              <dd className="text-ink">{account.city ?? '—'}</dd>
             </div>
             <div>
               <dt className="text-small text-muted">Cuenta creada</dt>
-              <dd className="text-ink tabular-nums">{formatDate(user.createdAt)}</dd>
-            </div>
-            <div>
-              <dt className="text-small text-muted">Último acceso</dt>
-              <dd className="text-ink tabular-nums">{user.lastSeenAt ? formatDateTime(user.lastSeenAt) : 'Todavía no entra'}</dd>
+              <dd className="text-ink tabular-nums">{formatDate(account.createdAt)}</dd>
             </div>
           </dl>
 
-          {organization && (
+          {account.organization && (
             <ContextLink
               label="Organización"
-              title={organization.name}
-              detail={`${organization.kind} · ${organization.city}`}
-              to={session.can('organizations.review', 'organizations.manage') ? paths.organization(organization.id) : undefined}
+              title={account.organization.name}
+              detail={`${ORGANIZATION_KIND_LABELS[account.organization.kind]} · ${account.organization.verified ? 'verificada' : 'en revisión'}`}
+              to={session.can('organizations.review', 'organizations.manage') ? paths.organization(account.organization.id) : undefined}
+            />
+          )}
+          {account.provider && !application && (
+            <ContextLink
+              label="Perfil de prestador"
+              title={servicesLabel(account.provider.services)}
+              detail={PROVIDER_STATUS_LABELS[account.provider.status]}
             />
           )}
           {application && (
@@ -163,11 +190,11 @@ export function UserSheet({ user, organization, staffRole, application, onClose 
               to={paths.guideApplication(application.id)}
             />
           )}
-          {staffRole && (
+          {account.staffRole && (
             <ContextLink
               label="Rol interno"
-              title={staffRole.name}
-              detail={staffRole.description}
+              title={account.staffRole.name}
+              detail="Lo que puede hacer en el portal."
               to={session.can('staff.manage') ? paths.staff : undefined}
             />
           )}
@@ -177,15 +204,72 @@ export function UserSheet({ user, organization, staffRole, application, onClose 
       <ConfirmDialog
         open={confirming}
         tone={suspended ? 'primary' : 'danger'}
-        title={suspended ? `Reactivar a ${user?.name}` : `Suspender a ${user?.name}`}
+        title={suspended ? `Reactivar a ${account?.name}` : `Suspender a ${account?.name}`}
         confirmLabel={suspended ? 'Reactivar' : 'Suspender'}
-        loading={update.isPending}
+        loading={setStatus.isPending}
         onClose={() => setConfirming(false)}
         onConfirm={changeStatus}
       >
-        {user && (suspended ? 'Vuelve a entrar con su correo y contraseña de siempre.' : SUSPEND_EFFECT[user.role])}
+        {account && (suspended ? 'Vuelve a entrar con su correo y contraseña de siempre.' : suspendEffect(account))}
       </ConfirmDialog>
     </Dialog>
+  )
+}
+
+function RenameForm({ account, onDone }: { account: Account; onDone: (renamed: Account | null) => void }) {
+  const rename = useRenameAccount()
+  const toast = useToast()
+  const [firstName, setFirstName] = useState(account.firstName)
+  const [lastName, setLastName] = useState(account.lastName)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const submit = () => {
+    if (!firstName.trim()) {
+      setErrors({ firstName: 'Escribe su nombre' })
+      return
+    }
+    rename.mutate(
+      { id: account.id, input: { firstName, lastName } },
+      {
+        onSuccess: (renamed) => {
+          toast({ title: 'Nombre corregido' })
+          onDone(renamed)
+        },
+        onError: (error) => {
+          if (error instanceof ApiError && Object.keys(error.fieldErrors).length > 0) setErrors(error.fieldErrors)
+          else toast({ title: errorMessage(error), tone: 'error' })
+        },
+      },
+    )
+  }
+
+  return (
+    <form
+      noValidate
+      className="flex flex-col gap-4 rounded-kp border border-divider p-4"
+      onSubmit={(event) => {
+        event.preventDefault()
+        submit()
+      }}
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Nombre" error={errors.firstName}>
+          {(control) => <Input {...control} value={firstName} maxLength={100} onChange={(event) => setFirstName(event.target.value)} />}
+        </Field>
+        <Field label="Apellido" optional error={errors.lastName}>
+          {(control) => <Input {...control} value={lastName} maxLength={100} onChange={(event) => setLastName(event.target.value)} />}
+        </Field>
+      </div>
+      <p className="text-caption text-muted">El correo no se cambia desde aquí.</p>
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" onClick={() => onDone(null)} disabled={rename.isPending}>
+          Cancelar
+        </Button>
+        <Button type="submit" loading={rename.isPending}>
+          Guardar nombre
+        </Button>
+      </div>
+    </form>
   )
 }
 

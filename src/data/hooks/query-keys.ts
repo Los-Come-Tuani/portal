@@ -1,10 +1,9 @@
-import type { ProviderQueueFilters, QueueFilters } from '../models'
+import type { AccountFilters, ProviderQueueFilters, QueueFilters } from '../models'
 import type { EventFilters } from '../repositories/events.repository'
 import type { OrganizationFilters } from '../repositories/organizations.repository'
 import type { PlaceRequestFilters } from '../repositories/place-requests.repository'
 import type { RedemptionFilters } from '../repositories/coupons.repository'
 import type { StopFilters } from '../repositories/places.repository'
-import type { UserFilters } from '../repositories/users.repository'
 import type { VisitFilters } from '../repositories/visits.repository'
 
 /** Todas las llaves de caché en un lugar, para invalidar sin adivinar. */
@@ -66,10 +65,10 @@ export const queryKeys = {
     all: ['visits'] as const,
     events: (filters: VisitFilters) => ['visits', 'events', filters] as const,
   },
-  users: {
-    all: ['users'] as const,
-    list: (filters: UserFilters) => ['users', 'list', filters] as const,
-    detail: (userId: string) => ['users', 'detail', userId] as const,
+  /** El directorio de cuentas ("Todos los usuarios"). */
+  accounts: {
+    all: ['accounts'] as const,
+    list: (filters: AccountFilters) => ['accounts', 'list', filters] as const,
   },
   staffRoles: ['staff-roles'] as const,
   staffMembers: ['staff-members'] as const,

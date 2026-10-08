@@ -1,12 +1,13 @@
 import { z } from 'zod'
 import { todayISO } from '@/lib/dates'
-import { uniqueSlug } from '@/lib/slug'
+import { slugify, uniqueSlug } from '@/lib/slug'
 import { endpoints } from '../../api/endpoints'
-import { PERMISSIONS, type User, type UserRole, type UserStatus } from '../../models'
-import { userUpdateSchema } from '../../schemas/access.schema'
+import { PERMISSIONS, type User } from '../../models'
 import type { MockDatabase, MockStaffRole } from '../db'
 import { fail, MockHttpError, parseBody, requireUser, route, type MockContext } from '../http'
 import { hasPermission } from '../services/access'
+import { CITIES, cityByName } from '../services/application-catalog'
+import type { MockProvider } from '../services/providers'
 
 const SUPER_ADMIN = 'role-super-admin'
 
@@ -34,77 +35,136 @@ function activeSuperAdmins(db: MockDatabase): User[] {
 
 const field = (status: number, message: string, name: string) => new MockHttpError(status, message, { [name]: message })
 
-// ── Todas las cuentas ("Todos los usuarios"): solo existe en la demo ────
+// ── El directorio de cuentas, con el formato del API (docs/roles.md) ────
+
+const DEFAULT_PAGE_SIZE = 20
+
+/** Como el API: un guía cuya solicitud sigue en revisión todavía no tiene grupo, ni papel. */
+function apiRoleOf(user: User, provider: MockProvider | undefined): string | null {
+  if (user.role !== 'guia') return user.role
+  if (provider) {
+    if (provider.status === 'unaccredited' || provider.status === 'in_review') return null
+    return provider.services.includes('guia') ? 'guia' : 'traductor'
+  }
+  return user.serviceRole === 'translator' ? 'traductor' : 'guia'
+}
+
+function wireCity(name: string | null | undefined) {
+  if (!name) return null
+  const city = cityByName(name)
+  return city ? { id: city.id, code: city.code, name: city.name } : { id: `city-${slugify(name)}`, code: slugify(name), name }
+}
+
+function wireAccount(db: MockDatabase, user: User) {
+  const staffRole = db.staffRoles.find((item) => item.id === user.staffRoleId)
+  const organization = db.organizations.find((item) => item.id === user.organizationId)
+  const provider = db.providers.find((item) => item.userId === user.id)
+  const providerCity = provider?.cityId ? CITIES.find((city) => city.id === provider.cityId)?.name : undefined
+  const [firstName = '', ...rest] = user.name.split(' ')
+  return {
+    id: user.id,
+    email: user.email,
+    first_name: firstName,
+    last_name: rest.join(' '),
+    name: user.name,
+    status: user.status === 'invited' ? 'pending' : user.status,
+    verified: user.status !== 'invited',
+    created_at: `${user.createdAt}T12:00:00Z`,
+    role: apiRoleOf(user, provider),
+    superuser: false,
+    staff_role: user.role === 'admin' && staffRole ? { id: staffRole.id, name: staffRole.name } : null,
+    organization: organization
+      ? {
+          id: organization.id,
+          kind: organization.type === 'negocio' ? 'business' : 'municipality',
+          name: organization.name,
+          verified: organization.status === 'active',
+        }
+      : null,
+    provider: provider ? { id: provider.id, status: provider.status, services: provider.services } : null,
+    city: wireCity(organization?.city ?? providerCity ?? user.city),
+  }
+}
+
+/** Por nombre, sin importar tildes, o por correo. */
+const fold = (value: string) => value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
+
+const nameBody = z
+  .object({
+    first_name: z.string().trim().min(1).max(100).optional(),
+    last_name: z.string().trim().max(100).optional(),
+    email: z.unknown().optional(),
+  })
+  .refine((value) => value.email === undefined, { error: 'El correo no se cambia aquí.', path: ['email'] })
 
 export const userRoutes = [
   route(
     'GET',
-    endpoints.users.list,
+    endpoints.auth.accounts,
     (context) => {
-      const role = context.query.get('role') as UserRole | null
-      const status = context.query.get('status') as UserStatus | null
-      const search = context.query.get('q')?.trim().toLowerCase()
-      return context.db.users
+      const { db, query } = context
+      const role = query.get('role')
+      const status = query.get('status')
+      const search = fold(query.get('search')?.trim() ?? '')
+      const pageSize = Math.min(100, Math.max(1, Number(query.get('page_size')) || DEFAULT_PAGE_SIZE))
+      const requested = Math.max(1, Number(query.get('page')) || 1)
+      const shown = db.users
         .filter((item) => canSee(context, item))
+        .filter((item) => !search || fold(`${item.name} ${item.email}`).includes(search))
+        .sort((a, b) => a.name.localeCompare(b.name, 'es'))
+        .map((item) => wireAccount(db, item))
         .filter((item) => !role || item.role === role)
         .filter((item) => !status || item.status === status)
-        .filter((item) => !search || `${item.name} ${item.email}`.toLowerCase().includes(search))
-        .sort((a, b) => a.name.localeCompare(b.name, 'es'))
+      const pages = Math.max(1, Math.ceil(shown.length / pageSize))
+      return {
+        next: requested < pages,
+        previous: requested > 1,
+        elements: shown.length,
+        pages,
+        current: requested,
+        results: shown.slice((requested - 1) * pageSize, requested * pageSize),
+      }
     },
     { permissions: ['users.view', 'staff.manage'] },
   ),
   route(
     'GET',
-    endpoints.users.detail(':id'),
+    endpoints.auth.account(':id'),
     (context) => {
       const target = findUser(context.db, context.params.id)
       if (!canSee(context, target)) throw fail.notFound('No encontramos a esa persona.')
-      return target
+      return wireAccount(context.db, target)
     },
     { permissions: ['users.view', 'staff.manage'] },
   ),
   route(
     'PATCH',
-    endpoints.users.detail(':id'),
+    endpoints.auth.account(':id'),
     (context) => {
       const { db, params, body } = context
       const actor = requireUser(context)
       const target = findUser(db, params.id)
-      const input = parseBody(userUpdateSchema, body)
-      if (target.id === actor.id) throw fail.conflict('No puedes cambiar tu propia cuenta desde aquí')
-
-      const isStaff = target.role === 'admin'
-      const needed = isStaff ? (['staff.manage'] as const) : (['users.manage'] as const)
+      if (!canSee(context, target)) throw fail.notFound('No encontramos a esa persona.')
+      if (target.id === actor.id) throw new MockHttpError(403, 'Tu nombre se cambia desde tu perfil.')
+      const needed = target.role === 'admin' ? (['staff.manage'] as const) : (['users.manage'] as const)
       if (!hasPermission(db, actor, needed)) throw fail.forbidden()
-
-      const losesSuperAdmin =
-        target.staffRoleId === SUPER_ADMIN &&
-        ((input.staffRoleId !== undefined && input.staffRoleId !== SUPER_ADMIN) || input.status === 'suspended')
-      if (losesSuperAdmin && activeSuperAdmins(db).length <= 1) {
-        throw fail.conflict('Tiene que quedar al menos un super admin activo')
-      }
-
-      if (input.staffRoleId !== undefined) {
-        if (!isStaff) throw fail.invalid('Sólo el equipo de K\'Plan tiene rol interno')
-        target.staffRoleId = findRole(db, input.staffRoleId).id
-      }
-      if (input.status !== undefined) {
-        if (input.status === 'invited' && target.status !== 'invited') throw fail.invalid('Esa persona ya entró al portal')
-        target.status = input.status
-      }
-      return target
+      const input = parseBody(nameBody, body)
+      const [firstName = '', ...rest] = target.name.split(' ')
+      target.name = `${input.first_name ?? firstName} ${input.last_name ?? rest.join(' ')}`.trim()
+      return wireAccount(db, target)
     },
     { permissions: ['users.manage', 'staff.manage'] },
   ),
   route(
     'POST',
-    endpoints.users.passwordReset(':id'),
+    endpoints.auth.userPasswordReset,
     (context) => {
-      const target = findUser(context.db, context.params.id)
+      const { user_id: userId } = parseBody(z.object({ user_id: z.string().min(1) }), context.body)
+      const target = findUser(context.db, userId)
       if (!canSee(context, target)) throw fail.notFound('No encontramos a esa persona.')
       return undefined
     },
-    { permissions: ['users.manage', 'staff.manage'] },
+    { permissions: ['users.manage'] },
   ),
 ]
 

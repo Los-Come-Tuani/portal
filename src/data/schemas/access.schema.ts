@@ -13,10 +13,3 @@ export const staffInviteSchema = z.object({
   email: z.email({ error: 'Escribe un correo válido' }),
   staffRoleId: z.string().min(1, { error: 'Elige un rol' }),
 })
-
-export const userUpdateSchema = z
-  .object({
-    status: z.enum(['active', 'suspended', 'invited']).optional(),
-    staffRoleId: z.string().min(1).optional(),
-  })
-  .refine((value) => value.status !== undefined || value.staffRoleId !== undefined, { error: 'No hay cambios' })

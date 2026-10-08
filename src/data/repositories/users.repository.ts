@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import { endpoints } from '../api/endpoints'
 import { http } from '../api/http-client'
-import type { StaffInviteInput, StaffMember, StaffRole, StaffRoleInput, User, UserRole, UserStatus, UserUpdate } from '../models'
+import type { Account, AccountFilters, AccountNameInput, Page, StaffInviteInput, StaffMember, StaffRole, StaffRoleInput } from '../models'
+import { accountNameBody, apiAccountPageSchema, apiAccountSchema, toAccount, toAccountPage } from '../schemas/account-api.schema'
 import {
   apiInviteSchema,
   apiMemberSchema,
@@ -13,18 +14,28 @@ import {
   toRole,
 } from '../schemas/team-api.schema'
 
-export interface UserFilters {
-  role?: UserRole
-  status?: UserStatus
-  q?: string
-}
+/**
+ * Todas las cuentas ("Todos los usuarios", docs/roles.md del repo del API). Los filtros los aplica
+ * el API; suspender, reactivar y mandar un código de contraseña siguen en sus propias rutas.
+ */
+export const accountsRepository = {
+  async list({ role, status, search, page, pageSize }: AccountFilters = {}): Promise<Page<Account>> {
+    const data = await http.get<unknown>(endpoints.auth.accounts, {
+      query: { role, status, search: search?.trim(), page, page_size: pageSize },
+    })
+    return toAccountPage(apiAccountPageSchema.parse(data))
+  },
 
-/** Todas las cuentas ("Todos los usuarios"). El API todavía no tiene este directorio: solo hay demo. */
-export const usersRepository = {
-  list: (filters: UserFilters = {}) => http.get<User[]>(endpoints.users.list, { query: { ...filters } }),
-  get: (userId: string) => http.get<User>(endpoints.users.detail(userId)),
-  update: (userId: string, input: UserUpdate) => http.patch<User>(endpoints.users.detail(userId), { body: input }),
-  sendPasswordReset: (userId: string) => http.post<void>(endpoints.users.passwordReset(userId)),
+  async rename(userId: string, input: AccountNameInput): Promise<Account> {
+    return toAccount(apiAccountSchema.parse(await http.patch<unknown>(endpoints.auth.account(userId), { body: accountNameBody(input) })))
+  },
+
+  /** Suspender corta de inmediato sus sesiones; la respuesta es la de una persona del equipo y no se lee. */
+  async setStatus(userId: string, status: 'active' | 'suspended'): Promise<void> {
+    await http.post<unknown>(endpoints.auth.userStatus, { body: { user_id: userId, status } })
+  },
+
+  sendPasswordReset: (userId: string) => http.post<void>(endpoints.auth.userPasswordReset, { body: { user_id: userId } }),
 }
 
 /** Los roles del equipo (docs/roles.md del repo del API). */

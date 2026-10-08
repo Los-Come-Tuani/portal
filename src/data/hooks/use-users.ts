@@ -1,31 +1,46 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { StaffInviteInput, StaffRoleInput, UserUpdate } from '../models'
-import { staffRepository, staffRolesRepository, usersRepository, type UserFilters } from '../repositories/users.repository'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { AccountFilters, AccountNameInput, StaffInviteInput, StaffRoleInput } from '../models'
+import { accountsRepository, staffRepository, staffRolesRepository } from '../repositories/users.repository'
 import { queryKeys } from './query-keys'
 
-// ── Todas las cuentas (solo demo) ─────────────────────────────────────────
+// ── Todas las cuentas ─────────────────────────────────────────────────────
 
-export function useUsers(filters: UserFilters = {}, enabled = true) {
+export function useAccounts(filters: AccountFilters = {}, enabled = true) {
   return useQuery({
-    queryKey: queryKeys.users.list(filters),
-    queryFn: () => usersRepository.list(filters),
+    queryKey: queryKeys.accounts.list(filters),
+    queryFn: () => accountsRepository.list(filters),
+    placeholderData: keepPreviousData,
     enabled,
   })
 }
 
-export function useUpdateUser() {
+/** Una cuenta que cambia también cambia el equipo (estado, nombre). */
+function useRefreshAccounts() {
   const queryClient = useQueryClient()
+  return () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all })
+    queryClient.invalidateQueries({ queryKey: queryKeys.staffMembers })
+  }
+}
+
+export function useRenameAccount() {
+  const refresh = useRefreshAccounts()
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: UserUpdate }) => usersRepository.update(id, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.all })
-      queryClient.invalidateQueries({ queryKey: queryKeys.staffRoles })
-    },
+    mutationFn: ({ id, input }: { id: string; input: AccountNameInput }) => accountsRepository.rename(id, input),
+    onSuccess: refresh,
+  })
+}
+
+export function useSetAccountStatus() {
+  const refresh = useRefreshAccounts()
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'active' | 'suspended' }) => accountsRepository.setStatus(id, status),
+    onSuccess: refresh,
   })
 }
 
 export function useSendPasswordReset() {
-  return useMutation({ mutationFn: (userId: string) => usersRepository.sendPasswordReset(userId) })
+  return useMutation({ mutationFn: (userId: string) => accountsRepository.sendPasswordReset(userId) })
 }
 
 // ── El equipo de K'Plan ───────────────────────────────────────────────────
