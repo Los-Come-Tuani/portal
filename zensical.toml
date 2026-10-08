@@ -1,0 +1,153 @@
+[project]
+  extra_css = [
+    "stylesheets/theme.css",
+    "stylesheets/width.css",
+  ]
+
+  extra_javascript = ["scripts/elk.mjs"]
+
+  repo_name = "Los-Come-Tuani/portal"
+  repo_url  = "https://github.com/Los-Come-Tuani/portal"
+
+  site_author      = "Joaquín Zúñiga"
+  site_description = "Documentación del portal web de K'Plan para negocios, alcaldías y el equipo de K'Plan"
+  site_name        = "portal-docs"
+
+  nav = [
+    { "Inicio" = "index.md" },
+    "guia.md",
+    {
+      "Producto" = [
+        "producto/index.md",
+        "producto/alcance.md",
+        "producto/principios.md",
+      ],
+    },
+    {
+      "Contexto K'Plan" = [
+        "contexto/index.md",
+        "contexto/app-movil.md",
+        "contexto/modulos.md",
+        "contexto/contrato-datos.md",
+        "contexto/reglas-negocio.md",
+        "contexto/eventos-visita.md",
+        "contexto/datos-demo.md",
+        "contexto/arquitectura.md",
+        "contexto/api.md",
+        "contexto/decisiones-abiertas.md",
+        "contexto/referencias.md",
+      ],
+    },
+    {
+      "Diseño" = [
+        "diseno/index.md",
+        "diseno/migracion.md",
+        "diseno/auditoria-marca.md",
+        "diseno/bitacora.md",
+        "diseno/evidencias.md",
+        "diseno/cierre.md",
+      ],
+    },
+  ]
+
+  [[project.extra.social]]
+    icon = "fontawesome/brands/github"
+    link = "https://github.com/Los-Come-Tuani"
+
+  [[project.extra.social]]
+    icon = "fontawesome/brands/instagram"
+    link = "https://instagram.com/kplan.nic"
+
+  [project.markdown_extensions]
+    abbr       = {}
+    admonition = {}
+    attr_list  = {}
+    def_list   = {}
+    md_in_html = {}
+    tables     = {}
+
+    toc = {
+      permalink = true,
+      toc_depth = 3,
+    }
+
+    [project.markdown_extensions.pymdownx]
+      blocks.caption = {}
+      caret          = {}
+      details        = {}
+      emoji          = {}
+      highlight      = {}
+      keys           = {}
+      mark           = {}
+      tilde          = {}
+
+      tasklist.custom_checkbox = true
+
+      snippets.auto_append = [
+        "docs/snippets/abbrs.md",
+        "docs/snippets/links.md",
+      ]
+
+      superfences.custom_fences = [
+        {
+          name   = "mermaid",
+          class  = "mermaid",
+          format = "pymdownx.superfences.fence_code_format",
+        },
+      ]
+
+      [project.markdown_extensions.pymdownx.tabbed]
+        alternate_style = true
+
+        slugify = {
+          kwds.case = "lower",
+          object    = "pymdownx.slugs.slugify",
+        }
+
+  [project.theme]
+    features = [
+      "content.code.copy",
+      "content.tooltips",
+      "navigation.footer",
+      "navigation.indexes",
+      "navigation.instant",
+      "navigation.instant.prefetch",
+      "navigation.instant.progress",
+      "navigation.path",
+      "navigation.pruning",
+      "navigation.sections",
+      "navigation.tabs",
+      "navigation.tabs.sticky",
+      "navigation.top",
+    ]
+
+    favicon  = "favicon.svg"
+    language = "es"
+    logo     = "logo.svg"
+    variant  = "modern"
+
+    [[project.theme.palette]]
+      accent      = "custom"
+      media       = "(prefers-color-scheme: light)"
+      primary     = "custom"
+      scheme      = "default"
+      toggle.icon = "lucide/sun"
+      toggle.name = "Ir a modo oscuro"
+
+    [[project.theme.palette]]
+      accent      = "custom"
+      media       = "(prefers-color-scheme: dark)"
+      primary     = "custom"
+      scheme      = "slate"
+      toggle.icon = "lucide/moon"
+      toggle.name = "Ir a modo claro"
+
+  [project.validation]
+    invalid_link_anchors  = true
+    invalid_links         = true
+    shadowed_definitions  = true
+    shadowed_footnotes    = true
+    unresolved_footnotes  = true
+    unresolved_references = false
+    unused_definitions    = false
+    unused_footnotes      = true

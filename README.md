@@ -1,4 +1,33 @@
-# K'Plan · Portal
+<div align="center">
+  <img
+    src="docs/banner.svg"
+    width="300"
+    height="125"
+    style="padding: 10px;"
+  />
+</div>
+
+<h1 align="center">
+  <code>kplan-portal</code>
+</h1>
+
+<h3 align="center">
+  Portal web de K'Plan para negocios, alcaldías y el equipo de K'Plan
+</h3>
+
+<div align="center">
+
+[![React.][react-badge]][react-docs]
+[![TypeScript.][typescript-badge]][typescript-docs]
+[![Vite.][vite-badge]][vite-docs]
+[![Tailwind CSS.][tailwindcss-badge]][tailwindcss-docs]
+<br/>
+[![React Router.][reactrouter-badge]][reactrouter-docs]
+[![TanStack Query.][tanstackquery-badge]][tanstackquery-docs]
+[![Vitest.][vitest-badge]][vitest-docs]
+[![Oxlint.][oxlint-badge]][oxlint-docs]
+
+</div>
 
 Portal web de K'Plan para **negocios**, **alcaldías** y el **equipo de K'Plan**. Los turistas y los guías usan la app móvil (`../mobile`).
 
@@ -83,3 +112,34 @@ Todos los colores viven en un solo bloque de `src/styles/theme.css`, espejo de `
 - `npm run lint`: revisa el código con Oxlint.
 - `npm run test`: corre las pruebas (formatos, horas, planificador de itinerarios y agenda).
 - `npm run preview`: sirve localmente el build de producción.
+
+## Documentación
+
+La documentación ampliada (arquitectura, dominio, contrato de datos y sistema de diseño) vive en `docs/`, generada con [Zensical](https://zensical.org/). Para verla en local:
+
+```bash
+uvx zensical serve
+```
+
+Requiere [`uv`](https://docs.astral.sh/uv/#installation).
+
+[maplibre-badge]: https://img.shields.io/badge/maplibre-white?style=for-the-badge&color=gray&logoColor=white&logo=maplibre
+[maplibre-docs]: https://maplibre.org/
+[oxlint-badge]: https://img.shields.io/badge/oxlint-white?style=for-the-badge&color=gray
+[oxlint-docs]: https://oxc.rs/
+[react-badge]: https://img.shields.io/badge/react-white?style=for-the-badge&color=gray&logoColor=white&logo=react
+[react-docs]: https://react.dev/
+[reactrouter-badge]: https://img.shields.io/badge/react_router-white?style=for-the-badge&color=gray&logoColor=white&logo=reactrouter
+[reactrouter-docs]: https://reactrouter.com/
+[tailwindcss-badge]: https://img.shields.io/badge/tailwind_css-white?style=for-the-badge&color=gray&logoColor=white&logo=tailwindcss
+[tailwindcss-docs]: https://tailwindcss.com/
+[tanstackquery-badge]: https://img.shields.io/badge/tanstack_query-white?style=for-the-badge&color=gray&logoColor=white&logo=reactquery
+[tanstackquery-docs]: https://tanstack.com/query
+[typescript-badge]: https://img.shields.io/badge/typescript-white?style=for-the-badge&color=gray&logoColor=white&logo=typescript
+[typescript-docs]: https://www.typescriptlang.org/
+[vite-badge]: https://img.shields.io/badge/vite-white?style=for-the-badge&color=gray&logoColor=white&logo=vite
+[vite-docs]: https://vite.dev/
+[vitest-badge]: https://img.shields.io/badge/vitest-white?style=for-the-badge&color=gray&logoColor=white&logo=vitest
+[vitest-docs]: https://vitest.dev/
+[zod-badge]: https://img.shields.io/badge/zod-white?style=for-the-badge&color=gray&logoColor=white&logo=zod
+[zod-docs]: https://zod.dev/
