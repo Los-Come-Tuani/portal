@@ -1,6 +1,6 @@
 # Memoria de trabajo: portal y la hoja de ruta del API
 
-Actualizada el 2026-10-08. Traspaso para el siguiente agente. La memoria general (estado de
+Actualizada el 2026-10-09. Traspaso para el siguiente agente. La memoria general (estado de
 todas las tareas, API, F2 a F8, avisos y cómo correr el API en esta máquina) está en
 `C:\development\kplan\api\.cursor\memory\hoja-de-ruta.md`: léela primero.
 
@@ -234,6 +234,35 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
     `playwright-core`, sin descargar navegadores). Pide el API local en `:8010`, la landing en
     `:5173` con `VITE_API_URL=http://127.0.0.1:8010` y el portal en demo en `:5174`; prepara las
     versiones con `f9_setup.py` (ORM del API).
+- **Hecho: errores y estados vacíos amigables** (2026-10-09, rama `feat/errores-amigables`; pedido
+  del cliente: nunca un código de estado ni texto técnico, y siempre una acción para seguir):
+  - Mensajes (`data/api/errors.ts`, `toApiError` en `http-client.ts`): un 5xx nunca muestra el texto
+    del API ("Tuvimos un problema de nuestro lado…"); los `detail` por defecto del API (la lista
+    `API_GENERIC_DETAILS`) se cambian por el texto del portal para ese estado (400, 403, 404, 409,
+    413, 429…) y los específicos pasan. Las rutas de `OWN_401` conservan el texto del 401.
+  - `createFetchTransport` corta a los 30 s (`REQUEST_TIMEOUT_MS`, también la lectura del cuerpo) con
+    `ApiError(0, timeout)`; la cancelación de quien llama sigue saliendo como `AbortError`. Las subidas
+    directas al bucket (`upload.ts`) y un cuerpo `FormData` no tienen límite.
+  - Arranque: sólo un 401/403 de `GET /auth/profile/` deja `anonymous`. Sin conexión, 5xx o 429 el
+    estado es `unavailable` (`features/auth/session-status.ts`): `RequireAuth` muestra "No pudimos
+    cargar tu sesión" con el motivo (`errorMessageWithWait`), "Reintentar" (`retrySession`) e "Ir a la
+    entrada"; la sesión recordada no se borra y `RedirectIfAuthenticated` deja ver la entrada.
+  - Router: `RouteErrorPage` está también en la raíz (cubre la entrada, la postulación…), ocupa la
+    pantalla entera y distingue con `app/pages/route-error.ts` un módulo perdido tras publicar ("Hay
+    una versión nueva", "Recargar"), un 404 (la página que no existe) y lo demás.
+  - Red de avisos (`app/providers/query-client.ts`): una mutación que falla sin `onError` propio ni al
+    llamarla, sin `mutateAsync` y sin `meta: { errorToast: false }` muestra un aviso. Las mutaciones se
+    crean con `useMutation` de `data/hooks/mutation.ts`, que anota los errores que la pantalla ya
+    atiende (oxlint prohíbe el de TanStack fuera de ahí); el aviso llega al `ToastProvider` por
+    `components/ui/toast-bridge.ts`.
+  - Pantallas: `InlineError` (`States.tsx`) para paneles que antes se leían vacíos al fallar (agenda,
+    pendientes del equipo, campana, organización, roles, diálogos de lugares); la agenda ya no se queda
+    cargando si fallan los lugares. Todo `EmptyState` lleva `action`: quitar filtros o cambiar de
+    pestaña, crear con el permiso de la cabecera, o a dónde seguir. Con el API real, la agenda, "Por qué
+    no llegaron", "Donde más los dejan" y los pendientes muestran el error con reintento mientras
+    `/api/visit-events` y `/api/place-requests` sigan siendo de la demo.
+  - Pruebas: 270 unitarias (24 nuevas). Navegador: `%LOCALAPPDATA%\Temp\kplan-dev\e2e\e2e-errores.mjs`
+    (15 comprobaciones; `vite` en `:5182` con todo `/_api` interceptado y `vite --mode demo` en `:5183`).
 - Comprobaciones: `npm run typecheck && npm run lint && npm test && npm run build:demo`.
 
 ## Qué falta (depende de otras fases)
@@ -251,8 +280,6 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
      "Lo que queda para después").
    Queda por retirar lo que dejó F3: la propiedad de los lugares por `claimedStopIds` en
    `ownership.ts` y `generators/admissions.ts`.
-   Un `429` en `GET /auth/profile/` al cargar la página lleva a la pantalla de entrada sin cerrar la
-   sesión (`AuthProvider`); conviene mostrar un error con "Reintentar" en vez del login.
 2. **Anotado para el API** (no se tocó):
    - Decidido por el usuario, no pedirlo: la sesión no trae la ciudad de la organización (el
      portal la saca de sus lugares) y los estados de cuenta son sólo de comercios.
@@ -286,7 +313,8 @@ superficie con el mismo error que una contraseña mala): en un script, `GET /aut
 - `src/data/api/http-client.ts`: `createFetchTransport` (real), transporte de demo (se carga
   bajo demanda) y `createHttpClient` (renovación de sesión). `endpoints.ts` es el contrato.
 - `src/data/repositories/*.repository.ts` -> `src/data/hooks/use-*.ts` -> pantallas en
-  `src/features/*`. `src/data/mock/*` implementa las mismas rutas para la demo.
+  `src/features/*`. `src/data/mock/*` implementa las mismas rutas para la demo. Las mutaciones usan
+  `useMutation` de `src/data/hooks/mutation.ts` (ver la red de avisos arriba).
 - Sesión: `src/features/auth/AuthProvider.tsx` (+ `auth-context.ts`, `use-auth.ts`),
   `src/app/router/guards.tsx` (`RequireAuth`, `RequireRole`, `RequirePermission`).
 - Los DTO del API usan snake_case; el portal, camelCase: la traducción vive en los
