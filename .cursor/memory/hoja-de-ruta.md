@@ -258,10 +258,16 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
 
 ## Cómo probar contra el API real en esta máquina
 
+`npm run dev` va contra develop (`https://develop-api.kplan.dev`) por el proxy `/_api` de Vite
+(`vite.config.ts`, `API_PROXY_TARGET` en `.env.development`). El proxy quita `Origin` (develop no
+tiene `localhost` en sus orígenes de confianza y tampoco reconoce su propio host) y deja las
+cookies como propias de `localhost`. Para el API local: `.env.development.local` con
+`API_PROXY_TARGET=http://localhost:8080`.
+
 El Postgres portátil y el API local se describen en la memoria del API (sección 10). Resumen:
-con el API en `http://localhost:8080` y `npm run dev` (puerto 5173) se entra con el superusuario
-del `.env` del API. El script de navegador que usé está fuera del repo, en
-`%LOCALAPPDATA%\Temp\kplan-dev\e2e` (`run-e2e.ps1`); si no existe, la prueba de integración de
+con el API en `http://localhost:8080`, ese `.env.development.local` y `npm run dev` (puerto 5173)
+se entra con el superusuario del `.env` del API. El script de navegador que usé está fuera del
+repo, en `%LOCALAPPDATA%\Temp\kplan-dev\e2e` (`run-e2e.ps1`); si no existe, la prueba de integración de
 arriba cubre el contrato.
 
 Cuentas locales (contraseña `Kplan-Local-2026`): `admin@example.com` (superusuario) y

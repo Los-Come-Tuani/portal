@@ -34,13 +34,13 @@ Portal web de K'Plan para **negocios**, **alcaldías** y el **equipo de K'Plan**
 
 ```bash
 npm install
-npm run dev        # contra el API local (http://localhost:8080, ver .env.development)
+npm run dev        # contra el API de desarrollo publicado (https://develop-api.kplan.dev, ver .env.development)
 npm run dev:demo   # sin API: backend simulado en el navegador
 ```
 
 La app queda disponible en http://localhost:5173. Con `npm run dev:demo`, la pantalla de entrada muestra las cuentas de prueba (negocios, alcaldías y varias personas del equipo con roles distintos): cualquier contraseña sirve.
 
-`npm run dev` necesita el API corriendo (`just run` en el repo del API). Usa `localhost` en los dos lados y no `127.0.0.1`: las cookies de sesión solo viajan si portal y API son del mismo sitio.
+`npm run dev` le habla al API a través del proxy del servidor de desarrollo (`/_api`, ver `vite.config.ts`): el navegador solo ve `localhost`, así que el API no tiene que aceptar ese origen en CORS y las cookies de sesión viajan. El destino es `API_PROXY_TARGET` en `.env.development`; para trabajar contra el API local (`just run` en el repo del API), crea `.env.development.local` con `API_PROXY_TARGET=http://localhost:8080`. Las subidas de archivos van directo al bucket, sin proxy: si el bucket no acepta `http://localhost:5173` en su CORS, fallan con un error de red.
 
 ## Datos: modo demo y API real
 
@@ -51,7 +51,7 @@ pantalla → hook (src/data/hooks) → repositorio (src/data/repositories) → c
 ```
 
 - **Modo demo** (`VITE_USE_MOCKS=true`, que activan `npm run dev:demo` y `npm run build:demo`; ver `.env.demo`): el cliente HTTP manda cada petición al backend de demo (`src/data/mock`). Este implementa las mismas rutas de `src/data/api/endpoints.ts` con los JSON de `src/data/mock/json` y guarda los cambios en `localStorage`. El menú "Modo demo" de la barra superior restablece los datos. Es explícito: dejar `VITE_API_URL` vacía ya no activa la demo.
-- **API real** (`VITE_API_URL`): `.env.development` apunta a `http://localhost:8080` y `.env.production` (el build que se publica) a `https://develop-api.kplan.dev`; una variable `VITE_API_URL` del hosting manda sobre ese archivo. `npm run build` falla si falta, si no es `https` o si el modo demo está activo. El backend de demo ni siquiera se descarga.
+- **API real** (`VITE_API_URL`): `.env.development` apunta al proxy `/_api` (que reenvía a `https://develop-api.kplan.dev`) y `.env.production` (el build que se publica) directo a `https://develop-api.kplan.dev`; una variable `VITE_API_URL` del hosting manda sobre ese archivo. `npm run build` falla si falta, si no es `https` o si el modo demo está activo. El backend de demo ni siquiera se descarga.
 - **Variables**: ver `.env.example`. Todo `VITE_*` termina dentro del bundle del navegador, así que solo van valores públicos, nunca claves ni tokens. Los valores propios van en `.env.development.local`, que no se versiona.
 - **El contrato con el backend** es `endpoints.ts` (las rutas) más `src/data/models` (el formato JSON, el mismo que lee la app). El cliente acepta respuestas planas o envueltas en `data` / `Data`.
 - **Qué funciona con el API real hoy**: el acceso y la seguridad de la cuenta (entrar, 2FA, recuperar y cambiar la contraseña, cerrar sesiones), el **equipo interno y sus roles**, la **cola de guías y traductores**, y la **postulación de una organización**, con su revisión por el equipo (alta, estado, corrección y cola, ver abajo). Las demás pantallas piden `/api/stops`, `/api/circuits`, etc., que el API todavía no publica (llegan por fases): ahí responden 404. Para trabajar la interfaz completa usa `npm run dev:demo`. Cuando una fase del dominio llega al API, se alinean su sección de `endpoints.ts`, su repositorio y su handler de demo.
@@ -118,7 +118,7 @@ Todos los colores viven en un solo bloque de `src/styles/theme.css`, espejo de `
 
 ## Scripts
 
-- `npm run dev`: servidor de desarrollo con recarga en caliente (HMR), contra el API local.
+- `npm run dev`: servidor de desarrollo con recarga en caliente (HMR), contra el API de desarrollo publicado.
 - `npm run dev:demo`: lo mismo, pero en modo demo (sin API).
 - `npm run build`: verifica los tipos y genera el build de producción en `dist/`. Exige `VITE_API_URL` con `https`.
 - `npm run build:demo`: build en modo demo, solo para publicar una demo a propósito.
