@@ -52,7 +52,7 @@ export const staffRolesRepository = {
   remove: (roleId: string) => http.delete(endpoints.auth.staffRole(roleId)),
 }
 
-/** Las personas del equipo: invitarlas, cambiarles el rol y quitarles o devolverles el acceso. */
+/** Las personas del equipo: invitarlas, darles o cambiarles el rol, sacarlas y quitarles o devolverles el acceso. */
 export const staffRepository = {
   async members(): Promise<StaffMember[]> {
     return z.array(apiMemberSchema).parse(await http.get<unknown>(endpoints.auth.staffMembers)).map(toMember)
@@ -67,8 +67,14 @@ export const staffRepository = {
     return { member: toMember(data), sent: data.sent }
   },
 
+  /** También mete al equipo una cuenta que ya existe, si no es de una organización ni de un guía. */
   async setRole(userId: string, roleId: string): Promise<StaffMember> {
     const data = await http.post<unknown>(endpoints.auth.userRole, { body: { user_id: userId, role_id: roleReference(roleId) } })
+    return toMember(apiMemberSchema.parse(data))
+  },
+
+  async removeFromTeam(userId: string): Promise<StaffMember> {
+    const data = await http.post<unknown>(endpoints.auth.staffRemove, { body: { user_id: userId } })
     return toMember(apiMemberSchema.parse(data))
   },
 

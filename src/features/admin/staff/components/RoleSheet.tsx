@@ -8,29 +8,48 @@ import { useDeleteStaffRole, useSaveStaffRole } from '@/data/hooks/use-users'
 import { isImplied, PERMISSION_GROUPS, type StaffRole, type StaffRoleInput } from '@/data/models'
 import { staffRoleInputSchema } from '@/data/schemas/access.schema'
 import { plural } from '@/lib/format'
+import { RoleMembers } from './RoleMembers'
 
 interface RoleSheetProps {
   open: boolean
   /** `null` para crear uno nuevo. */
   role: StaffRole | null
   members: number
+  /** Todos los roles, para cambiar de rol a alguien desde aquí. */
+  roles: readonly StaffRole[]
   onClose: () => void
 }
 
-export function RoleSheet({ open, role, members, onClose }: RoleSheetProps) {
+export function RoleSheet({ open, role, members, roles, onClose }: RoleSheetProps) {
   return (
     <Dialog
       open={open}
       onClose={onClose}
       variant="sheet"
-      title={role ? `Editar: ${role.name}` : 'Nuevo rol'}
+      title={role ? (role.system ? role.name : `Editar: ${role.name}`) : 'Nuevo rol'}
       description={
         role
-          ? `${plural(members, 'persona tiene', 'personas tienen')} este rol. Los cambios les aplican cuando recarguen el portal.`
+          ? role.system
+            ? `${plural(members, 'persona tiene', 'personas tienen')} este rol. Es de sistema: sus permisos no se editan, pero sí a quién se le da.`
+            : `${plural(members, 'persona tiene', 'personas tienen')} este rol. Los cambios les aplican cuando recarguen el portal.`
           : 'Arma el rol con los permisos justos para el trabajo de esa persona.'
       }
     >
-      <RoleForm key={role?.id ?? 'nuevo'} role={role} members={members} onDone={onClose} />
+      <div className="flex flex-col gap-6">
+        {role && <RoleMembers role={role} roles={roles} />}
+        {role?.system ? (
+          <div className="flex justify-end border-t border-divider pt-5">
+            <Button variant="ghost" onClick={onClose}>
+              Cerrar
+            </Button>
+          </div>
+        ) : (
+          <>
+            {role && <hr className="border-divider" />}
+            <RoleForm key={role?.id ?? 'nuevo'} role={role} members={members} onDone={onClose} />
+          </>
+        )}
+      </div>
     </Dialog>
   )
 }

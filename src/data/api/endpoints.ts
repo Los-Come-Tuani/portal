@@ -38,8 +38,10 @@ export const endpoints = {
     staffMembers: '/auth/staff-member/',
     /** Invita a alguien al equipo, o le vuelve a escribir si no ha aceptado. */
     staffInvite: '/auth/staff-invite/',
-    /** Cambia el rol del equipo de una persona. */
+    /** Cambia el rol del equipo de una persona, o mete al equipo una cuenta que ya existe. */
     userRole: '/auth/user-role/',
+    /** Saca a una persona del equipo: pierde su rol del equipo, no la cuenta. */
+    staffRemove: '/auth/staff-remove/',
     /** Suspende o reactiva una cuenta. */
     userStatus: '/auth/user-status/',
     /** Le manda a una persona un código para crear otra contraseña. */

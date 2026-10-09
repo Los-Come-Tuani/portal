@@ -5,7 +5,7 @@ import { paths } from '@/app/router/paths'
 import { Avatar, Button, ConfirmDialog, Dialog, Field, Input, Tag, useToast } from '@/components/ui'
 import { ApiError, errorMessage } from '@/data/api/errors'
 import { useSanctions } from '@/data/hooks/use-moderation'
-import { useRenameAccount, useSendPasswordReset, useSetAccountStatus } from '@/data/hooks/use-users'
+import { useRenameAccount, useSendPasswordReset, useSetAccountStatus, useStaffRoles } from '@/data/hooks/use-users'
 import {
   ORGANIZATION_KIND_LABELS,
   PROVIDER_STAGE_LABELS,
@@ -18,6 +18,8 @@ import {
 } from '@/data/models'
 import { SanctionDialog } from '@/features/admin/moderation/SanctionDialog'
 import { SanctionList } from '@/features/admin/moderation/SanctionList'
+import { ChangeRoleDialog } from '@/features/admin/staff/components/ChangeRoleDialog'
+import { whyNotTeam } from '@/features/admin/staff/team'
 import { useSession } from '@/features/auth/use-auth'
 import { cn } from '@/lib/cn'
 import { nowLocalDateTime } from '@/lib/dates'
@@ -59,9 +61,15 @@ export function UserSheet({ account, application, onClose, onChange }: UserSheet
   const canSanction = canManage && account?.status !== 'pending' && account?.status !== 'closing'
   const [sanctioning, setSanctioning] = useState(false)
   const sanctions = useSanctions({ userId: account?.id, pageSize: 10 }, !!account && session.can('users.view'))
+  // Dar, cambiar o quitar el rol del equipo es de quien administra el equipo; a uno mismo, no.
+  const canAssignRole = !!account && !isSelf && session.can('staff.manage')
+  const staffRoles = useStaffRoles(canAssignRole)
+  const [assigning, setAssigning] = useState(false)
+  const teamProblem = account ? whyNotTeam(account) : null
 
   const close = () => {
     setRenaming(false)
+    setAssigning(false)
     onClose()
   }
 
@@ -202,13 +210,30 @@ export function UserSheet({ account, application, onClose, onChange }: UserSheet
               to={paths.guideApplication(application.id)}
             />
           )}
-          {account.staffRole && (
-            <ContextLink
-              label="Rol interno"
-              title={account.staffRole.name}
-              detail="Lo que puede hacer en el portal."
-              to={session.can('staff.manage') ? paths.staff : undefined}
-            />
+          {canAssignRole ? (
+            <div className="flex items-center gap-3 rounded-kp border border-divider px-4 py-3">
+              <span className="min-w-0 flex-1">
+                <span className="block text-small text-muted">Rol en el equipo</span>
+                <span className="block text-body font-semibold text-ink">
+                  {account.staffRole?.name ?? (account.superuser ? 'Superusuario, sin rol' : 'No es del equipo')}
+                </span>
+                <span className="block text-small text-muted">
+                  {teamProblem ??
+                    (account.staffRole
+                      ? 'Lo que puede hacer en el portal.'
+                      : account.superuser
+                        ? 'Tiene todo el portal aunque no tenga rol.'
+                        : 'Dale un rol para que entre al portal con esos permisos.')}
+                </span>
+              </span>
+              {!teamProblem && (
+                <Button size="sm" variant="secondary" disabled={!staffRoles.data} onClick={() => setAssigning(true)}>
+                  {account.staffRole ? 'Cambiar' : 'Darle un rol'}
+                </Button>
+              )}
+            </div>
+          ) : (
+            account.staffRole && <ContextLink label="Rol interno" title={account.staffRole.name} detail="Lo que puede hacer en el portal." />
           )}
           {sanctions.data && sanctions.data.results.length > 0 && (
             <section className="flex flex-col gap-2" aria-labelledby="sanciones-de-la-cuenta">
@@ -221,6 +246,13 @@ export function UserSheet({ account, application, onClose, onChange }: UserSheet
         </div>
       )}
       <SanctionDialog user={sanctioning && account ? { id: account.id, name: account.name } : null} onClose={() => setSanctioning(false)} />
+      <ChangeRoleDialog
+        person={assigning && account ? { id: account.id, name: account.name, role: account.staffRole } : null}
+        roles={staffRoles.data ?? []}
+        onClose={() => setAssigning(false)}
+        onChanged={(member) => account && onChange({ ...account, role: 'admin', staffRole: member.role })}
+        onRemoved={close}
+      />
 
       <ConfirmDialog
         open={confirming}

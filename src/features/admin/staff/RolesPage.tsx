@@ -58,13 +58,14 @@ export function RolesPage() {
 
   const all = roles.data ?? []
   const membersOf = (role: StaffRole) => role.members
-  const current = editing === 'nuevo' ? null : editing
+  // El rol recién leído: asignarle a alguien cambia cuántas personas tiene.
+  const current = editing === 'nuevo' || editing === null ? null : (all.find((role) => role.id === editing.id) ?? editing)
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Roles y permisos"
-        description="Cada rol es un conjunto de permisos. A cada persona del equipo le toca un rol, y el portal le muestra sólo lo que ese rol permite."
+        description="Cada rol es un conjunto de permisos. A cada persona del equipo le toca un rol, y el portal le muestra sólo lo que ese rol permite. Abre un rol para ver quiénes lo tienen y dárselo a alguien."
         actions={
           <>
             <ButtonLink to={paths.staff} icon={<Users size={16} />}>
@@ -81,7 +82,7 @@ export function RolesPage() {
         <p className="max-w-[72ch] text-lead text-muted">
           <strong className="font-semibold text-ink">{plural(all.length, 'rol', 'roles')}</strong> para{' '}
           <strong className="font-semibold text-ink">{plural(staff.data.filter((member) => member.status !== 'suspended').length, 'persona', 'personas')}</strong>.
-          Cada columna es un rol: toca su nombre para cambiarle los permisos.
+          Cada columna es un rol: toca su nombre para ver a quién se le dio, dárselo a alguien o cambiarle los permisos.
         </p>
       )}
 
@@ -104,15 +105,20 @@ export function RolesPage() {
                 {all.map((role) => (
                   <th key={role.id} scope="col" className="w-28 min-w-28 border-b border-l border-divider bg-canvas px-3 py-4 align-bottom font-normal">
                     {role.system ? (
-                      <span className="flex flex-col gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(role)}
+                        aria-label={`Ver quiénes tienen el rol ${role.name}`}
+                        className="group -mx-2 -my-1.5 flex min-h-11 flex-col gap-0.5 rounded-sm px-2 py-1.5 text-left transition-colors duration-150 hover:bg-canvas"
+                      >
                         <span className="flex items-center gap-1.5 text-small font-semibold text-ink">
                           <Lock size={13} className="text-muted" aria-hidden="true" />
                           {role.name}
                         </span>
                         <span className="text-caption text-muted tabular-nums">
-                          {plural(membersOf(role), 'persona', 'personas')} · no se edita
+                          {plural(membersOf(role), 'persona', 'personas')} · permisos fijos
                         </span>
-                      </span>
+                      </button>
                     ) : (
                       <button
                         type="button"
@@ -179,6 +185,7 @@ export function RolesPage() {
         open={editing !== null}
         role={current}
         members={current ? membersOf(current) : 0}
+        roles={all}
         onClose={() => setEditing(null)}
       />
     </div>

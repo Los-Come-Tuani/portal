@@ -49,12 +49,13 @@ export function useStaffMembers(enabled = true) {
   return useQuery({ queryKey: queryKeys.staffMembers, queryFn: staffRepository.members, enabled })
 }
 
-/** Invitar, cambiar el rol o el acceso cambia también cuántas personas tiene cada rol. */
+/** Invitar, cambiar el rol o el acceso cambia también cuántas personas tiene cada rol y el directorio. */
 function useRefreshTeam() {
   const queryClient = useQueryClient()
   return () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.staffMembers })
     queryClient.invalidateQueries({ queryKey: queryKeys.staffRoles })
+    queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all })
   }
 }
 
@@ -69,6 +70,11 @@ export function useSetStaffRole() {
     mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) => staffRepository.setRole(userId, roleId),
     onSuccess: refresh,
   })
+}
+
+export function useRemoveFromStaff() {
+  const refresh = useRefreshTeam()
+  return useMutation({ mutationFn: (userId: string) => staffRepository.removeFromTeam(userId), onSuccess: refresh })
 }
 
 export function useSetStaffStatus() {

@@ -233,6 +233,17 @@ function assertCanChange(db: MockDatabase, actor: User, target: User, losesSuper
   }
 }
 
+/** Como el API: entra al equipo una cuenta activa que no es de una organización ni de un guía o traductor. */
+function assertCanJoin(db: MockDatabase, target: User) {
+  if (target.status !== 'active') throw fail.conflict('Solo una cuenta activa entra al equipo.')
+  if (target.organizationId || target.role === 'negocio' || target.role === 'alcaldia') {
+    throw fail.conflict('Esa cuenta es de una organización: con un rol del equipo dejaría de ver sus pantallas. Invita a la persona al equipo con otro correo.')
+  }
+  if (target.role === 'guia' || db.providers.some((item) => item.userId === target.id)) {
+    throw fail.conflict('Esa cuenta es de un guía o traductor: con un rol del equipo dejaría de ver sus pantallas. Invita a la persona al equipo con otro correo.')
+  }
+}
+
 export const staffRoleRoutes = [
   route('GET', endpoints.auth.staffRoles, ({ db }) => db.staffRoles.map((role) => wireRole(db, role)), {
     permissions: ['staff.manage', 'users.view'],
@@ -348,9 +359,25 @@ export const staffRoleRoutes = [
       const input = parseBody(userRoleBody, body)
       const target = findUser(db, input.user_id)
       const role = findRole(db, input.role_id)
-      if (target.role !== 'admin') throw new MockHttpError(400, "Esa persona no es del equipo de K'Plan.")
+      if (target.role !== 'admin') assertCanJoin(db, target)
       assertCanChange(db, requireUser(context), target, role.id !== SUPER_ADMIN)
+      target.role = 'admin'
       target.staffRoleId = role.id
+      return wireMember(db, target)
+    },
+    { permissions: ['staff.manage'] },
+  ),
+  route(
+    'POST',
+    endpoints.auth.staffRemove,
+    (context) => {
+      const { db, body } = context
+      const target = findUser(db, parseBody(userBody, body).user_id)
+      if (target.role !== 'admin') throw new MockHttpError(400, "Esa persona no es del equipo de K'Plan.")
+      assertCanChange(db, requireUser(context), target, true)
+      // La demo no guarda qué papel tenía antes: queda como turista.
+      target.role = 'turista'
+      target.staffRoleId = null
       return wireMember(db, target)
     },
     { permissions: ['staff.manage'] },

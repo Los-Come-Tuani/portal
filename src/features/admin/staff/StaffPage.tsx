@@ -202,7 +202,7 @@ export function StaffPage() {
       )}
 
       <InviteSheet open={inviting} roles={roles.data ?? []} onClose={() => setInviting(false)} />
-      <ChangeRoleDialog member={changing} roles={roles.data ?? []} onClose={() => setChanging(null)} />
+      <ChangeRoleDialog person={changing} roles={roles.data ?? []} onClose={() => setChanging(null)} />
       <ConfirmDialog
         open={toggling !== null}
         tone={toggling?.status === 'suspended' ? 'primary' : 'danger'}
