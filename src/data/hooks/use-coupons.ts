@@ -1,6 +1,7 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { BenefitType, CampaignInput, CouponCampaign } from '../models'
 import { couponsRepository, type CampaignFilters, type RedemptionFilters } from '../repositories/coupons.repository'
+import { useMutation } from './mutation'
 import { queryKeys } from './query-keys'
 
 export function useCampaigns(filters: CampaignFilters = {}, enabled = true) {
@@ -39,16 +40,17 @@ export function useRedemptions(filters: RedemptionFilters = {}, enabled = true) 
   })
 }
 
-/** Busca un código entre los vigentes sin consumirlo, para confirmar qué cupón es. */
+/** Busca un código entre los vigentes sin consumirlo, para confirmar qué cupón es. El error va en el campo del diálogo. */
 export function useFindCoupon() {
-  return useMutation({ mutationFn: (code: string) => couponsRepository.find(code) })
+  return useMutation({ mutationFn: (code: string) => couponsRepository.find(code), meta: { errorToast: false } })
 }
 
-/** Valida el código en el mostrador: el cupón queda usado. */
+/** Valida el código en el mostrador: el cupón queda usado. El error se lee dentro del diálogo. */
 export function useConsumeCoupon() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (code: string) => couponsRepository.validate(code),
+    meta: { errorToast: false },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.coupons.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.billing.all })

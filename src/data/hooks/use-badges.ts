@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { BadgeCampaignInput } from '../models'
 import { badgesRepository } from '../repositories/badges.repository'
+import { useMutation } from './mutation'
 import { queryKeys } from './query-keys'
 
 export function useBadgeActivations(organizationId?: string, enabled = true) {

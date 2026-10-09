@@ -1,6 +1,7 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { NewStopInput, OrganizationKind, PlaceProfileInput, PostInput, Stop, StopFilters, StopInput } from '../models'
 import { placesRepository } from '../repositories/places.repository'
+import { useMutation } from './mutation'
 import { queryKeys } from './query-keys'
 
 /** Todos los lugares que ve quien entró (con los filtros del API), sin paginar. */

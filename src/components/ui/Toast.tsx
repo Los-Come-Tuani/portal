@@ -1,5 +1,6 @@
 import { CircleAlert, CircleCheck, X } from 'lucide-react'
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { subscribeToasts } from './toast-bridge'
 import { ToastContext, type ToastInput } from './toast-context'
 
 interface ToastItem extends ToastInput {
@@ -23,6 +24,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     },
     [dismiss],
   )
+
+  useEffect(() => subscribeToasts(show), [show])
 
   const value = useMemo(() => show, [show])
 

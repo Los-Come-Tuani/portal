@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { CircuitFilters, CircuitInput } from '../models'
 import { circuitsRepository } from '../repositories/circuits.repository'
+import { useMutation } from './mutation'
 import { queryKeys } from './query-keys'
 
 /** Los circuitos oficiales que ve quien entró: el equipo, todos; una alcaldía, los de su ciudad. */

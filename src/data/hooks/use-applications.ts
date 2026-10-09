@@ -1,7 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { uploadFile } from '../api/upload'
 import { isOpen, type ApplicantInput, type OrganizationData, type UploadKind } from '../models'
 import { applicationsRepository } from '../repositories/applications.repository'
+import { useMutation } from './mutation'
 import { queryKeys } from './query-keys'
 
 /** Las ciudades y los tipos casi no cambian: se piden una vez por visita. */

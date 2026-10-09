@@ -1,6 +1,7 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { CredentialReviewInput, ProviderQueueFilters, ProviderRequestDetail, RejectInput } from '../models'
 import { providersRepository } from '../repositories/providers.repository'
+import { useMutation } from './mutation'
 import { queryKeys } from './query-keys'
 
 /** La bandeja de guías y traductores. Al cambiar de página se sigue mostrando la anterior. */

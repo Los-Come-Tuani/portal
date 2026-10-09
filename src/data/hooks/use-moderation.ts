@@ -1,6 +1,7 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { SanctionInput } from '../models'
 import { moderationRepository, type DisputeFilters, type ReportFilters, type SanctionFilters } from '../repositories/moderation.repository'
+import { useMutation } from './mutation'
 import { queryKeys } from './query-keys'
 
 export function useDisputes(filters: DisputeFilters = {}, enabled = true) {
