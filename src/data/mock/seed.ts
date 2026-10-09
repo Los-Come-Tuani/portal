@@ -14,7 +14,7 @@ import { seedProviders } from './generators/providers'
 import { seedApplications } from './services/applications'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 18
+export const SCHEMA_VERSION = 19
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -246,7 +246,6 @@ export function seedDatabase(today: ISODate): MockDatabase {
         },
       ]
     : []
-  const releases = seedReleases(today)
 
   return {
     version: SCHEMA_VERSION,
@@ -286,7 +285,6 @@ export function seedDatabase(today: ISODate): MockDatabase {
     sanctions: warnings,
     notifications: warnings.map(sanctionNotice),
     demoRequests: seedDemoRequests(today),
-    releases,
-    installers: Object.fromEntries(releases.map((release) => [release.fileKey, release.size])),
+    releases: seedReleases(today),
   }
 }

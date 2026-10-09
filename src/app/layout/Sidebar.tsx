@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState, type FocusEvent, type MouseEvent } 
 import { Link, matchPath, NavLink, useLocation, useNavigate } from 'react-router'
 import { Logo } from '@/components/brand/Logo'
 import { Avatar, Menu, MenuItem } from '@/components/ui'
-import { useNewDemoCount } from '@/data/hooks/use-landing'
+import { usePendingDemoCount } from '@/data/hooks/use-landing'
 import { useOpenProviderCount } from '@/data/hooks/use-providers'
 import { useOpenRequestCount } from '@/data/hooks/use-verification'
 import { usePlaceRequests } from '@/data/hooks/use-place-requests'
@@ -48,11 +48,11 @@ function usePendingCounts(): Record<NavCount, number> {
   const reviewsOrganizations = can('organizations.view')
   const openRequests = useOpenRequestCount(reviewsOrganizations)
   const placeRequests = usePlaceRequests({ status: 'pending' }, reviewsOrganizations)
-  const demos = useNewDemoCount(can('demos.view'))
+  const demos = usePendingDemoCount(can('demos.view'))
   return {
     pendingGuides: guides ?? 0,
     pendingAdmissions: (openRequests ?? 0) + (placeRequests.data?.length ?? 0),
-    newDemos: demos ?? 0,
+    pendingDemos: demos ?? 0,
   }
 }
 

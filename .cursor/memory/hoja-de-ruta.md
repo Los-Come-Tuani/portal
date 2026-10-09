@@ -205,27 +205,30 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
     bucket local de la memoria del API para el documento) y se aprueba en `/solicitudes`.
 - **Hecho: F9, el panel de la landing** (2026-10-08, rama `feat/landing-demo-y-versiones`; contrato en
   `docs/landing.md` del API). Grupo "Sitio web" del menú del equipo:
-  - `/demos` (`DemoRequestsPage`, `demo-request/`): pestañas por estado (nuevas, contactadas,
-    agendadas, realizadas, descartadas, todas), búsqueda, correo y teléfono como enlaces, y
-    "Atender" (`demos.manage`): estado y seguimiento. El contador `newDemos` del menú y
-    `AdminPending` salen de `useNewDemoCount`. La campana muestra `solicitud_demo`.
-  - `/versiones` (`ReleasesPage`, `app-release/`): la vigente de cada plataforma arriba, historial,
-    subir (plataforma, versión, novedades, instalador) con barra de avance, editar (la versión solo
-    en borrador), publicar, retirar, borrar un borrador y "Descargar para probar" (`{ url }`).
-    El instalador se sube con `uploadInstaller` (`data/api/upload.ts`): pide la URL a
-    `app-release/upload/` y hace el `PUT` con `XMLHttpRequest` para tener el avance; el tipo lo fija
-    la plataforma (`INSTALLERS` en `models/landing.ts`), no el navegador.
-  - Permisos nuevos en `models/access.ts`: `demos.view|manage` y `releases.view|manage` (módulo
-    "Sitio web"); el Super admin de la demo los tiene.
+  - Rediseño (2026-10-08, pedido del usuario): no se suben instaladores. Cada versión lleva el
+    link de Drive de su instalador; la landing no tiene descarga directa: al enviar el formulario
+    de demo el API responde `{delivered, links}` con los links de las versiones vigentes. Si no
+    había ninguna, la landing dice que le van a avisar (no se manda correo) y la solicitud queda
+    pendiente.
+  - `/demos` (`DemoRequestsPage`, `demo-request/`): pestañas Pendientes, Entregadas y Todas,
+    búsqueda, correo y teléfono como enlaces, "Recibió los links el …" (`deliveredAt`), y con
+    `demos.manage` "Marcar entregada" (un clic) y "Anotar"/"Actualizar" (estado y seguimiento). El
+    contador `pendingDemos` del menú y `AdminPending` salen de `usePendingDemoCount`. La campana
+    muestra `solicitud_demo`.
+  - `/versiones` (`ReleasesPage`, `app-release/`): la vigente de cada plataforma arriba con sus
+    entregas, historial, "Nueva versión" (plataforma, versión, link https, novedades) como
+    borrador, editar (link y novedades siempre; la versión solo en borrador), publicar, retirar,
+    borrar un borrador y "Abrir el link para probar".
+  - Permisos en `models/access.ts`: `demos.view|manage` y `releases.view|manage` (módulo "Sitio
+    web"), con las descripciones del catálogo del API; el Super admin de la demo los tiene.
   - Datos: `models/landing.ts`, `schemas/landing-api.schema.ts` (+ prueba),
-    `repositories/landing.repository.ts`, `hooks/use-landing.ts`. Demo (`SCHEMA_VERSION` 18):
-    `mock/services/landing.ts` y `mock/handlers/landing.ts` (+ `landing.test.ts`); la demo no guarda
-    instaladores (anota la clave en `db.installers`, simula el avance y "Descargar para probar"
-    responde `503`).
-  - Navegador: `%LOCALAPPDATA%\Temp\kplan-dev\e2e\e2e-f9-demo.mjs` (8 comprobaciones en demo) y
-    `e2e-f9-real.mjs` (7, contra el API local con la landing: la landing pide la demo, llega el aviso,
-    se agenda; sin bucket, subir un instalador lo explica). Ese script pide `E2E_PORTAL`,
-    `E2E_LANDING`, `E2E_EMAIL` y `E2E_PASSWORD`.
+    `repositories/landing.repository.ts`, `hooks/use-landing.ts`. Demo (`SCHEMA_VERSION` 19):
+    `mock/services/landing.ts` y `mock/handlers/landing.ts` (+ `landing.test.ts`). La validación del
+    mock responde `422` (el API real, `400`); la pantalla solo lee `field_errors`.
+  - Navegador: `%LOCALAPPDATA%\Temp\kplan-dev\e2e\e2e-f9-links.mjs` (13 comprobaciones; Edge con
+    `playwright-core`, sin descargar navegadores). Pide el API local en `:8010`, la landing en
+    `:5173` con `VITE_API_URL=http://127.0.0.1:8010` y el portal en demo en `:5174`; prepara las
+    versiones con `f9_setup.py` (ORM del API).
 - Comprobaciones: `npm run typecheck && npm run lint && npm test && npm run build:demo`.
 
 ## Qué falta (depende de otras fases)

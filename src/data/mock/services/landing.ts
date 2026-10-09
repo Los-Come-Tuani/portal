@@ -1,9 +1,9 @@
 /**
  * Lo que alimenta la landing en el backend de demo, con el formato del API (docs/landing.md del repo
- * del API): las solicitudes de demo y las versiones de la app.
+ * del API): las solicitudes de demo y las versiones de la app con el link de su instalador.
  */
 import { addDays, toLocalDateTime, type ISODate, type LocalDateTime } from '@/lib/dates'
-import { INSTALLERS, type DemoKind, type DemoStatus, type ReleasePlatform, type ReleaseStatus } from '../../models'
+import type { DemoKind, DemoStatus, ReleasePlatform, ReleaseStatus } from '../../models'
 import type { MockDatabase } from '../db'
 import { wireInstant } from './places'
 
@@ -17,6 +17,7 @@ export interface MockDemoRequest {
   city: string
   message: string
   status: DemoStatus
+  deliveredAt: LocalDateTime | null
   notes: string
   createdAt: LocalDateTime
   updatedAt: LocalDateTime | null
@@ -34,6 +35,7 @@ export function wireDemoRequest(request: MockDemoRequest) {
     city: request.city,
     message: request.message,
     status: request.status,
+    delivered_at: request.deliveredAt ? wireInstant(request.deliveredAt) : null,
     notes: request.notes,
     created_at: wireInstant(request.createdAt),
     updated_at: request.updatedAt ? wireInstant(request.updatedAt) : null,
@@ -41,7 +43,7 @@ export function wireDemoRequest(request: MockDemoRequest) {
   }
 }
 
-/** Unas solicitudes de ejemplo: dos nuevas, una agendada y una realizada. */
+/** Unas solicitudes de ejemplo: dos que recibieron los links al enviarla y dos pendientes. */
 export function seedDemoRequests(today: ISODate): MockDemoRequest[] {
   const at = (days: number, minutes: number) => toLocalDateTime(addDays(today, -days), minutes)
   const untouched = { notes: '', updatedAt: null, updatedBy: null, phone: '' }
@@ -56,7 +58,8 @@ export function seedDemoRequests(today: ISODate): MockDemoRequest[] {
       kind: 'business',
       city: 'León',
       message: 'Queremos ver cómo se publican los cupones y cuánto cuesta la insignia del local.',
-      status: 'new',
+      status: 'delivered',
+      deliveredAt: at(0, 9 * 60 + 20),
       createdAt: at(0, 9 * 60 + 20),
     },
     {
@@ -68,7 +71,8 @@ export function seedDemoRequests(today: ISODate): MockDemoRequest[] {
       kind: 'tour_operator',
       city: 'Granada',
       message: '¿Podemos llevar a nuestros grupos por los circuitos creativos?',
-      status: 'new',
+      status: 'delivered',
+      deliveredAt: at(1, 16 * 60 + 5),
       createdAt: at(1, 16 * 60 + 5),
     },
     {
@@ -79,27 +83,26 @@ export function seedDemoRequests(today: ISODate): MockDemoRequest[] {
       organization: 'Alcaldía de Masaya',
       kind: 'municipality',
       city: 'Masaya',
-      message: 'Nos interesa publicar la agenda cultural de las fiestas patronales.',
-      status: 'scheduled',
-      notes: 'Videollamada el jueves a las 10 a.m. con la oficina de turismo.',
+      message: 'Nos interesa publicar la agenda cultural de las fiestas patronales. Usamos computadoras con Windows.',
+      status: 'pending',
+      deliveredAt: null,
+      notes: 'Pidió el instalador de Windows: hay que avisarle cuando lo publiquemos.',
       createdAt: at(4, 11 * 60),
       updatedAt: at(3, 15 * 60),
       updatedBy: "Equipo de K'Plan",
     },
     {
+      ...untouched,
       id: 'demo-4',
       name: 'Ernesto Gaitán',
       email: 'egaitan@museoleon.example',
-      phone: '',
       organization: 'Museo de Leyendas y Tradiciones',
       kind: 'institution',
       city: 'León',
+      status: 'pending',
+      deliveredAt: null,
       message: '',
-      status: 'done',
-      notes: 'Les interesa el QR de insignias en la entrada. Mandan su solicitud desde /postular.',
-      createdAt: at(12, 10 * 60),
-      updatedAt: at(8, 17 * 60),
-      updatedBy: "Equipo de K'Plan",
+      createdAt: at(25, 10 * 60),
     },
   ]
 }
@@ -109,10 +112,9 @@ export interface MockRelease {
   platform: ReleasePlatform
   version: string
   notes: string
+  link: string
   status: ReleaseStatus
-  fileKey: string
-  size: number
-  downloads: number
+  deliveries: number
   createdAt: LocalDateTime
   createdBy: string
   publishedAt: LocalDateTime | null
@@ -136,11 +138,10 @@ export function wireRelease(release: MockRelease, current: Set<string>) {
     platform: release.platform,
     version: release.version,
     notes: release.notes,
+    link: release.link,
     status: release.status,
     current: current.has(release.id),
-    file_name: `kplan-${release.version}${INSTALLERS[release.platform].extension}`,
-    size: release.size,
-    downloads: release.downloads,
+    deliveries: release.deliveries,
     created_at: wireInstant(release.createdAt),
     created_by: release.createdBy,
     published_at: release.publishedAt ? wireInstant(release.publishedAt) : null,
@@ -152,16 +153,16 @@ export function wireRelease(release: MockRelease, current: Set<string>) {
 export function seedReleases(today: ISODate): MockRelease[] {
   const at = (days: number, minutes: number) => toLocalDateTime(addDays(today, -days), minutes)
   const team = "Equipo de K'Plan"
+  const drive = (name: string) => `https://drive.google.com/file/d/kplan-demo-${name}/view`
   return [
     {
       id: 'version-1',
       platform: 'android',
       version: '0.9.0',
       notes: 'Primera versión del piloto: circuitos, agenda y Mi circuito.',
+      link: drive('0.9.0'),
       status: 'published',
-      fileKey: 'app-installer/android/demo-0.9.0.apk',
-      size: 48_300_000,
-      downloads: 37,
+      deliveries: 37,
       createdAt: at(20, 9 * 60),
       createdBy: team,
       publishedAt: at(20, 10 * 60),
@@ -172,10 +173,9 @@ export function seedReleases(today: ISODate): MockRelease[] {
       platform: 'android',
       version: '1.0.0',
       notes: 'Reservas con guía, chat y avisos. Inicio de sesión con Google.',
+      link: drive('1.0.0'),
       status: 'published',
-      fileKey: 'app-installer/android/demo-1.0.0.apk',
-      size: 51_700_000,
-      downloads: 112,
+      deliveries: 12,
       createdAt: at(3, 9 * 60),
       createdBy: team,
       publishedAt: at(3, 11 * 60),
@@ -186,10 +186,9 @@ export function seedReleases(today: ISODate): MockRelease[] {
       platform: 'android',
       version: '1.1.0-beta.1',
       notes: 'Insignias por QR y cupones. Para probar antes de publicar.',
+      link: drive('1.1.0-beta.1'),
       status: 'draft',
-      fileKey: 'app-installer/android/demo-1.1.0-beta.1.apk',
-      size: 52_100_000,
-      downloads: 0,
+      deliveries: 0,
       createdAt: at(0, 8 * 60 + 30),
       createdBy: team,
       publishedAt: null,

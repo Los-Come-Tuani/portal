@@ -15,8 +15,11 @@ vi.stubGlobal('localStorage', {
 const request = (method: HttpMethod, path: string, body?: unknown, query: Record<string, string> = {}) =>
   handleMockRequest({ method, path, query: new URLSearchParams(query), body })
 
-type Release = { id: string; version: string; status: string; current: boolean }
+type Release = { id: string; version: string; status: string; current: boolean; link: string }
+type Demo = { id: string; status: string; delivered_at: string | null; updated_by: string | null }
 type Page<T> = { elements: number; results: T[] }
+
+const DRIVE = 'https://drive.google.com/file/d/kplan-2/view'
 
 function signInWith(...permissions: Parameters<typeof hasPermission>[2]) {
   const db = getDatabase()
@@ -25,10 +28,7 @@ function signInWith(...permissions: Parameters<typeof hasPermission>[2]) {
   demoSession.open(user.id)
 }
 
-async function upload(version: string) {
-  const ticket = (await request('POST', '/app-release/upload/', { platform: 'android', size: 50_000_000 })).data as { key: string }
-  return request('POST', '/app-release/', { platform: 'android', version, notes: '', file: ticket.key })
-}
+const create = (version: string, link = DRIVE) => request('POST', '/app-release/', { platform: 'android', version, notes: '', link })
 
 /** El backend de demo responde como el API de F9 (docs/landing.md). */
 describe('backend de demo: versiones y solicitudes de demo', () => {
@@ -39,8 +39,8 @@ describe('backend de demo: versiones y solicitudes de demo', () => {
   })
 
   it('publicar una versión la vuelve la vigente y retirarla devuelve la anterior', async () => {
-    const created = (await upload('2.0.0')).data as Release
-    expect(created).toMatchObject({ status: 'draft', current: false })
+    const created = (await create('2.0.0')).data as Release
+    expect(created).toMatchObject({ status: 'draft', current: false, link: DRIVE })
 
     const published = (await request('POST', `/app-release/${created.id}/publish/`)).data as Release
     expect(published.current).toBe(true)
@@ -52,9 +52,13 @@ describe('backend de demo: versiones y solicitudes de demo', () => {
   })
 
   it('una versión repetida en la misma plataforma responde 409 en version', async () => {
-    const again = await upload('1.0.0')
+    const again = await create('1.0.0')
     expect(again.status).toBe(409)
     expect((again.data as { errors: Record<string, string> }).errors.version).toContain('1.0.0')
+  })
+
+  it('el link tiene que ser https', async () => {
+    expect((await create('2.0.0', 'http://drive.google.com/x')).status).toBe(422)
   })
 
   it('sólo se borra un borrador', async () => {
@@ -65,16 +69,14 @@ describe('backend de demo: versiones y solicitudes de demo', () => {
     expect((await request('DELETE', `/app-release/${draft?.id}/`)).status).toBe(204)
   })
 
-  it('atender una solicitud anota quién y la saca de las nuevas', async () => {
-    const before = (await request('GET', '/demo-request/', undefined, { status: 'new' })).data as Page<{ id: string }>
+  it('marcar una pendiente como entregada anota cuándo y quién', async () => {
+    const before = (await request('GET', '/demo-request/', undefined, { status: 'pending' })).data as Page<Demo>
     const first = before.results[0]
-    const updated = (await request('PATCH', `/demo-request/${first.id}/`, { status: 'contacted', notes: 'Llamada el lunes.' })).data as {
-      status: string
-      updated_by: string | null
-    }
-    expect(updated.status).toBe('contacted')
+    const updated = (await request('PATCH', `/demo-request/${first.id}/`, { status: 'delivered', notes: 'Le mandé el link.' })).data as Demo
+    expect(updated.status).toBe('delivered')
+    expect(updated.delivered_at).not.toBeNull()
     expect(updated.updated_by).not.toBeNull()
-    const after = (await request('GET', '/demo-request/', undefined, { status: 'new' })).data as Page<{ id: string }>
+    const after = (await request('GET', '/demo-request/', undefined, { status: 'pending' })).data as Page<Demo>
     expect(after.elements).toBe(before.elements - 1)
   })
 

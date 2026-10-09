@@ -1,4 +1,4 @@
-import { Mail, MessageSquareText, Phone, Search } from 'lucide-react'
+import { CheckCheck, Mail, MessageSquareText, Phone, Search } from 'lucide-react'
 import { useDeferredValue, useState } from 'react'
 import { Button, Dialog, EmptyState, ErrorState, Field, Input, PageHeader, Pager, Select, SkeletonRows, Tabs, Tag, Textarea, useToast, type TagTone } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
@@ -10,36 +10,46 @@ import { formatDateTime } from '@/lib/format'
 
 type Section = DemoStatus | 'all'
 
-const TONES: Record<DemoStatus, TagTone> = { new: 'brand', contacted: 'planned', scheduled: 'planned', done: 'confirmed', dismissed: 'neutral' }
+const TONES: Record<DemoStatus, TagTone> = { pending: 'brand', delivered: 'confirmed' }
 
 const SECTION_LABELS: Record<DemoStatus, string> = {
-  new: 'Nuevas',
-  contacted: 'Contactadas',
-  scheduled: 'Agendadas',
-  done: 'Realizadas',
-  dismissed: 'Descartadas',
+  pending: 'Pendientes',
+  delivered: 'Entregadas',
 }
 
 /**
  * La bandeja de solicitudes de demo (`demo-request/`, F9): quién pidió una demostración desde la
- * landing. `demos.view` la ve; `demos.manage` cambia el estado y anota el seguimiento.
+ * landing. Si al enviarla había una versión publicada, recibió los links ahí mismo y llega
+ * entregada; si no, queda pendiente hasta que el equipo se los haga llegar. `demos.view` la ve;
+ * `demos.manage` la marca y anota el seguimiento.
  */
 export function DemoRequestsPage() {
   useDocumentTitle('Solicitudes de demo')
   const { can } = useSession()
-  const [section, setSection] = useState<Section>('new')
+  const [section, setSection] = useState<Section>('pending')
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search.trim())
   const [page, setPage] = useState(1)
   const [attending, setAttending] = useState<DemoRequest | null>(null)
   const requests = useDemoRequests({ status: section === 'all' ? undefined : section, search: deferredSearch || undefined, page, pageSize: 20 })
+  const deliver = useUpdateDemoRequest()
+  const toast = useToast()
   const canAttend = can('demos.manage')
+
+  const markDelivered = (request: DemoRequest) =>
+    deliver.mutate(
+      { id: request.id, change: { status: 'delivered' } },
+      {
+        onSuccess: () => toast({ title: `${request.name} quedó como entregada` }),
+        onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
+      },
+    )
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Solicitudes de demo"
-        description="Quién pidió una demostración desde la landing. Contáctalo, agenda la demo y anota cómo va para que el resto del equipo lo sepa."
+        description="Quién pidió una demo desde la landing. Si había una versión publicada, recibió los links al enviarla. Las pendientes esperan que les hagas llegar el link (por correo o WhatsApp) y las marques como entregadas."
       />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <Tabs
@@ -77,8 +87,11 @@ export function DemoRequestsPage() {
       ) : requests.isError ? (
         <ErrorState error={requests.error} onRetry={() => void requests.refetch()} />
       ) : requests.data.results.length === 0 ? (
-        <EmptyState icon={<MessageSquareText size={20} />} title={deferredSearch ? 'Ninguna solicitud coincide' : section === 'new' ? 'No hay solicitudes nuevas' : 'No hay solicitudes aquí'}>
-          {!deferredSearch && section === 'new' && 'Cuando alguien pida una demo desde la landing, aparece aquí y te llega un aviso.'}
+        <EmptyState
+          icon={<MessageSquareText size={20} />}
+          title={deferredSearch ? 'Ninguna solicitud coincide' : section === 'pending' ? 'No hay solicitudes pendientes' : 'No hay solicitudes aquí'}
+        >
+          {!deferredSearch && section === 'pending' && 'Si alguien pide una demo cuando no hay versión publicada, aparece aquí y te llega un aviso.'}
         </EmptyState>
       ) : (
         <>
@@ -117,17 +130,22 @@ export function DemoRequestsPage() {
                     {request.notes}
                   </p>
                 )}
-                {request.updatedAt && (
-                  <p className="mt-2 text-caption text-muted">
-                    Última actualización el {formatDateTime(request.updatedAt)}
-                    {request.updatedBy && ` por ${request.updatedBy}`}
-                  </p>
-                )}
+                <p className="mt-2 text-caption text-muted">
+                  {request.deliveredAt
+                    ? `Recibió los links el ${formatDateTime(request.deliveredAt)}`
+                    : 'Todavía no recibe los links: no había una versión publicada cuando la envió.'}
+                  {request.updatedAt && ` · actualizada el ${formatDateTime(request.updatedAt)}${request.updatedBy ? ` por ${request.updatedBy}` : ''}`}
+                </p>
                 {canAttend && (
-                  <div className="mt-4 flex justify-end">
-                    <Button variant={request.status === 'new' ? 'primary' : 'secondary'} onClick={() => setAttending(request)}>
-                      {request.status === 'new' ? 'Atender' : 'Actualizar'}
+                  <div className="mt-4 flex flex-wrap justify-end gap-2">
+                    <Button variant="ghost" onClick={() => setAttending(request)}>
+                      {request.status === 'pending' ? 'Anotar' : 'Actualizar'}
                     </Button>
+                    {request.status === 'pending' && (
+                      <Button icon={<CheckCheck size={16} />} loading={deliver.isPending && deliver.variables?.id === request.id} onClick={() => markDelivered(request)}>
+                        Marcar entregada
+                      </Button>
+                    )}
                   </div>
                 )}
               </li>
@@ -144,14 +162,14 @@ export function DemoRequestsPage() {
 
 function AttendDialog({ request, onClose }: { request: DemoRequest | null; onClose: () => void }) {
   return (
-    <Dialog open={request !== null} onClose={onClose} title="Atender la solicitud" description={request ? `${request.name}, ${request.organization}` : undefined}>
+    <Dialog open={request !== null} onClose={onClose} title="Seguimiento de la solicitud" description={request ? `${request.name}, ${request.organization}` : undefined}>
       {request && <AttendForm key={request.id} request={request} onDone={onClose} />}
     </Dialog>
   )
 }
 
 function AttendForm({ request, onDone }: { request: DemoRequest; onDone: () => void }) {
-  const [status, setStatus] = useState<DemoStatus>(request.status === 'new' ? 'contacted' : request.status)
+  const [status, setStatus] = useState<DemoStatus>(request.status)
   const [notes, setNotes] = useState(request.notes)
   const update = useUpdateDemoRequest()
   const toast = useToast()
@@ -174,7 +192,7 @@ function AttendForm({ request, onDone }: { request: DemoRequest; onDone: () => v
         )
       }}
     >
-      <Field label="Estado">
+      <Field label="Estado" hint="Entregada: ya tiene el link de la app, porque lo recibió al enviarla o porque se lo hiciste llegar.">
         {(control) => (
           <Select {...control} value={status} onChange={(change) => setStatus(change.target.value as DemoStatus)}>
             {DEMO_STATUSES.map((value) => (
@@ -185,7 +203,7 @@ function AttendForm({ request, onDone }: { request: DemoRequest; onDone: () => v
           </Select>
         )}
       </Field>
-      <Field label="Seguimiento" optional hint="Para el equipo: cuándo la contactaste, la fecha de la demo, qué le interesó.">
+      <Field label="Seguimiento" optional hint="Para el equipo: por dónde le mandaste el link, qué plataforma pidió, qué le interesó.">
         {(control) => <Textarea {...control} rows={4} maxLength={2000} value={notes} onChange={(change) => setNotes(change.target.value)} />}
       </Field>
       <div className="flex justify-end gap-2">

@@ -158,17 +158,17 @@ export const PERMISSION_GROUPS: { label: string; permissions: PermissionInfo[] }
       {
         id: 'demos.manage',
         label: 'Atender solicitudes de demo',
-        description: 'Cambia el estado de las solicitudes de demo, anota el seguimiento y recibe el aviso de cada una nueva.',
+        description: 'Marca las solicitudes de demo como entregadas o pendientes, anota el seguimiento y recibe el aviso de cada una nueva.',
       },
       {
         id: 'releases.view',
         label: 'Ver versiones de la app',
-        description: 'Ve los instaladores de la app y cuál se descarga desde la landing.',
+        description: 'Ve las versiones de la app, sus links y cuál se entrega a quien pide una demo.',
       },
       {
         id: 'releases.manage',
         label: 'Publicar versiones de la app',
-        description: 'Sube los instaladores (APK, DMG, EXE), los publica en la landing y los retira.',
+        description: 'Registra cada versión (Android, macOS, Windows) con el link de Drive de su instalador, la publica y la retira.',
       },
     ],
   },

@@ -2,7 +2,7 @@ import { ArrowRight, BadgeCheck, Building2, CreditCard, Landmark, MapPin, Messag
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { usePayments, useStatements, useWithdrawals } from '@/data/hooks/use-billing'
-import { useNewDemoCount } from '@/data/hooks/use-landing'
+import { usePendingDemoCount } from '@/data/hooks/use-landing'
 import { useOpenProviderCount } from '@/data/hooks/use-providers'
 import { usePlaceRequests } from '@/data/hooks/use-place-requests'
 import { useOpenRequestCount } from '@/data/hooks/use-verification'
@@ -22,7 +22,7 @@ export function AdminPending() {
   const dueStatements = statements.data?.elements ?? 0
   const pendingPayments = payments.data?.elements ?? 0
   const pendingWithdrawals = withdrawals.data?.elements ?? 0
-  const newDemos = useNewDemoCount(can('demos.view')) ?? 0
+  const pendingDemos = usePendingDemoCount(can('demos.view')) ?? 0
 
   const items = [
     guideCount > 0
@@ -67,11 +67,11 @@ export function AdminPending() {
           text: `${plural(dueStatements, 'estado de cuenta', 'estados de cuenta')} por cobrar`,
         }
       : null,
-    newDemos > 0
+    pendingDemos > 0
       ? {
           to: paths.demoRequests,
           icon: <MessageSquareText size={16} aria-hidden="true" />,
-          text: `${plural(newDemos, 'solicitud de demo espera', 'solicitudes de demo esperan')} respuesta`,
+          text: `${plural(pendingDemos, 'solicitud de demo espera', 'solicitudes de demo esperan')} el link de la app`,
         }
       : null,
   ].filter((item) => item !== null)

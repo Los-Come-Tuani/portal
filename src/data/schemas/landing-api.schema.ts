@@ -12,7 +12,8 @@ export const apiDemoRequestSchema = z.object({
   kind: z.enum(['business', 'municipality', 'institution', 'tour_operator', 'other']),
   city: z.string(),
   message: z.string(),
-  status: z.enum(['new', 'contacted', 'scheduled', 'done', 'dismissed']),
+  status: z.enum(['pending', 'delivered']),
+  delivered_at: z.string().nullable(),
   notes: z.string(),
   created_at: z.string(),
   updated_at: z.string().nullable(),
@@ -34,6 +35,7 @@ export function toDemoRequest(api: z.infer<typeof apiDemoRequestSchema>): DemoRe
     city: api.city,
     message: api.message,
     status: api.status,
+    deliveredAt: local(api.delivered_at),
     notes: api.notes,
     createdAt: toLocalDateTime(api.created_at),
     updatedAt: local(api.updated_at),
@@ -56,11 +58,10 @@ export const apiReleaseSchema = z.object({
   platform: z.enum(['android', 'macos', 'windows']),
   version: z.string(),
   notes: z.string(),
+  link: z.string(),
   status: z.enum(['draft', 'published', 'withdrawn']),
   current: z.boolean(),
-  file_name: z.string(),
-  size: z.number(),
-  downloads: z.number(),
+  deliveries: z.number(),
   created_at: z.string(),
   created_by: z.string(),
   published_at: z.string().nullable(),
@@ -75,11 +76,10 @@ export function toRelease(api: z.infer<typeof apiReleaseSchema>): AppRelease {
     platform: api.platform,
     version: api.version,
     notes: api.notes,
+    link: api.link,
     status: api.status,
     current: api.current,
-    fileName: api.file_name,
-    size: api.size,
-    downloads: api.downloads,
+    deliveries: api.deliveries,
     createdAt: toLocalDateTime(api.created_at),
     createdBy: api.created_by,
     publishedAt: local(api.published_at),
@@ -88,5 +88,3 @@ export function toRelease(api: z.infer<typeof apiReleaseSchema>): AppRelease {
 }
 
 export const toReleasePage = (api: z.infer<typeof apiReleasePageSchema>): Page<AppRelease> => toPage(api, toRelease)
-
-export const apiReleaseDownloadSchema = z.object({ url: z.string() })

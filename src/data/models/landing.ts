@@ -12,19 +12,20 @@ export const DEMO_KIND_LABELS: Record<DemoKind, string> = {
   other: 'Otro',
 }
 
-export type DemoStatus = 'new' | 'contacted' | 'scheduled' | 'done' | 'dismissed'
+/** Entregada: recibió los links de la app, al enviarla o porque el equipo se los hizo llegar. */
+export type DemoStatus = 'pending' | 'delivered'
 
-export const DEMO_STATUSES: readonly DemoStatus[] = ['new', 'contacted', 'scheduled', 'done', 'dismissed']
+export const DEMO_STATUSES: readonly DemoStatus[] = ['pending', 'delivered']
 
 export const DEMO_STATUS_LABELS: Record<DemoStatus, string> = {
-  new: 'Nueva',
-  contacted: 'Contactada',
-  scheduled: 'Demo agendada',
-  done: 'Demo realizada',
-  dismissed: 'Descartada',
+  pending: 'Pendiente',
+  delivered: 'Entregada',
 }
 
-/** Alguien que vio la landing pide que le muestren K'Plan. No tiene cuenta: el equipo lo contacta. */
+/**
+ * Alguien que vio la landing pide que le muestren K'Plan. No tiene cuenta. Si al enviarla había
+ * una versión publicada, recibió los links ahí mismo; si no, el equipo se los hace llegar.
+ */
 export interface DemoRequest {
   id: string
   name: string
@@ -35,6 +36,7 @@ export interface DemoRequest {
   city: string
   message: string
   status: DemoStatus
+  deliveredAt: LocalDateTime | null
   /** Lo que anota el equipo al atenderla; quien la pidió no lo ve. */
   notes: string
   createdAt: LocalDateTime
@@ -54,14 +56,12 @@ export type ReleasePlatform = 'android' | 'macos' | 'windows'
 
 export const RELEASE_PLATFORMS: readonly ReleasePlatform[] = ['android', 'macos', 'windows']
 
-/** Qué instalador lleva cada plataforma: el tipo va dentro de la firma de la subida. */
-export const INSTALLERS: Record<ReleasePlatform, { label: string; extension: string; contentType: string; format: string }> = {
-  android: { label: 'Android', extension: '.apk', contentType: 'application/vnd.android.package-archive', format: 'APK' },
-  macos: { label: 'macOS', extension: '.dmg', contentType: 'application/x-apple-diskimage', format: 'DMG' },
-  windows: { label: 'Windows', extension: '.exe', contentType: 'application/vnd.microsoft.portable-executable', format: 'EXE' },
+/** Qué instalador lleva cada plataforma. */
+export const INSTALLERS: Record<ReleasePlatform, { label: string; format: string }> = {
+  android: { label: 'Android', format: 'APK' },
+  macos: { label: 'macOS', format: 'DMG' },
+  windows: { label: 'Windows', format: 'EXE' },
 }
-
-export const INSTALLER_MAX_BYTES = 500 * 1024 * 1024
 
 export type ReleaseStatus = 'draft' | 'published' | 'withdrawn'
 
@@ -74,18 +74,24 @@ export const RELEASE_STATUS_LABELS: Record<ReleaseStatus, string> = {
 /** `1.2.0`, `1.2.0-beta.1` o `1.2.0+14`, como lo pide el API. */
 export const VERSION_PATTERN = /^\d+(\.\d+){1,3}([-+][0-9A-Za-z.-]+)?$/
 
-/** Un instalador de la app. La vigente de cada plataforma es la publicada más reciente. */
+/** El link compartido (de Drive) donde está el instalador: el API sólo acepta `https`. */
+export const LINK_PATTERN = /^https:\/\/\S+$/
+
+/**
+ * Una versión de la app con el link de su instalador. La vigente de cada plataforma es la
+ * publicada más reciente, y su link es el que recibe quien pide una demo.
+ */
 export interface AppRelease {
   id: string
   platform: ReleasePlatform
   version: string
   notes: string
+  link: string
   status: ReleaseStatus
-  /** La que hoy se descarga desde la landing para su plataforma. */
+  /** La que hoy se entrega con el formulario de la landing para su plataforma. */
   current: boolean
-  fileName: string
-  size: number
-  downloads: number
+  /** Cuántas solicitudes de demo recibieron este link. */
+  deliveries: number
   createdAt: LocalDateTime
   createdBy: string
   publishedAt: LocalDateTime | null
@@ -96,5 +102,12 @@ export interface AppReleaseInput {
   platform: ReleasePlatform
   version: string
   notes: string
-  file: File
+  link: string
+}
+
+/** Lo que se corrige: las notas y el link siempre; la versión, sólo en un borrador. */
+export interface AppReleaseChange {
+  version?: string
+  notes?: string
+  link?: string
 }

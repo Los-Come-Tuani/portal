@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { AppReleaseInput, DemoRequestChange } from '../models'
+import type { AppReleaseChange, AppReleaseInput, DemoRequestChange } from '../models'
 import { landingRepository, type DemoRequestFilters, type ReleaseFilters } from '../repositories/landing.repository'
 import { queryKeys } from './query-keys'
 
@@ -13,8 +13,8 @@ export function useDemoRequests(filters: DemoRequestFilters = {}, enabled = true
 }
 
 /** Cuántas solicitudes de demo nadie ha atendido: alimenta el menú y los pendientes. */
-export function useNewDemoCount(enabled = true) {
-  const queue = useDemoRequests({ status: 'new', page: 1, pageSize: 1 }, enabled)
+export function usePendingDemoCount(enabled = true) {
+  const queue = useDemoRequests({ status: 'pending', page: 1, pageSize: 1 }, enabled)
   return queue.data?.elements
 }
 
@@ -44,13 +44,11 @@ function useReleaseMutation<T>(mutationFn: (variables: T) => Promise<unknown>) {
 }
 
 export function useCreateRelease() {
-  return useReleaseMutation(({ input, onProgress }: { input: AppReleaseInput; onProgress?: (fraction: number) => void }) =>
-    landingRepository.createRelease(input, onProgress),
-  )
+  return useReleaseMutation((input: AppReleaseInput) => landingRepository.createRelease(input))
 }
 
 export function useUpdateRelease() {
-  return useReleaseMutation(({ id, change }: { id: string; change: { version?: string; notes?: string } }) => landingRepository.updateRelease(id, change))
+  return useReleaseMutation(({ id, change }: { id: string; change: AppReleaseChange }) => landingRepository.updateRelease(id, change))
 }
 
 export function usePublishRelease() {

@@ -145,8 +145,6 @@ export interface MockDatabase {
   /** Las solicitudes de demo de la landing y las versiones de la app (F9), con las reglas del API. */
   demoRequests: MockDemoRequest[]
   releases: MockRelease[]
-  /** Los instaladores "subidos": la clave y su peso. La demo no guarda el archivo. */
-  installers: Record<string, number>
 }
 
 let database: MockDatabase | null = null

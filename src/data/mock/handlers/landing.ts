@@ -1,13 +1,14 @@
 import { z } from 'zod'
 import { nowLocalDateTime } from '@/lib/dates'
 import { endpoints } from '../../api/endpoints'
-import { INSTALLER_MAX_BYTES, INSTALLERS, RELEASE_PLATFORMS, VERSION_PATTERN, type ReleasePlatform } from '../../models'
+import { INSTALLERS, LINK_PATTERN, RELEASE_PLATFORMS, VERSION_PATTERN, type ReleasePlatform } from '../../models'
 import { fail, MockHttpError, paginate, parseBody, requireUser, route } from '../http'
 import { currentReleaseIds, wireDemoRequest, wireRelease, type MockRelease } from '../services/landing'
 
 const platform = z.enum(RELEASE_PLATFORMS as [ReleasePlatform, ...ReleasePlatform[]])
 const version = z.string().trim().max(32).regex(VERSION_PATTERN, 'Usa una versión como 1.2.0, 1.2.0-beta.1 o 1.2.0+14.')
 const notes = z.string().max(4000)
+const link = z.string().trim().max(500).regex(LINK_PATTERN, 'Pega el link compartido del instalador; tiene que empezar con https://.')
 
 const fold = (value: string) =>
   value
@@ -54,12 +55,13 @@ export const landingRoutes = [
       const actor = requireUser(context)
       const request = db.demoRequests.find((item) => item.id === params.id)
       if (!request) throw fail.notFound('No encontramos esa solicitud de demo.')
-      const input = parseBody(
-        z.object({ status: z.enum(['new', 'contacted', 'scheduled', 'done', 'dismissed']).optional(), notes: z.string().max(2000).optional() }),
-        body,
-      )
-      if (input.status !== undefined || input.notes !== undefined) {
-        if (input.status !== undefined) request.status = input.status
+      const input = parseBody(z.object({ status: z.enum(['pending', 'delivered']).optional(), notes: z.string().max(2000).optional() }), body)
+      const changesStatus = input.status !== undefined && input.status !== request.status
+      if (changesStatus || input.notes !== undefined) {
+        if (changesStatus && input.status) {
+          request.status = input.status
+          request.deliveredAt = input.status === 'delivered' ? nowLocalDateTime() : null
+        }
         if (input.notes !== undefined) request.notes = input.notes.trim()
         request.updatedAt = nowLocalDateTime()
         request.updatedBy = actor.name
@@ -87,47 +89,20 @@ export const landingRoutes = [
   ),
   route(
     'POST',
-    endpoints.appRelease.upload,
-    ({ db, body }) => {
-      const input = parseBody(z.object({ platform, size: z.number().int().positive() }), body)
-      if (input.size > INSTALLER_MAX_BYTES) throw fail.invalid('Revisa los campos marcados', { size: 'El instalador pesa más de 500 MB.' })
-      const installer = INSTALLERS[input.platform]
-      const key = `app-installer/${input.platform}/${crypto.randomUUID()}${installer.extension}`
-      // La demo no recibe el archivo: anota la clave como si ya estuviera en el bucket.
-      db.installers[key] = input.size
-      return {
-        key,
-        url: `https://storage.demo/${key}`,
-        method: 'PUT',
-        headers: { 'Content-Type': installer.contentType },
-        expires_in: 3600,
-        max_bytes: INSTALLER_MAX_BYTES,
-      }
-    },
-    { permissions: ['releases.manage'] },
-  ),
-  route(
-    'POST',
     endpoints.appRelease.list,
     (context) => {
       const { db, body } = context
       const actor = requireUser(context)
-      const input = parseBody(z.object({ platform, version, notes: notes.default(''), file: z.string().min(1) }), body)
-      const size = db.installers[input.file]
-      if (!input.file.startsWith(`app-installer/${input.platform}/`) || size === undefined) {
-        throw fail.invalid('Revisa los campos marcados', { file: 'No encontramos el instalador. Súbelo de nuevo.' })
-      }
-      if (db.releases.some((item) => item.fileKey === input.file)) throw fail.invalid('Revisa los campos marcados', { file: 'Ese instalador ya es de otra versión.' })
+      const input = parseBody(z.object({ platform, version, notes: notes.default(''), link }), body)
       versionTaken(db.releases, input)
       const release: MockRelease = {
         id: `version-${crypto.randomUUID()}`,
         platform: input.platform,
         version: input.version,
         notes: input.notes.trim(),
+        link: input.link,
         status: 'draft',
-        fileKey: input.file,
-        size,
-        downloads: 0,
+        deliveries: 0,
         createdAt: nowLocalDateTime(),
         createdBy: actor.name,
         publishedAt: null,
@@ -143,13 +118,14 @@ export const landingRoutes = [
     endpoints.appRelease.detail(':id'),
     ({ db, params, body }) => {
       const release = findRelease(db.releases, params.id)
-      const input = parseBody(z.object({ version: version.optional(), notes: notes.optional() }), body)
+      const input = parseBody(z.object({ version: version.optional(), notes: notes.optional(), link: link.optional() }), body)
       if (input.version !== undefined && input.version !== release.version) {
         if (release.status !== 'draft') throw fail.conflict('La versión solo cambia mientras es un borrador.')
         versionTaken(db.releases, { platform: release.platform, version: input.version }, release.id)
         release.version = input.version
       }
       if (input.notes !== undefined) release.notes = input.notes.trim()
+      if (input.link !== undefined) release.link = input.link
       return wireRelease(release, currentReleaseIds(db))
     },
     { permissions: ['releases.manage'] },
@@ -161,7 +137,6 @@ export const landingRoutes = [
       const release = findRelease(db.releases, params.id)
       if (release.status !== 'draft') throw fail.conflict('Solo se borra un borrador; una versión publicada se retira.')
       db.releases = db.releases.filter((item) => item.id !== release.id)
-      delete db.installers[release.fileKey]
       return undefined
     },
     { permissions: ['releases.manage'] },
@@ -191,14 +166,5 @@ export const landingRoutes = [
       return wireRelease(release, currentReleaseIds(db))
     },
     { permissions: ['releases.manage'] },
-  ),
-  route(
-    'GET',
-    endpoints.appRelease.download(':id'),
-    ({ db, params }) => {
-      findRelease(db.releases, params.id)
-      throw new MockHttpError(503, 'El modo demo no guarda instaladores: la descarga se prueba con el API real.')
-    },
-    { permissions: ['releases.view', 'releases.manage'] },
   ),
 ]

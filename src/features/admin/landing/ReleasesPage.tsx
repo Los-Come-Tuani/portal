@@ -1,26 +1,25 @@
-import { Download, MonitorSmartphone, Pencil, Plus, Trash2, Upload } from 'lucide-react'
-import { useId, useState } from 'react'
+import { ExternalLink, MonitorSmartphone, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import { Button, ConfirmDialog, Dialog, EmptyState, ErrorState, Field, Input, PageHeader, Pager, Select, SkeletonRows, Tag, Textarea, useToast, type TagTone } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
-import { installerProblem } from '@/data/api/upload'
 import { useCreateRelease, useDeleteRelease, usePublishRelease, useReleases, useUpdateRelease, useWithdrawRelease } from '@/data/hooks/use-landing'
-import { landingRepository } from '@/data/repositories/landing.repository'
-import { INSTALLERS, RELEASE_PLATFORMS, RELEASE_STATUS_LABELS, VERSION_PATTERN, type AppRelease, type ReleasePlatform, type ReleaseStatus } from '@/data/models'
+import { INSTALLERS, LINK_PATTERN, RELEASE_PLATFORMS, RELEASE_STATUS_LABELS, VERSION_PATTERN, type AppRelease, type ReleasePlatform, type ReleaseStatus } from '@/data/models'
 import { useSession } from '@/features/auth/use-auth'
 import { useDocumentTitle } from '@/hooks/use-document-title'
-import { cn } from '@/lib/cn'
-import { formatDateTime, formatNumber, plural } from '@/lib/format'
+import { formatDateTime, plural } from '@/lib/format'
 
 const TONES: Record<ReleaseStatus, TagTone> = { draft: 'neutral', published: 'confirmed', withdrawn: 'danger' }
 
-const megabytes = (bytes: number) => `${(bytes / (1024 * 1024)).toLocaleString('es-NI', { maximumFractionDigits: 1 })} MB`
+const VERSION_PROBLEM = 'Usa una versión como 1.2.0, 1.2.0-beta.1 o 1.2.0+14.'
+const LINK_PROBLEM = 'Pega el link compartido del instalador; tiene que empezar con https://.'
 
 type Pending = { kind: 'publish' | 'withdraw' | 'delete'; release: AppRelease }
 
 /**
- * Las versiones de la app que se descargan desde la landing (`app-release/`, F9). La vigente de
- * cada plataforma es la publicada más reciente: publicar otra la reemplaza y retirarla deja otra
- * vez la anterior. `releases.view` las ve y prueba; `releases.manage` sube, publica y retira.
+ * Las versiones de la app (`app-release/`, F9), cada una con el link (de Drive) de su instalador.
+ * La vigente de cada plataforma es la publicada más reciente, y su link es el que recibe quien
+ * pide una demo en la landing. `releases.view` las ve; `releases.manage` las registra, publica y
+ * retira.
  */
 export function ReleasesPage() {
   useDocumentTitle('Versiones de la app')
@@ -28,7 +27,7 @@ export function ReleasesPage() {
   const canManage = can('releases.manage')
   const [platform, setPlatform] = useState<ReleasePlatform | ''>('')
   const [page, setPage] = useState(1)
-  const [uploading, setUploading] = useState(false)
+  const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<AppRelease | null>(null)
   const [pending, setPending] = useState<Pending | null>(null)
   const releases = useReleases({ platform: platform || undefined, page, pageSize: 20 })
@@ -41,19 +40,11 @@ export function ReleasesPage() {
 
   const current = (target: ReleasePlatform) => published.data?.results.find((release) => release.platform === target && release.current)
 
-  const download = async (release: AppRelease) => {
-    try {
-      window.location.assign(await landingRepository.downloadUrl(release.id))
-    } catch (error) {
-      toast({ title: errorMessage(error), tone: 'error' })
-    }
-  }
-
   const confirm = () => {
     if (!pending) return
     const { kind, release } = pending
     const mutation = kind === 'publish' ? publish : kind === 'withdraw' ? withdraw : remove
-    const done = { publish: 'Versión publicada en la landing', withdraw: 'Versión retirada', delete: 'Borrador borrado' }[kind]
+    const done = { publish: 'Versión publicada', withdraw: 'Versión retirada', delete: 'Borrador borrado' }[kind]
     mutation.mutate(release.id, {
       onSuccess: () => {
         toast({ title: done })
@@ -67,17 +58,17 @@ export function ReleasesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Versiones de la app"
-        description="Los instaladores que se descargan desde la landing. Sube uno como borrador, pruébalo y publícalo: reemplaza al vigente de su plataforma."
+        description="Cada versión lleva el link de Drive de su instalador. Regístrala como borrador, prueba el link y publícala: desde ese momento es la que recibe quien pide una demo en la landing."
         actions={
           canManage && (
-            <Button icon={<Plus size={16} />} onClick={() => setUploading(true)}>
-              Subir versión
+            <Button icon={<Plus size={16} />} onClick={() => setCreating(true)}>
+              Nueva versión
             </Button>
           )
         }
       />
 
-      <ul className="grid gap-3 sm:grid-cols-3" aria-label="Lo que hoy se descarga">
+      <ul className="grid gap-3 sm:grid-cols-3" aria-label="Lo que hoy se entrega">
         {RELEASE_PLATFORMS.map((target) => {
           const live = current(target)
           return (
@@ -90,10 +81,10 @@ export function ReleasesPage() {
               ) : live ? (
                 <>
                   <p className="mt-1 text-title font-semibold text-ink">{live.version}</p>
-                  <p className="text-small text-muted">{plural(live.downloads, 'descarga', 'descargas')}</p>
+                  <p className="text-small text-muted">{plural(live.deliveries, 'entrega', 'entregas')}</p>
                 </>
               ) : (
-                <p className="mt-1 text-small text-muted">Sin versión publicada: la landing no muestra este botón.</p>
+                <p className="mt-1 text-small text-muted">Sin versión publicada: quien pida una demo no recibe link de esta plataforma.</p>
               )}
             </li>
           )
@@ -129,13 +120,13 @@ export function ReleasesPage() {
           title="Todavía no hay versiones"
           action={
             canManage && (
-              <Button icon={<Upload size={16} />} onClick={() => setUploading(true)}>
-                Subir la primera
+              <Button icon={<Plus size={16} />} onClick={() => setCreating(true)}>
+                Registrar la primera
               </Button>
             )
           }
         >
-          Sube el APK, el DMG o el EXE de la app. Queda como borrador hasta que lo publiques.
+          Sube el APK, el DMG o el EXE a Drive, compártelo con cualquiera que tenga el link y pégalo aquí. Queda como borrador hasta que lo publiques.
         </EmptyState>
       ) : (
         <>
@@ -149,24 +140,30 @@ export function ReleasesPage() {
                         {INSTALLERS[release.platform].label} {release.version}
                       </p>
                       <Tag tone={TONES[release.status]}>{RELEASE_STATUS_LABELS[release.status]}</Tag>
-                      {release.current && <Tag tone="brand">Se descarga en la landing</Tag>}
+                      {release.current && <Tag tone="brand">Se entrega con el formulario</Tag>}
                     </div>
-                    <p className="mt-1 text-small text-muted">
-                      {release.fileName} · {megabytes(release.size)}
-                      {release.status !== 'draft' && ` · ${plural(release.downloads, 'descarga', 'descargas')}`}
+                    <p className="mt-1 truncate text-small text-muted">
+                      {release.link}
+                      {release.status !== 'draft' && ` · ${plural(release.deliveries, 'entrega', 'entregas')}`}
                     </p>
                   </div>
                 </div>
                 {release.notes && <p className="mt-3 text-body whitespace-pre-line text-ink">{release.notes}</p>}
                 <p className="mt-2 text-caption text-muted">
-                  La subió {release.createdBy} el {formatDateTime(release.createdAt)}
+                  La registró {release.createdBy} el {formatDateTime(release.createdAt)}
                   {release.publishedAt && ` · publicada el ${formatDateTime(release.publishedAt)}`}
                   {release.withdrawnAt && ` · retirada el ${formatDateTime(release.withdrawnAt)}`}
                 </p>
                 <div className="mt-4 flex flex-wrap justify-end gap-2">
-                  <Button variant="ghost" icon={<Download size={15} />} className="mr-auto" onClick={() => void download(release)}>
-                    Descargar para probar
-                  </Button>
+                  <a
+                    href={release.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mr-auto inline-flex min-h-10 items-center gap-1.5 rounded-kp px-3 text-small font-semibold text-ink hover:bg-paper"
+                  >
+                    <ExternalLink size={15} aria-hidden="true" />
+                    Abrir el link para probar
+                  </a>
                   {canManage && (
                     <>
                       <Button variant="ghost" icon={<Pencil size={15} />} onClick={() => setEditing(release)}>
@@ -194,11 +191,11 @@ export function ReleasesPage() {
         </>
       )}
 
-      <UploadDialog open={uploading} onClose={() => setUploading(false)} />
+      <CreateDialog open={creating} onClose={() => setCreating(false)} />
       <EditDialog release={editing} onClose={() => setEditing(null)} />
       <ConfirmDialog
         open={pending !== null}
-        title={pending ? { publish: 'Publicar en la landing', withdraw: 'Retirar la versión', delete: 'Borrar el borrador' }[pending.kind] : ''}
+        title={pending ? { publish: 'Publicar la versión', withdraw: 'Retirar la versión', delete: 'Borrar el borrador' }[pending.kind] : ''}
         confirmLabel={pending ? { publish: 'Publicar', withdraw: 'Retirar', delete: 'Borrar' }[pending.kind] : ''}
         tone={pending?.kind === 'publish' ? 'primary' : 'danger'}
         loading={publish.isPending || withdraw.isPending || remove.isPending}
@@ -217,61 +214,56 @@ function ConfirmText({ pending, live }: { pending: Pending; live: AppRelease | u
   if (pending.kind === 'publish') {
     return (
       <p>
-        {label} pasa a ser la descarga de la landing
-        {live && live.id !== release.id ? `, en lugar de la ${live.version}` : ''}. Quien la baje desde hoy instala esta.
+        Quien pida una demo desde hoy recibe el link de {label}
+        {live && live.id !== release.id ? `, en lugar del de la ${live.version}` : ''}. Revisa que el link abra el archivo para cualquiera.
       </p>
     )
   }
   if (pending.kind === 'withdraw') {
     return (
       <p>
-        {label} deja de descargarse.{' '}
-        {release.current ? 'La landing vuelve a ofrecer la publicada anterior; si no hay otra, oculta el botón de esta plataforma.' : 'No era la vigente: la landing no cambia.'}
+        {label} deja de entregarse.{' '}
+        {release.current ? 'Vuelve a entregarse la publicada anterior; si no hay otra, quien pida una demo no recibe link de esta plataforma.' : 'No era la vigente: no cambia lo que se entrega.'}
       </p>
     )
   }
-  return <p>Se borran la versión {label} y su instalador. No se puede deshacer.</p>
+  return <p>Se borra la versión {label}. El archivo sigue en Drive. No se puede deshacer.</p>
 }
 
-function UploadDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function CreateDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
-    <Dialog open={open} onClose={onClose} title="Subir versión" description="Queda como borrador: la landing no la ofrece hasta que la publiques.">
-      {open && <UploadForm onDone={onClose} />}
+    <Dialog open={open} onClose={onClose} title="Nueva versión" description="Queda como borrador: nadie recibe su link hasta que la publiques.">
+      {open && <CreateForm onDone={onClose} />}
     </Dialog>
   )
 }
 
-function UploadForm({ onDone }: { onDone: () => void }) {
-  const inputId = useId()
-  const errorId = useId()
+function CreateForm({ onDone }: { onDone: () => void }) {
   const [platform, setPlatform] = useState<ReleasePlatform>('android')
   const [version, setVersion] = useState('')
+  const [link, setLink] = useState('')
   const [notes, setNotes] = useState('')
-  const [file, setFile] = useState<File | null>(null)
-  const [progress, setProgress] = useState(0)
-  const [errors, setErrors] = useState<{ version?: string; file?: string }>({})
+  const [errors, setErrors] = useState<{ version?: string; link?: string }>({})
   const create = useCreateRelease()
   const toast = useToast()
-  const installer = INSTALLERS[platform]
 
   const submit = () => {
     const next = {
-      version: VERSION_PATTERN.test(version.trim()) ? undefined : 'Usa una versión como 1.2.0, 1.2.0-beta.1 o 1.2.0+14.',
-      file: file ? (installerProblem(platform, file) ?? undefined) : `Elige el ${installer.format}.`,
+      version: VERSION_PATTERN.test(version.trim()) ? undefined : VERSION_PROBLEM,
+      link: LINK_PATTERN.test(link.trim()) ? undefined : LINK_PROBLEM,
     }
     setErrors(next)
-    if (next.version || next.file || !file) return
-    setProgress(0)
+    if (next.version || next.link) return
     create.mutate(
-      { input: { platform, version, notes, file }, onProgress: setProgress },
+      { platform, version, notes, link },
       {
         onSuccess: () => {
-          toast({ title: 'Versión subida como borrador' })
+          toast({ title: 'Versión registrada como borrador' })
           onDone()
         },
         onError: (error) => {
           const fields = (error as { fieldErrors?: Record<string, string> }).fieldErrors ?? {}
-          setErrors({ version: fields.version, file: fields.file })
+          setErrors({ version: fields.version, link: fields.link })
           toast({ title: errorMessage(error), tone: 'error' })
         },
       },
@@ -288,16 +280,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
     >
       <Field label="Plataforma">
         {(control) => (
-          <Select
-            {...control}
-            value={platform}
-            disabled={create.isPending}
-            onChange={(change) => {
-              setPlatform(change.target.value as ReleasePlatform)
-              setFile(null)
-              setErrors({})
-            }}
-          >
+          <Select {...control} value={platform} disabled={create.isPending} onChange={(change) => setPlatform(change.target.value as ReleasePlatform)}>
             {RELEASE_PLATFORMS.map((value) => (
               <option key={value} value={value}>
                 {INSTALLERS[value].label} ({INSTALLERS[value].format})
@@ -306,67 +289,46 @@ function UploadForm({ onDone }: { onDone: () => void }) {
           </Select>
         )}
       </Field>
-      <Field label="Versión" hint="La que muestra la app, por ejemplo 1.2.0. Va en el nombre del archivo que se descarga." error={errors.version}>
-        {(control) => <Input {...control} value={version} maxLength={32} placeholder="1.2.0" disabled={create.isPending} onChange={(change) => setVersion(change.target.value)} />}
+      <Field label="Versión" hint="La que muestra la app, por ejemplo 1.2.0." error={errors.version}>
+        {(control) => (
+          <Input
+            {...control}
+            value={version}
+            maxLength={32}
+            placeholder="1.2.0"
+            disabled={create.isPending}
+            onChange={(change) => {
+              setVersion(change.target.value)
+              setErrors((current) => ({ ...current, version: undefined }))
+            }}
+          />
+        )}
       </Field>
-      <Field label="Novedades" optional hint="Lo que cambió. La landing lo muestra junto al botón de descarga.">
+      <Field label="Link de Drive" hint={`El link compartido del ${INSTALLERS[platform].format}. En Drive: Compartir → "Cualquier persona con el enlace".`} error={errors.link}>
+        {(control) => (
+          <Input
+            {...control}
+            type="url"
+            value={link}
+            maxLength={500}
+            placeholder="https://drive.google.com/file/d/…/view"
+            disabled={create.isPending}
+            onChange={(change) => {
+              setLink(change.target.value)
+              setErrors((current) => ({ ...current, link: undefined }))
+            }}
+          />
+        )}
+      </Field>
+      <Field label="Novedades" optional hint="Lo que cambió en esta versión. Queda para el equipo.">
         {(control) => <Textarea {...control} rows={3} maxLength={4000} value={notes} disabled={create.isPending} onChange={(change) => setNotes(change.target.value)} />}
       </Field>
-      <div className="flex flex-col gap-2">
-        <span className="text-small font-medium text-ink">Instalador ({installer.format}, hasta 500 MB)</span>
-        <input
-          id={inputId}
-          type="file"
-          accept={`${installer.extension},${installer.contentType}`}
-          disabled={create.isPending}
-          aria-invalid={!!errors.file}
-          aria-describedby={errors.file ? errorId : undefined}
-          className="peer sr-only"
-          onChange={(change) => {
-            setFile(change.target.files?.[0] ?? null)
-            setErrors((current) => ({ ...current, file: undefined }))
-          }}
-        />
-        <label
-          htmlFor={inputId}
-          className={cn(
-            'flex min-h-14 cursor-pointer items-center gap-2 rounded-kp border border-dashed px-3 py-3 text-small transition-colors duration-150 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink',
-            errors.file ? 'border-danger/60 text-muted' : 'border-outline text-muted hover:border-ink/50 hover:text-ink',
-            create.isPending && 'pointer-events-none opacity-60',
-          )}
-        >
-          <Upload size={16} aria-hidden="true" className="shrink-0" />
-          {file ? (
-            <span className="flex min-w-0 flex-1 items-center justify-between gap-3">
-              <span className="truncate font-semibold text-ink">{file.name}</span>
-              <span className="shrink-0">{megabytes(file.size)}</span>
-            </span>
-          ) : (
-            <span>
-              <span className="font-semibold text-ink">Elige el {installer.format}</span> de esta versión
-            </span>
-          )}
-        </label>
-        {errors.file && (
-          <p id={errorId} className="text-caption font-medium text-danger">
-            {errors.file}
-          </p>
-        )}
-      </div>
-      {create.isPending && (
-        <div className="flex flex-col gap-1" role="status">
-          <div className="h-2 overflow-hidden rounded-full bg-paper">
-            <div className="h-full rounded-full bg-brand transition-[width] duration-200" style={{ width: `${Math.round(progress * 100)}%` }} />
-          </div>
-          <p className="text-caption text-muted">{progress < 1 ? `Subiendo… ${formatNumber(Math.round(progress * 100))} %` : 'Registrando la versión…'}</p>
-        </div>
-      )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onDone} disabled={create.isPending}>
           Cancelar
         </Button>
-        <Button type="submit" icon={<Upload size={16} />} loading={create.isPending}>
-          Subir como borrador
+        <Button type="submit" icon={<Plus size={16} />} loading={create.isPending}>
+          Registrar como borrador
         </Button>
       </div>
     </form>
@@ -383,8 +345,9 @@ function EditDialog({ release, onClose }: { release: AppRelease | null; onClose:
 
 function EditForm({ release, onDone }: { release: AppRelease; onDone: () => void }) {
   const [version, setVersion] = useState(release.version)
+  const [link, setLink] = useState(release.link)
   const [notes, setNotes] = useState(release.notes)
-  const [error, setError] = useState<string | undefined>()
+  const [errors, setErrors] = useState<{ version?: string; link?: string }>({})
   const update = useUpdateRelease()
   const toast = useToast()
   const isDraft = release.status === 'draft'
@@ -394,27 +357,59 @@ function EditForm({ release, onDone }: { release: AppRelease; onDone: () => void
       className="flex flex-col gap-4"
       onSubmit={(event) => {
         event.preventDefault()
-        if (isDraft && !VERSION_PATTERN.test(version.trim())) {
-          setError('Usa una versión como 1.2.0, 1.2.0-beta.1 o 1.2.0+14.')
-          return
+        const next = {
+          version: !isDraft || VERSION_PATTERN.test(version.trim()) ? undefined : VERSION_PROBLEM,
+          link: LINK_PATTERN.test(link.trim()) ? undefined : LINK_PROBLEM,
         }
+        setErrors(next)
+        if (next.version || next.link) return
         update.mutate(
-          { id: release.id, change: { notes, ...(isDraft && { version }) } },
+          { id: release.id, change: { notes, link, ...(isDraft && { version }) } },
           {
             onSuccess: () => {
               toast({ title: 'Versión actualizada' })
               onDone()
             },
             onError: (caught) => {
-              setError((caught as { fieldErrors?: Record<string, string> }).fieldErrors?.version)
+              const fields = (caught as { fieldErrors?: Record<string, string> }).fieldErrors ?? {}
+              setErrors({ version: fields.version, link: fields.link })
               toast({ title: errorMessage(caught), tone: 'error' })
             },
           },
         )
       }}
     >
-      <Field label="Versión" hint={isDraft ? undefined : 'Ya se publicó: la versión no cambia. Si te equivocaste, sube otra.'} error={error}>
-        {(control) => <Input {...control} value={version} maxLength={32} disabled={!isDraft} onChange={(change) => setVersion(change.target.value)} />}
+      <Field label="Versión" hint={isDraft ? undefined : 'Ya se publicó: la versión no cambia. Si te equivocaste, registra otra.'} error={errors.version}>
+        {(control) => (
+          <Input
+            {...control}
+            value={version}
+            maxLength={32}
+            disabled={!isDraft}
+            onChange={(change) => {
+              setVersion(change.target.value)
+              setErrors((current) => ({ ...current, version: undefined }))
+            }}
+          />
+        )}
+      </Field>
+      <Field
+        label="Link de Drive"
+        hint={release.status === 'published' ? 'Si lo cambias, quien pida una demo desde ahora recibe el nuevo.' : undefined}
+        error={errors.link}
+      >
+        {(control) => (
+          <Input
+            {...control}
+            type="url"
+            value={link}
+            maxLength={500}
+            onChange={(change) => {
+              setLink(change.target.value)
+              setErrors((current) => ({ ...current, link: undefined }))
+            }}
+          />
+        )}
       </Field>
       <Field label="Novedades" optional>
         {(control) => <Textarea {...control} rows={4} maxLength={4000} value={notes} onChange={(change) => setNotes(change.target.value)} />}

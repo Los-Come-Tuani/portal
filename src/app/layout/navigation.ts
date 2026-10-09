@@ -19,7 +19,7 @@ import type { Session } from '@/features/auth/use-auth'
 import { paths } from '../router/paths'
 
 /** Un número que la barra lateral busca y muestra junto al módulo. */
-export type NavCount = 'pendingGuides' | 'pendingAdmissions' | 'newDemos'
+export type NavCount = 'pendingGuides' | 'pendingAdmissions' | 'pendingDemos'
 
 export interface NavLinkEntry {
   kind: 'link'
@@ -98,7 +98,7 @@ export function navigationFor({ role, organization, can }: Session): NavEntry[] 
         can('billing.view') && { to: paths.pricing, label: 'Tarifas' },
       ]),
       group('sitio', 'Sitio web', Globe, [
-        can('demos.view') && { to: paths.demoRequests, label: 'Solicitudes de demo', count: 'newDemos' },
+        can('demos.view') && { to: paths.demoRequests, label: 'Solicitudes de demo', count: 'pendingDemos' },
         can('releases.view') && { to: paths.releases, label: 'Versiones de la app' },
       ]),
     ].filter((entry): entry is NavEntry => !!entry)
