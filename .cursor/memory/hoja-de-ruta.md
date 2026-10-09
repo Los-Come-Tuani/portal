@@ -242,7 +242,10 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
     413, 429…) y los específicos pasan. Las rutas de `OWN_401` conservan el texto del 401.
   - `createFetchTransport` corta a los 30 s (`REQUEST_TIMEOUT_MS`, también la lectura del cuerpo) con
     `ApiError(0, timeout)`; la cancelación de quien llama sigue saliendo como `AbortError`. Las subidas
-    directas al bucket (`upload.ts`) y un cuerpo `FormData` no tienen límite.
+    directas al bucket (`upload.ts`) y un cuerpo `FormData` no tienen límite. Un `503` de
+    `POST /upload/` (API sin `STORAGE_*`; `develop-api` no lo tiene, comprobado el 2026-10-09) se
+    lee "Por ahora no podemos recibir archivos…": la postulación y las fotos no se pueden subir
+    hasta configurar el bucket (`api/docs/archivos.md`).
   - Arranque: sólo un 401/403 de `GET /auth/profile/` deja `anonymous`. Sin conexión, 5xx o 429 el
     estado es `unavailable` (`features/auth/session-status.ts`): `RequireAuth` muestra "No pudimos
     cargar tu sesión" con el motivo (`errorMessageWithWait`), "Reintentar" (`retrySession`) e "Ir a la
