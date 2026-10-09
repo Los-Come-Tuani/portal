@@ -6,7 +6,7 @@
 :root {
   /* Paleta base */
   --kp-primary-60: #1e2022;
-  --kp-primary-30: #d95d39;
+  --kp-primary-30: #b04321;
   --kp-primary-10: #f8f4e6;
   --kp-action: #b74728;
   --kp-action-hover: #983a20;
@@ -135,11 +135,13 @@
       transform: translateY(6px);
     }
   }
+
   @keyframes fade {
     from {
       opacity: 0;
     }
   }
+
   @keyframes slide-in {
     from {
       opacity: 0.4;

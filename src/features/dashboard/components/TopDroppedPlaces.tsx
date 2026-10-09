@@ -1,7 +1,7 @@
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Panel, SkeletonRows } from '@/components/ui'
+import { InlineError, Panel, SkeletonRows } from '@/components/ui'
 import { useVisitEvents } from '@/data/hooks/use-visits'
 import type { Stop } from '@/data/models'
 import { DROP_REASONS, type DropReason } from '@/data/models'
@@ -34,6 +34,8 @@ export function TopDroppedPlaces({ stopIds, today, places }: { stopIds?: string[
     <Panel title="Donde más los dejan" description={`Lugares con más abandonos en los últimos ${WINDOW_DAYS} días.`}>
       {events.isPending ? (
         <SkeletonRows rows={4} />
+      ) : events.isError ? (
+        <InlineError error={events.error} onRetry={() => void events.refetch()} />
       ) : ranked.length === 0 ? (
         <p className="text-body text-muted">Nadie dejó un lugar en este tiempo.</p>
       ) : (

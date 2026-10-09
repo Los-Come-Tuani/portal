@@ -1,6 +1,7 @@
 import { Gavel } from 'lucide-react'
 import { useState } from 'react'
-import { EmptyState, ErrorState, PageHeader, Pager, SegmentedControl, SkeletonRows } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { Button, ButtonLink, EmptyState, ErrorState, PageHeader, Pager, SegmentedControl, SkeletonRows } from '@/components/ui'
 import { useSanctions } from '@/data/hooks/use-moderation'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { SanctionList } from './SanctionList'
@@ -44,7 +45,25 @@ export function SanctionsPage() {
       ) : sanctions.isError ? (
         <ErrorState error={sanctions.error} onRetry={() => void sanctions.refetch()} />
       ) : sanctions.data.results.length === 0 ? (
-        <EmptyState icon={<Gavel size={20} />} title={filter === 'active' ? 'No hay sanciones vigentes' : 'Todavía no hay sanciones'} />
+        <EmptyState
+          icon={<Gavel size={20} />}
+          title={filter === 'active' ? 'No hay sanciones vigentes' : 'Todavía no hay sanciones'}
+          action={
+            filter === 'active' ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilter('all')
+                  setPage(1)
+                }}
+              >
+                Ver todas
+              </Button>
+            ) : (
+              <ButtonLink to={paths.users}>Ir a Todos los usuarios</ButtonLink>
+            )
+          }
+        />
       ) : (
         <>
           <SanctionList sanctions={sanctions.data.results} showUser />

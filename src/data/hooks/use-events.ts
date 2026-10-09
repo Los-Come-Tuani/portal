@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { CulturalEvent, EventInput } from '../models'
 import { eventsRepository, type EventFilters } from '../repositories/events.repository'
+import { useMutation } from './mutation'
 import { queryKeys } from './query-keys'
 
 export function useEvents(filters: EventFilters = {}, enabled = true) {

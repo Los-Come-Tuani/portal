@@ -1,6 +1,7 @@
 import { MessageSquareWarning, Star } from 'lucide-react'
 import { useState } from 'react'
-import { Button, ConfirmDialog, EmptyState, ErrorState, Field, PageHeader, Pager, SkeletonRows, Tabs, Tag, Textarea, useToast, type TagTone } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { Button, ButtonLink, ConfirmDialog, EmptyState, ErrorState, Field, PageHeader, Pager, SkeletonRows, Tabs, Tag, Textarea, useToast, type TagTone } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useDisputes, useResolveDispute } from '@/data/hooks/use-moderation'
 import { DISPUTE_STATUS_LABELS, REVIEW_DIRECTION_LABELS, type DisputeStatus, type ReviewDispute } from '@/data/models'
@@ -66,7 +67,25 @@ export function ReviewDisputesPage() {
       ) : disputes.isError ? (
         <ErrorState error={disputes.error} onRetry={() => void disputes.refetch()} />
       ) : disputes.data.results.length === 0 ? (
-        <EmptyState icon={<MessageSquareWarning size={20} />} title={section === 'pending' ? 'No hay reseñas por decidir' : 'No hay impugnaciones aquí'}>
+        <EmptyState
+          icon={<MessageSquareWarning size={20} />}
+          title={section === 'pending' ? 'No hay reseñas por decidir' : 'No hay impugnaciones aquí'}
+          action={
+            section !== 'all' ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSection('all')
+                  setPage(1)
+                }}
+              >
+                Ver todas
+              </Button>
+            ) : (
+              <ButtonLink to={paths.reports}>Ver reportes</ButtonLink>
+            )
+          }
+        >
           {section === 'pending' && 'Cuando alguien impugne una reseña desde la app, aparece aquí por orden de llegada.'}
         </EmptyState>
       ) : (

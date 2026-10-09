@@ -149,7 +149,25 @@ export function AdmissionsPage() {
       ) : queue.isError ? (
         <ErrorState error={queue.error} onRetry={() => void queue.refetch()} />
       ) : rows.length === 0 ? (
-        <EmptyState icon={<Building2 size={20} />} title="No hay solicitudes aquí">
+        <EmptyState
+          icon={<Building2 size={20} />}
+          title={tab === 'open' && !kind ? 'No hay solicitudes abiertas' : 'No hay solicitudes aquí'}
+          action={
+            kind ? (
+              <Button variant="secondary" onClick={() => update({ kind: 'all' })}>
+                Ver todas las clases
+              </Button>
+            ) : tab !== 'all' ? (
+              <Button variant="secondary" onClick={() => update({ tab: 'all' })}>
+                Ver todas las solicitudes
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={() => setParams({ vista: 'lugares' }, { replace: true })}>
+                Ver lugares pedidos
+              </Button>
+            )
+          }
+        >
           {tab === 'open'
             ? 'Cuando un comercio, una institución o una alcaldía se postule desde el portal, aparece en esta bandeja.'
             : 'Cambia el estado o la clase para ver otras.'}

@@ -1,10 +1,18 @@
-/** Los mismos textos que la app, para que el portal y la app se lean igual. */
+/**
+ * Los textos de la app donde los hay, para que el portal y la app se lean igual. Nunca llevan el
+ * código de estado ni el texto técnico del servidor.
+ */
 export const ERROR_MESSAGES = {
   generic: 'Algo salió mal, intenta de nuevo',
   offline: 'No hay conexión a internet',
+  timeout: 'El servidor tardó demasiado en responder, intenta de nuevo',
+  server: 'Tuvimos un problema de nuestro lado, intenta de nuevo en unos minutos',
+  invalid: 'Revisa los datos e intenta de nuevo',
   sessionExpired: 'Sesión expirada, vuelve a iniciar sesión',
   forbidden: 'No tienes permiso para hacer esto',
   notFound: 'No encontramos lo que buscas',
+  conflict: 'Esto cambió hace un momento, recarga la página e intenta de nuevo',
+  tooLarge: 'Lo que intentas enviar pesa demasiado, prueba con un archivo más liviano',
   tooManyRequests: 'Demasiados intentos, espera un momento e intenta de nuevo',
 } as const
 
@@ -86,11 +94,16 @@ export function waitText(seconds: number): string {
   return `${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`
 }
 
+/** Los mensajes de error no llevan punto final; dentro de un párrafo, sí. */
+export function asSentence(text: string): string {
+  return /[.!?]$/.test(text) ? text : `${text}.`
+}
+
 /** Como `errorMessage`, y en un 429 con `Retry-After` dice cuánto falta para volver a intentar. */
 export function errorMessageWithWait(error: unknown): string {
   const message = errorMessage(error)
   if (error instanceof ApiError && error.status === 429 && error.retryAfter) {
-    return `${message} Puedes reintentar en ${waitText(error.retryAfter)}.`
+    return `${asSentence(message)} Puedes reintentar en ${waitText(error.retryAfter)}.`
   }
   return message
 }

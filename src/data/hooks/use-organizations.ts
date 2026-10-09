@@ -1,7 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Organization, OrganizationInput } from '../models'
 import { organizationsRepository, type OrganizationFilters } from '../repositories/organizations.repository'
 import { placesRepository } from '../repositories/places.repository'
+import { useMutation } from './mutation'
 import { queryKeys } from './query-keys'
 
 export function useOrganizations(filters: OrganizationFilters = {}, enabled = true) {

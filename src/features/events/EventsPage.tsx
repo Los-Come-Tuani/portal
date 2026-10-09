@@ -1,6 +1,7 @@
 ﻿import { CalendarHeart, CopyPlus, Eye, EyeOff, MapPin, MoreHorizontal, Pencil, Plus, Search, Star, XCircle } from 'lucide-react'
 import { useDeferredValue, useState } from 'react'
-import { Button, EmptyState, ErrorState, IconButton, Input, Menu, MenuItem, PageHeader, SkeletonRows, Tabs, Tag, useToast, type TagTone } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { Button, ButtonLink, EmptyState, ErrorState, IconButton, Input, Menu, MenuItem, PageHeader, SkeletonRows, Tabs, Tag, useToast, type TagTone } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useEvents, useFeatureEvent, useShowEvent } from '@/data/hooks/use-events'
 import { useOwnCity } from '@/data/hooks/use-own-city'
@@ -131,12 +132,20 @@ export function EventsPage() {
           icon={<CalendarHeart size={20} />}
           title={deferredSearch ? 'Ningún evento se llama así' : section === 'proximos' ? 'No hay eventos próximos' : section === 'terminados' ? 'Todavía no terminó ningún evento' : 'No hay eventos cancelados'}
           action={
-            section === 'proximos' &&
-            canCreate &&
-            !deferredSearch && (
+            deferredSearch ? (
+              <Button variant="secondary" onClick={() => setSearch('')}>
+                Borrar la búsqueda
+              </Button>
+            ) : section !== 'proximos' ? (
+              <Button variant="secondary" onClick={() => setSection('proximos')}>
+                Ver los próximos
+              </Button>
+            ) : canCreate ? (
               <Button icon={<Plus size={16} />} onClick={() => setEditing('new')}>
                 Programar un evento
               </Button>
+            ) : (
+              <ButtonLink to={paths.home}>Volver a la agenda</ButtonLink>
             )
           }
         >

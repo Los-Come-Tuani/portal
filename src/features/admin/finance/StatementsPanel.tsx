@@ -1,6 +1,7 @@
 import { ChevronDown, Receipt } from 'lucide-react'
 import { useState } from 'react'
-import { Button, EmptyState, ErrorState, Pager, SegmentedControl, SkeletonRows, Tag, useToast } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { Button, ButtonLink, EmptyState, ErrorState, Pager, SegmentedControl, SkeletonRows, Tag, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { usePayStatement, useStatements } from '@/data/hooks/use-billing'
 import { MONTHLY_STATEMENT_STATUS_LABELS, type MonthlyStatement, type MonthlyStatementStatus } from '@/data/models'
@@ -51,7 +52,25 @@ export function StatementsPanel() {
       ) : statements.isError ? (
         <ErrorState error={statements.error} onRetry={() => void statements.refetch()} />
       ) : statements.data.results.length === 0 ? (
-        <EmptyState icon={<Receipt size={20} />} title="No hay estados de cuenta con este filtro">
+        <EmptyState
+          icon={<Receipt size={20} />}
+          title={filter === 'all' ? 'Todavía no hay estados de cuenta' : 'No hay estados de cuenta con este filtro'}
+          action={
+            filter !== 'all' ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilter('all')
+                  setPage(1)
+                }}
+              >
+                Ver todos
+              </Button>
+            ) : (
+              <ButtonLink to={paths.pricing}>Ver las tarifas</ButtonLink>
+            )
+          }
+        >
           Se emiten el primer día de cada mes, uno por comercio con algo que cobrar del mes anterior.
         </EmptyState>
       ) : (

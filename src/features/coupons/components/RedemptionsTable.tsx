@@ -1,6 +1,7 @@
 import { TicketCheck } from 'lucide-react'
 import { useState } from 'react'
-import { Button, EmptyState, ErrorState, SegmentedControl, SkeletonRows, Table, Tag, Td, Th, Tr } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { Button, ButtonLink, EmptyState, ErrorState, SegmentedControl, SkeletonRows, Table, Tag, Td, Th, Tr } from '@/components/ui'
 import { useRedemptions } from '@/data/hooks/use-coupons'
 import { COUPON_CODE_STATUS_LABELS, type CouponCodeStatus } from '@/data/models'
 import { formatDate, formatDateTime } from '@/lib/format'
@@ -49,8 +50,30 @@ export function RedemptionsTable({ canValidate }: { canValidate: boolean }) {
       ) : redemptions.isError ? (
         <ErrorState error={redemptions.error} onRetry={() => void redemptions.refetch()} />
       ) : redemptions.data.results.length === 0 ? (
-        <EmptyState icon={<TicketCheck size={20} />} title="No hay cupones con este filtro">
-          Cuando un turista canjee sus insignias por uno de tus cupones, su código aparece aquí.
+        <EmptyState
+          icon={<TicketCheck size={20} />}
+          title={filter === 'all' ? 'Todavía no hay cupones entregados' : 'No hay cupones con este filtro'}
+          action={
+            filter !== 'all' ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilter('all')
+                  setPage(1)
+                }}
+              >
+                Ver todos
+              </Button>
+            ) : canValidate ? (
+              <Button onClick={() => validateCoupon.open()}>Validar un código</Button>
+            ) : (
+              <ButtonLink to={paths.home}>Ir al inicio</ButtonLink>
+            )
+          }
+        >
+          {canValidate
+            ? 'Cuando un turista canjee sus insignias por uno de tus cupones, su código aparece aquí.'
+            : 'Cuando un turista canjee sus insignias por un cupón, su código aparece aquí.'}
         </EmptyState>
       ) : (
         <>

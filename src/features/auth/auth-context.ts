@@ -1,13 +1,18 @@
 import { createContext } from 'react'
 import type { AuthResponse, LoginInput, Organization, SessionUser } from '@/data/models'
 
-export type AuthStatus = 'loading' | 'authenticated' | 'anonymous'
+/** `unavailable`: había una sesión, pero no se pudo confirmar (sin conexión, un 5xx, un 429). */
+export type AuthStatus = 'loading' | 'authenticated' | 'anonymous' | 'unavailable'
 
 /** `two-factor`: la contraseña era correcta pero falta el código del segundo factor. */
 export type LoginOutcome = 'authenticated' | 'two-factor'
 
 export interface AuthContextValue {
   status: AuthStatus
+  /** Por qué no se pudo confirmar la sesión; sólo con `unavailable`. */
+  sessionError: unknown
+  /** Vuelve a pedir la sesión tras `unavailable`. */
+  retrySession: () => void
   user: SessionUser | null
   organization: Organization | null
   login: (input: LoginInput) => Promise<LoginOutcome>

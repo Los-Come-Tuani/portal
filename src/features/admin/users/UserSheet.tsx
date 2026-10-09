@@ -2,7 +2,7 @@ import { ArrowRight, Gavel, KeyRound, Mail, Pencil } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Avatar, Button, ConfirmDialog, Dialog, Field, Input, Tag, useToast } from '@/components/ui'
+import { Avatar, Button, ConfirmDialog, Dialog, Field, InlineError, Input, Tag, useToast } from '@/components/ui'
 import { ApiError, errorMessage } from '@/data/api/errors'
 import { useSanctions } from '@/data/hooks/use-moderation'
 import { useRenameAccount, useSendPasswordReset, useSetAccountStatus, useStaffRoles } from '@/data/hooks/use-users'
@@ -235,12 +235,16 @@ export function UserSheet({ account, application, onClose, onChange }: UserSheet
           ) : (
             account.staffRole && <ContextLink label="Rol interno" title={account.staffRole.name} detail="Lo que puede hacer en el portal." />
           )}
-          {sanctions.data && sanctions.data.results.length > 0 && (
+          {(sanctions.isError || (sanctions.data && sanctions.data.results.length > 0)) && (
             <section className="flex flex-col gap-2" aria-labelledby="sanciones-de-la-cuenta">
               <h3 id="sanciones-de-la-cuenta" className="text-small font-semibold text-muted">
                 Sanciones
               </h3>
-              <SanctionList sanctions={sanctions.data.results} />
+              {sanctions.isError ? (
+                <InlineError error={sanctions.error} onRetry={() => void sanctions.refetch()} />
+              ) : (
+                <SanctionList sanctions={sanctions.data?.results ?? []} />
+              )}
             </section>
           )}
         </div>

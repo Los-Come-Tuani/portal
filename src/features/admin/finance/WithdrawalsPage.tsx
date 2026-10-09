@@ -1,6 +1,7 @@
 import { Landmark } from 'lucide-react'
 import { useState } from 'react'
-import { Button, EmptyState, ErrorState, PageHeader, Pager, SegmentedControl, SkeletonRows, Table, Tag, Td, Th, Tr, useToast, type TagTone } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { Button, ButtonLink, EmptyState, ErrorState, PageHeader, Pager, SegmentedControl, SkeletonRows, Table, Tag, Td, Th, Tr, useToast, type TagTone } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { usePayWithdrawal, useRejectWithdrawal, useWithdrawals } from '@/data/hooks/use-billing'
 import { ACCOUNT_TYPE_LABELS, WITHDRAWAL_STATUS_LABELS, type GuideWithdrawal, type WithdrawalStatus } from '@/data/models'
@@ -74,7 +75,25 @@ export function WithdrawalsPage() {
       ) : withdrawals.isError ? (
         <ErrorState error={withdrawals.error} onRetry={() => void withdrawals.refetch()} />
       ) : withdrawals.data.results.length === 0 ? (
-        <EmptyState icon={<Landmark size={20} />} title="No hay retiros con este filtro">
+        <EmptyState
+          icon={<Landmark size={20} />}
+          title={filter === 'pending' ? 'No hay retiros por pagar' : filter === 'all' ? 'Todavía no hay retiros' : 'No hay retiros con este filtro'}
+          action={
+            filter !== 'all' ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilter('all')
+                  setPage(1)
+                }}
+              >
+                Ver todos
+              </Button>
+            ) : (
+              <ButtonLink to={paths.collections}>Ir a Cobros</ButtonLink>
+            )
+          }
+        >
           {filter === 'pending' && 'Cuando un guía pida retirar su saldo desde la app, aparece aquí por orden de llegada.'}
         </EmptyState>
       ) : (

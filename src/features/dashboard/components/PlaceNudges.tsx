@@ -1,12 +1,20 @@
 import { ArrowRight, CircleCheck } from 'lucide-react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Panel, SkeletonRows } from '@/components/ui'
+import { InlineError, Panel, SkeletonRows } from '@/components/ui'
 import type { Stop } from '@/data/models'
 import { placeIssues } from '@/features/places/lib/completeness'
 
+interface PlaceNudgesProps {
+  places: readonly Stop[] | undefined
+  loading: boolean
+  /** Si no se pudieron traer los lugares: no se dice que la ficha está al día. */
+  error?: unknown
+  onRetry?: () => void
+}
+
 /** Lo que le falta a cada ficha, con un enlace directo a arreglarlo. */
-export function PlaceNudges({ places, loading }: { places: readonly Stop[] | undefined; loading: boolean }) {
+export function PlaceNudges({ places, loading, error, onRetry }: PlaceNudgesProps) {
   const items = (places ?? []).flatMap((stop) => placeIssues(stop).map((issue) => ({ stop, issue })))
   const multiple = (places?.length ?? 0) > 1
 
@@ -14,6 +22,8 @@ export function PlaceNudges({ places, loading }: { places: readonly Stop[] | und
     <Panel title="Tu ficha en la app" description="Lo que el turista ve antes de decidir si te agrega a su día.">
       {loading ? (
         <SkeletonRows rows={3} />
+      ) : error ? (
+        <InlineError error={error} onRetry={onRetry} />
       ) : items.length === 0 ? (
         <p className="flex items-center gap-2 text-body text-ink">
           <CircleCheck size={18} className="text-confirmed" aria-hidden="true" />

@@ -42,6 +42,23 @@ export function ErrorState({ error, onRetry, className }: { error: unknown; onRe
   )
 }
 
+/** El error de una parte de la pantalla (un panel, una lista corta), con su reintento al lado. */
+export function InlineError({ error, onRetry, className }: { error: unknown; onRetry?: () => void; className?: string }) {
+  return (
+    <div role="alert" className={cn('flex flex-wrap items-center gap-x-3 gap-y-2', className)}>
+      <p className="flex min-w-0 flex-1 items-center gap-2 text-body text-ink">
+        <CircleAlert size={18} className="shrink-0 text-danger" aria-hidden="true" />
+        {errorMessage(error)}
+      </p>
+      {onRetry && (
+        <Button variant="secondary" size="sm" onClick={onRetry}>
+          Reintentar
+        </Button>
+      )}
+    </div>
+  )
+}
+
 export function Skeleton({ className }: { className?: string }) {
   return <div aria-hidden="true" className={cn('animate-pulse rounded-kp bg-placeholder', className)} />
 }

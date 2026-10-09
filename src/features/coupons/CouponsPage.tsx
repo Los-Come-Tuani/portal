@@ -1,6 +1,7 @@
 ﻿import { Medal, Pencil, Plus, TicketPercent, XCircle } from 'lucide-react'
 import { useState } from 'react'
-import { Button, ConfirmDialog, EmptyState, ErrorState, Field, IconButton, PageHeader, SegmentedControl, SkeletonRows, Tabs, Tag, Textarea, useToast, type TagTone } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { Button, ButtonLink, ConfirmDialog, EmptyState, ErrorState, Field, IconButton, PageHeader, SegmentedControl, SkeletonRows, Tabs, Tag, Textarea, useToast, type TagTone } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useCampaigns, useWithdrawCampaign } from '@/data/hooks/use-coupons'
 import { COUPON_CAMPAIGN_STATUS_LABELS, MAX_ACTIVE_CAMPAIGNS, type CouponCampaign, type CouponCampaignStatus } from '@/data/models'
@@ -98,11 +99,16 @@ export function CouponsPage() {
               icon={<TicketPercent size={20} />}
               title={all.length === 0 ? (isAdmin ? 'Ningún comercio ha publicado cupones' : 'Todavía no tienes cupones') : 'No hay campañas con este filtro'}
               action={
-                !isAdmin &&
-                all.length === 0 && (
+                all.length > 0 ? (
+                  <Button variant="secondary" onClick={() => setFilter('all')}>
+                    Ver todas
+                  </Button>
+                ) : !isAdmin ? (
                   <Button icon={<Plus size={16} />} onClick={() => setEditing('new')}>
                     Publicar el primero
                   </Button>
+                ) : (
+                  <ButtonLink to={paths.home}>Ir al inicio</ButtonLink>
                 )
               }
             >

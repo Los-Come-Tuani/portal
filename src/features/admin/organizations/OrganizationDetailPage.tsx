@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Button, ButtonLink, ConfirmDialog, ErrorState, IconButton, Panel, Skeleton, Tag, useToast } from '@/components/ui'
+import { Button, ButtonLink, ConfirmDialog, ErrorState, IconButton, InlineError, Panel, Skeleton, Tag, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useBadgeCampaigns } from '@/data/hooks/use-badges'
 import { useStatements } from '@/data/hooks/use-billing'
@@ -148,6 +148,8 @@ export function OrganizationDetailPage() {
           >
             {places.isPending ? (
               <Skeleton className="m-5 h-20" />
+            ) : places.isError ? (
+              <InlineError error={places.error} onRetry={() => void places.refetch()} className="p-5" />
             ) : (places.data ?? []).length === 0 ? (
               <p className="p-5 text-body text-muted">
                 {org.status === 'pending' ? 'Se le asignan al aprobar su solicitud.' : 'Todavía no administra ningún lugar.'}
@@ -228,6 +230,8 @@ export function OrganizationDetailPage() {
           <Panel title="Cobros">
             {statements.isPending && statements.fetchStatus !== 'idle' ? (
               <Skeleton className="h-16" />
+            ) : statements.isError ? (
+              <InlineError error={statements.error} onRetry={() => void statements.refetch()} />
             ) : !statements.data ? (
               <p className="text-small text-muted">Los estados de cuenta son de los comercios.</p>
             ) : (

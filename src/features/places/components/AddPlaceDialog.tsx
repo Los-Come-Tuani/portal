@@ -1,6 +1,6 @@
 import { MapPin, Search } from 'lucide-react'
 import { useState } from 'react'
-import { Button, Dialog, EmptyState, Field, Input, SegmentedControl, Select, SkeletonRows, Textarea, useToast } from '@/components/ui'
+import { Button, Dialog, EmptyState, Field, InlineError, Input, SegmentedControl, Select, SkeletonRows, Textarea, useToast } from '@/components/ui'
 import { ApiError, errorMessage } from '@/data/api/errors'
 import { useCreatePlaceRequest } from '@/data/hooks/use-place-requests'
 import { useAvailablePlaces } from '@/data/hooks/use-places'
@@ -115,9 +115,27 @@ function AddPlaceForm({ city, onDone }: { city: string; onDone: () => void }) {
           />
           {available.isPending ? (
             <SkeletonRows rows={3} />
+          ) : available.isError ? (
+            <InlineError error={available.error} onRetry={() => void available.refetch()} className="rounded-kp border border-divider p-4" />
           ) : places.length === 0 ? (
-            <EmptyState icon={<MapPin size={20} />} title="No hay lugares sin dueño con ese nombre" className="rounded-kp border border-divider py-8">
-              Si tu lugar no está, elige "Es nuevo".
+            <EmptyState
+              icon={<MapPin size={20} />}
+              title={search ? 'No hay lugares sin dueño con ese nombre' : `No hay lugares sin dueño en ${city}`}
+              action={
+                <div className="flex flex-wrap justify-center gap-2">
+                  {search && (
+                    <Button variant="ghost" size="sm" onClick={() => setSearch('')}>
+                      Ver todos
+                    </Button>
+                  )}
+                  <Button variant="secondary" size="sm" onClick={() => update({ kind: 'new' })}>
+                    Mi lugar es nuevo
+                  </Button>
+                </div>
+              }
+              className="rounded-kp border border-divider py-8"
+            >
+              Si tu lugar no está en la lista, pídelo como un lugar nuevo.
             </EmptyState>
           ) : (
             <div role="radiogroup" className="flex max-h-64 flex-col divide-y divide-divider overflow-y-auto rounded-kp border border-divider">

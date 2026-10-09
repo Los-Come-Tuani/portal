@@ -1,28 +1,35 @@
-import { ArrowRight, BadgeCheck, Building2, CreditCard, Landmark, MapPin, MessageSquareText, Receipt } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Building2, CircleAlert, CreditCard, Landmark, MapPin, MessageSquareText, Receipt, RotateCw } from 'lucide-react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { usePayments, useStatements, useWithdrawals } from '@/data/hooks/use-billing'
-import { usePendingDemoCount } from '@/data/hooks/use-landing'
-import { useOpenProviderCount } from '@/data/hooks/use-providers'
+import { useDemoRequests } from '@/data/hooks/use-landing'
+import { useProviderQueue } from '@/data/hooks/use-providers'
 import { usePlaceRequests } from '@/data/hooks/use-place-requests'
-import { useOpenRequestCount } from '@/data/hooks/use-verification'
+import { useVerificationQueue } from '@/data/hooks/use-verification'
 import { useSession } from '@/features/auth/use-auth'
 import { plural } from '@/lib/format'
 
-/** Lo que espera una decisión del equipo de K'Plan, según lo que su rol puede hacer. Si no hay nada, no se muestra. */
+/**
+ * Lo que espera una decisión del equipo de K'Plan, según lo que su rol puede hacer. Si no hay nada,
+ * no se muestra; si algo no se pudo revisar, lo dice con un reintento en vez de callarlo.
+ */
 export function AdminPending() {
   const { can } = useSession()
-  const pendingRequests = useOpenRequestCount(can('organizations.view'))
+  // Sólo hace falta cuántos hay: una página de uno trae `elements` (las mismas consultas que el menú).
+  const requests = useVerificationQueue({ status: 'open', page: 1, pageSize: 1 }, can('organizations.view'))
   const placeRequests = usePlaceRequests({ status: 'pending' }, can('organizations.view'))
-  const guideCount = useOpenProviderCount(can('guides.view')) ?? 0
-  // Sólo hace falta cuántos hay: una página de uno trae `elements`.
+  const guides = useProviderQueue({ status: 'open', page: 1, pageSize: 1 }, can('guides.view'))
   const statements = useStatements({ status: 'pending', pageSize: 1 }, can('billing.view'))
   const payments = usePayments({ status: 'pending', pageSize: 1 }, can('billing.manage'))
   const withdrawals = useWithdrawals({ status: 'pending', pageSize: 1 }, can('billing.manage'))
+  const demos = useDemoRequests({ status: 'pending', page: 1, pageSize: 1 }, can('demos.view'))
+  const pendingRequests = requests.data?.elements
+  const guideCount = guides.data?.elements ?? 0
   const dueStatements = statements.data?.elements ?? 0
   const pendingPayments = payments.data?.elements ?? 0
   const pendingWithdrawals = withdrawals.data?.elements ?? 0
-  const pendingDemos = usePendingDemoCount(can('demos.view')) ?? 0
+  const pendingDemos = demos.data?.elements ?? 0
+  const failed = [requests, placeRequests, guides, statements, payments, withdrawals, demos].filter((query) => query.isError)
 
   const items = [
     guideCount > 0
@@ -76,7 +83,7 @@ export function AdminPending() {
       : null,
   ].filter((item) => item !== null)
 
-  if (items.length === 0) return null
+  if (items.length === 0 && failed.length === 0) return null
 
   return (
     <ul className="flex flex-wrap gap-2" aria-label="Pendientes">
@@ -92,6 +99,22 @@ export function AdminPending() {
           </Link>
         </li>
       ))}
+      {failed.length > 0 && (
+        <li>
+          <button
+            type="button"
+            onClick={() => failed.forEach((query) => void query.refetch())}
+            className="group inline-flex items-center gap-2 rounded-kp border border-danger/30 bg-surface px-3.5 py-2 text-small font-medium text-ink transition-colors duration-150 hover:border-danger/60"
+          >
+            <CircleAlert size={16} aria-hidden="true" className="text-danger" />
+            No pudimos revisar todos los pendientes
+            <span className="inline-flex items-center gap-1 text-brand-strong">
+              <RotateCw size={14} aria-hidden="true" />
+              Reintentar
+            </span>
+          </button>
+        </li>
+      )}
     </ul>
   )
 }

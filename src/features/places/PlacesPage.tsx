@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Button, EmptyState, ErrorState, Input, PageHeader, Panel, Select, SkeletonRows, Tag, type TagTone } from '@/components/ui'
+import { Button, ButtonLink, EmptyState, ErrorState, Input, PageHeader, Panel, Select, SkeletonRows, Tag, type TagTone } from '@/components/ui'
 import { env } from '@/config/env'
 import { useCities } from '@/data/hooks/use-applications'
 import { useOwnCity } from '@/data/hooks/use-own-city'
@@ -142,7 +142,35 @@ export function PlacesPage() {
       ) : places.isError ? (
         <ErrorState error={places.error} onRetry={() => void places.refetch()} />
       ) : rows.length === 0 ? (
-        <EmptyState icon={<MapPin size={20} />} title={filtered ? 'No hay lugares con ese filtro' : 'Todavía no hay lugares aquí'}>
+        <EmptyState
+          icon={<MapPin size={20} />}
+          title={filtered ? 'No hay lugares con ese filtro' : 'Todavía no hay lugares aquí'}
+          action={
+            filtered ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setDraft('')
+                  update({ ciudad: '', buscar: '', estado: 'todos' })
+                }}
+              >
+                Quitar los filtros
+              </Button>
+            ) : canCreate ? (
+              <Button icon={<Plus size={16} />} onClick={() => setCreating(true)}>
+                Nuevo lugar
+              </Button>
+            ) : canRequest ? (
+              <Button icon={<Plus size={16} />} onClick={() => setRequesting(true)}>
+                Agregar un lugar
+              </Button>
+            ) : organization?.status === 'pending' ? (
+              <ButtonLink to={paths.application}>Ver mi solicitud</ButtonLink>
+            ) : (
+              <ButtonLink to={paths.home}>Volver a la agenda</ButtonLink>
+            )
+          }
+        >
           {filtered
             ? 'Prueba con otra ciudad o con otro nombre.'
             : canCreate

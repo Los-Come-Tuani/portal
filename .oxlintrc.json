@@ -4,6 +4,24 @@
   "ignorePatterns": [".cursor/**", ".impeccable/**", "dist/**"],
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@tanstack/react-query",
+            "importNames": ["useMutation"],
+            "message": "Usa useMutation de src/data/hooks/mutation.ts: anota los errores que atiende la pantalla para que la red de avisos no los repita."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/data/hooks/mutation.ts"],
+      "rules": { "no-restricted-imports": "off" }
+    }
+  ]
 }

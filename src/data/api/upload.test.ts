@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { ApiError } from './errors'
-import { putToBucket, uploadProblem } from './upload'
+import { http } from './http-client'
+import { putToBucket, uploadFile, uploadProblem } from './upload'
 
 const TICKET = {
   key: 'signature-dish-photo/0194.jpg',
@@ -56,6 +57,18 @@ describe('el PUT al almacenamiento', () => {
 
     await expect(putToBucket(TICKET, file)).rejects.toMatchObject({ status: 403, message: expect.stringContaining('No pudimos subir') })
     vi.unstubAllGlobals()
+  })
+
+  it('sin almacenamiento en el API, dice que por ahora no se reciben archivos', async () => {
+    const post = vi
+      .spyOn(http, 'post')
+      .mockRejectedValue(new ApiError(503, 'Tuvimos un problema de nuestro lado, intenta de nuevo en unos minutos'))
+
+    await expect(uploadFile('legal-document', new File(['%PDF'], 'ruc.pdf', { type: 'application/pdf' }))).rejects.toMatchObject({
+      status: 503,
+      message: expect.stringContaining('Por ahora no podemos recibir archivos'),
+    })
+    post.mockRestore()
   })
 
   it('si no hay conexión (o el CORS del bucket no lo permite), también', async () => {

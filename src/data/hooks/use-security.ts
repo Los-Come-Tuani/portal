@@ -1,7 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ChangePasswordInput, DisableTwoFactorInput, ResetPasswordInput } from '../models'
 import { authRepository } from '../repositories/auth.repository'
 import { securityRepository } from '../repositories/security.repository'
+import { useMutation } from './mutation'
 import { queryKeys } from './query-keys'
 
 export function useTwoFactorStatus() {

@@ -1,9 +1,11 @@
 import { ChevronLeft, ChevronRight, Search, Users } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { paths } from '@/app/router/paths'
 import {
   Avatar,
   Button,
+  ButtonLink,
   EmptyState,
   ErrorState,
   Input,
@@ -170,8 +172,26 @@ export function UsersPage() {
       ) : accounts.isError ? (
         <ErrorState error={accounts.error} onRetry={() => void accounts.refetch()} />
       ) : rows.length === 0 ? (
-        <EmptyState icon={<Users size={20} />} title="Nadie coincide con estos filtros">
-          Prueba con otro nombre, otro tipo de usuario o todos los estados.
+        <EmptyState
+          icon={<Users size={20} />}
+          title={filtered ? 'Nadie coincide con estos filtros' : 'Todavía no hay cuentas'}
+          action={
+            filtered ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setDraft('')
+                  update({ tipo: 'todos', estado: 'todas', buscar: '' })
+                }}
+              >
+                Quitar los filtros
+              </Button>
+            ) : (
+              <ButtonLink to={paths.home}>Ir al inicio</ButtonLink>
+            )
+          }
+        >
+          {filtered && 'Prueba con otro nombre, otro tipo de usuario o todos los estados.'}
         </EmptyState>
       ) : (
         <>

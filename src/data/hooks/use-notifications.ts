@@ -1,5 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { notificationsRepository } from '../repositories/notifications.repository'
+import { useMutation } from './mutation'
 import { queryKeys } from './query-keys'
 
 /** Cada cuánto se pregunta por avisos nuevos con el portal abierto. */

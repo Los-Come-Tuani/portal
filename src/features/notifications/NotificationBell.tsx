@@ -1,7 +1,6 @@
 import { Bell, CheckCheck } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
-import { Button, IconButton, Skeleton } from '@/components/ui'
-import { errorMessage } from '@/data/api/errors'
+import { Button, IconButton, InlineError, Skeleton } from '@/components/ui'
 import { useLatestNotifications, useReadAllNotifications, useReadNotification, useUnreadNotifications } from '@/data/hooks/use-notifications'
 import { NOTIFICATION_KIND_LABELS } from '@/data/models'
 import { cn } from '@/lib/cn'
@@ -70,7 +69,7 @@ export function NotificationBell() {
               <Skeleton className="h-12" />
             </div>
           ) : latest.isError ? (
-            <p className="p-4 text-small text-danger">{errorMessage(latest.error)}</p>
+            <InlineError error={latest.error} onRetry={() => void latest.refetch()} className="p-4" />
           ) : latest.data.results.length === 0 ? (
             <p className="p-4 text-small text-muted">No tienes avisos. Aquí llegan, por ejemplo, las sanciones de tu cuenta y los pagos.</p>
           ) : (

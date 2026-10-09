@@ -1,6 +1,7 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { QueueFilters, RejectInput, RequestDetail } from '../models'
 import { verificationRepository } from '../repositories/verification.repository'
+import { useMutation } from './mutation'
 import { queryKeys } from './query-keys'
 
 /** La bandeja. Al cambiar de página se sigue mostrando la anterior hasta que llega la nueva. */

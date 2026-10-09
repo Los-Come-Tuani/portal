@@ -35,6 +35,7 @@ const ticketSchema = z.object({
 export type Ticket = z.infer<typeof ticketSchema>
 
 const BUCKET_FAILED = 'No pudimos subir el archivo. Revisa tu conexión e intenta de nuevo.'
+const UPLOADS_UNAVAILABLE = 'Por ahora no podemos recibir archivos. Lo que llenaste sigue aquí: intenta de nuevo más tarde.'
 
 /**
  * El archivo va directo al almacenamiento, sin pasar por el API: un `PUT` a la URL firmada con
@@ -64,7 +65,10 @@ export async function uploadFile(kind: UploadKind, file: File): Promise<StoredFi
   const problem = uploadProblem(kind, file)
   if (problem) throw new ApiError(400, problem)
   const ticket = ticketSchema.parse(
-    await http.post<unknown>(endpoints.upload, { body: { kind, content_type: file.type, size: file.size } }),
+    await http.post<unknown>(endpoints.upload, { body: { kind, content_type: file.type, size: file.size } }).catch((error: unknown) => {
+      // Un 503 aquí es el API sin almacenamiento configurado: reintentar ya no lo arregla.
+      throw error instanceof ApiError && error.status === 503 ? new ApiError(503, UPLOADS_UNAVAILABLE) : error
+    }),
   )
   await (env.useMocks ? putToDemoBucket(ticket, file) : putToBucket(ticket, file))
   return { key: ticket.key, url: null, fileName: file.name }

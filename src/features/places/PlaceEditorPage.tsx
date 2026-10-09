@@ -282,7 +282,9 @@ export function PlaceEditorPage() {
           {section === 'servicios' &&
             (profile.data ? <ServicesContactForm form={profileForm} /> : <Skeleton className="h-64" />)}
           {section === 'novedades' && <PostsTab stopId={stopId} />}
-          {section === 'qr' && <QrPoster stop={place} managesPlaces={managesPlaces} />}
+          {section === 'qr' && (
+            <QrPoster stop={place} managesPlaces={managesPlaces} onActivate={() => toggleBadge(true)} activating={setBadge.isPending} />
+          )}
         </Panel>
 
         {showPreview && (

@@ -1,6 +1,7 @@
 import { ExternalLink, MonitorSmartphone, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { Button, ConfirmDialog, Dialog, EmptyState, ErrorState, Field, Input, PageHeader, Pager, Select, SkeletonRows, Tag, Textarea, useToast, type TagTone } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { Button, ButtonLink, ConfirmDialog, Dialog, EmptyState, ErrorState, Field, Input, PageHeader, Pager, Select, SkeletonRows, Tag, Textarea, useToast, type TagTone } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useCreateRelease, useDeleteRelease, usePublishRelease, useReleases, useUpdateRelease, useWithdrawRelease } from '@/data/hooks/use-landing'
 import { INSTALLERS, LINK_PATTERN, RELEASE_PLATFORMS, RELEASE_STATUS_LABELS, VERSION_PATTERN, type AppRelease, type ReleasePlatform, type ReleaseStatus } from '@/data/models'
@@ -117,12 +118,24 @@ export function ReleasesPage() {
       ) : releases.data.results.length === 0 ? (
         <EmptyState
           icon={<MonitorSmartphone size={20} />}
-          title="Todavía no hay versiones"
+          title={platform ? `Todavía no hay versiones de ${INSTALLERS[platform].label}` : 'Todavía no hay versiones'}
           action={
-            canManage && (
+            platform ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setPlatform('')
+                  setPage(1)
+                }}
+              >
+                Ver todas las plataformas
+              </Button>
+            ) : canManage ? (
               <Button icon={<Plus size={16} />} onClick={() => setCreating(true)}>
                 Registrar la primera
               </Button>
+            ) : (
+              <ButtonLink to={paths.home}>Ir al inicio</ButtonLink>
             )
           }
         >

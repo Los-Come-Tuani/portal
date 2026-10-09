@@ -42,6 +42,9 @@ function isCsrfFailure(data: unknown): boolean {
   return !!fields && typeof fields === 'object' && Object.keys(fields).some((key) => /csrf/i.test(key))
 }
 
+/** Cuánto se espera al API (respuesta y cuerpo) antes de decirle a la persona que intente de nuevo. */
+export const REQUEST_TIMEOUT_MS = 30_000
+
 interface FetchTransportOptions {
   baseUrl: string
   /** Para las pruebas; en el navegador es el `fetch` global. */
@@ -57,21 +60,39 @@ export function createFetchTransport({ baseUrl, fetch: fetchFn = (...args) => fe
   let csrfToken: string | null = null
   let csrfRequest: Promise<string> | null = null
 
-  async function call(url: string, init: RequestInit): Promise<Response> {
+  /**
+   * Pide y lee el cuerpo completo. Si quien llamó cancela, sale su `AbortError` como siempre; si
+   * el API no termina de responder a tiempo, un error sin estado. Un archivo no tiene límite.
+   */
+  async function call(url: string, init: RequestInit, { signal, limited = true }: { signal?: AbortSignal; limited?: boolean } = {}) {
+    const controller = new AbortController()
+    let timedOut = false
+    const timer = limited
+      ? setTimeout(() => {
+          timedOut = true
+          controller.abort()
+        }, REQUEST_TIMEOUT_MS)
+      : undefined
+    const cancel = () => controller.abort(signal?.reason)
+    if (signal?.aborted) cancel()
+    else signal?.addEventListener('abort', cancel, { once: true })
     try {
-      return await fetchFn(url, { ...init, credentials: 'include' })
+      const response = await fetchFn(url, { ...init, credentials: 'include', signal: controller.signal })
+      return { response, text: await response.text() }
     } catch (error) {
+      if (timedOut) throw new ApiError(0, ERROR_MESSAGES.timeout)
       if (error instanceof DOMException && error.name === 'AbortError') throw error
       throw new ApiError(0, ERROR_MESSAGES.offline)
+    } finally {
+      clearTimeout(timer)
+      signal?.removeEventListener('abort', cancel)
     }
   }
 
   /** El token se pide una sola vez aunque varias peticiones lo necesiten a la vez. */
   function loadCsrf(): Promise<string> {
     csrfRequest ??= call(`${baseUrl}${endpoints.auth.csrf}`, { headers: { Accept: 'application/json' } })
-      .then(async (response) => {
-        // La respuesta no trae cuerpo; se lee igual para soltar la conexión y que el navegador no la marque como cancelada.
-        await response.text().catch(() => '')
+      .then(({ response }) => {
         const token = response.headers.get(CSRF_HEADER)
         if (!token) throw new ApiError(response.status, ERROR_MESSAGES.generic)
         csrfToken = token
@@ -90,18 +111,16 @@ export function createFetchTransport({ baseUrl, fetch: fetchFn = (...args) => fe
     if (body !== undefined && !multipart) headers['Content-Type'] = 'application/json'
     if (method !== 'GET') headers['X-CSRFToken'] = csrfToken ?? (await loadCsrf())
 
-    const response = await call(`${baseUrl}${path}${search ? `?${search}` : ''}`, {
-      method,
-      headers,
-      body: body === undefined ? undefined : multipart ? body : JSON.stringify(body),
-      signal,
-    })
+    const { response, text } = await call(
+      `${baseUrl}${path}${search ? `?${search}` : ''}`,
+      { method, headers, body: body === undefined ? undefined : multipart ? body : JSON.stringify(body) },
+      { signal, limited: !multipart },
+    )
 
     // La API manda un token fresco en las respuestas de sesión (login, refresco, cierre).
     const fresh = response.headers.get(CSRF_HEADER)
     if (fresh) csrfToken = fresh
 
-    const text = await response.text()
     let data: unknown = null
     if (text) {
       try {
@@ -156,14 +175,40 @@ function unwrap(data: unknown): unknown {
 }
 
 const DEFAULT_MESSAGES: Record<number, string> = {
+  400: ERROR_MESSAGES.invalid,
   401: ERROR_MESSAGES.sessionExpired,
   403: ERROR_MESSAGES.forbidden,
   404: ERROR_MESSAGES.notFound,
+  409: ERROR_MESSAGES.conflict,
+  413: ERROR_MESSAGES.tooLarge,
   429: ERROR_MESSAGES.tooManyRequests,
 }
 
-/** La API responde `{ detail, field_errors }`; el backend de demo, `{ message, errors }`. */
-export function toApiError({ status, data, headers }: TransportResponse): ApiError {
+/** Los `detail` por defecto del API no le dicen nada a la persona: se cambian por el texto del estado. */
+const API_GENERIC_DETAILS: ReadonlySet<string> = new Set([
+  'La solicitud contiene datos inválidos.',
+  'Ha ocurrido un error inesperado.',
+  'Hay un conflicto con el estado actual del recurso.',
+  'La solicitud excede los límites permitidos.',
+  'El recurso solicitado no se encontró.',
+  'No tiene permiso para realizar esta acción.',
+  'El servicio no está disponible por ahora.',
+  'Ha superado el límite de uso establecido para este recurso.',
+  'Ha enviado un `Accept` header inválido.',
+  'No se proporcionaron credenciales de autenticación válidas.',
+  'No se pudo interpretar la solicitud.',
+])
+
+interface ApiErrorOptions {
+  /** En el inicio de sesión un 401 es la respuesta de la acción: su texto se muestra tal cual. */
+  ownUnauthorized?: boolean
+}
+
+/**
+ * La API responde `{ detail, field_errors }`; el backend de demo, `{ message, errors }`. Un error
+ * del servidor nunca muestra su texto; un 4xx muestra el suyo si es específico.
+ */
+export function toApiError({ status, data, headers }: TransportResponse, { ownUnauthorized = false }: ApiErrorOptions = {}): ApiError {
   const payload = (data ?? {}) as {
     detail?: unknown
     message?: unknown
@@ -171,8 +216,10 @@ export function toApiError({ status, data, headers }: TransportResponse): ApiErr
     field_errors?: unknown
     errors?: unknown
   }
-  const text = [payload.detail, payload.message, payload.Message].find((value) => typeof value === 'string' && value !== '')
-  const message = (text as string | undefined) ?? DEFAULT_MESSAGES[status] ?? ERROR_MESSAGES.generic
+  const text = [payload.detail, payload.message, payload.Message].find((value): value is string => typeof value === 'string' && value.trim() !== '')
+  const fallback = status >= 500 ? ERROR_MESSAGES.server : (DEFAULT_MESSAGES[status] ?? ERROR_MESSAGES.generic)
+  const specific = (detail: string) => !API_GENERIC_DETAILS.has(detail.trim()) || (ownUnauthorized && status === 401)
+  const message = text !== undefined && status < 500 && specific(text) ? text : fallback
   return new ApiError(
     status,
     message,
@@ -229,7 +276,7 @@ export function createHttpClient(transport: Transport) {
       if (!renewed || response.status === 401) sessionMarker.expire()
     }
 
-    if (response.status >= 400) throw toApiError(response)
+    if (response.status >= 400) throw toApiError(response, { ownUnauthorized: OWN_401.has(path) })
     return unwrap(response.data) as T
   }
 

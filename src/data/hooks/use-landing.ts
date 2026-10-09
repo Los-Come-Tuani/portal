@@ -1,6 +1,7 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { AppReleaseChange, AppReleaseInput, DemoRequestChange } from '../models'
 import { landingRepository, type DemoRequestFilters, type ReleaseFilters } from '../repositories/landing.repository'
+import { useMutation } from './mutation'
 import { queryKeys } from './query-keys'
 
 export function useDemoRequests(filters: DemoRequestFilters = {}, enabled = true) {

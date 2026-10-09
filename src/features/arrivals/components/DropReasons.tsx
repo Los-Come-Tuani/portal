@@ -1,7 +1,7 @@
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Panel, SkeletonRows } from '@/components/ui'
+import { InlineError, Panel, SkeletonRows } from '@/components/ui'
 import { useVisitEvents } from '@/data/hooks/use-visits'
 import type { DropReason } from '@/data/models'
 import { addDays } from '@/lib/dates'
@@ -61,6 +61,8 @@ export function DropReasons({ stopIds, today, profilePath, canOfferCoupons }: Dr
     <Panel title="Por qué no llegaron" description={`Lo que respondieron los turistas en los últimos ${WINDOW_DAYS} días.`}>
       {events.isPending ? (
         <SkeletonRows rows={3} />
+      ) : events.isError ? (
+        <InlineError error={events.error} onRetry={() => void events.refetch()} />
       ) : summary.total === 0 ? (
         <p className="text-body text-muted">Nadie quitó este lugar de su itinerario en este tiempo.</p>
       ) : (

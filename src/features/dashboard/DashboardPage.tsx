@@ -38,7 +38,12 @@ export function DashboardPage() {
         {isAdmin ? (
           <TopDroppedPlaces stopIds={cityStops} today={state.today} places={places.data} />
         ) : (
-          <PlaceNudges places={scopedPlaces} loading={places.isPending} />
+          <PlaceNudges
+            places={scopedPlaces}
+            loading={places.isPending}
+            error={places.isError ? places.error : null}
+            onRetry={() => void places.refetch()}
+          />
         )}
       </div>
     </div>
