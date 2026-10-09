@@ -6,6 +6,7 @@ import {
   Button,
   ButtonLink,
   ConfirmDialog,
+  EmptyState,
   ErrorState,
   IconButton,
   PageHeader,
@@ -122,8 +123,26 @@ export function StaffPage() {
 
       {staff.isPending || roles.isPending ? (
         <SkeletonRows rows={6} />
-      ) : staff.isError ? (
-        <ErrorState error={staff.error} onRetry={() => void staff.refetch()} />
+      ) : staff.isError || roles.isError ? (
+        <ErrorState
+          error={staff.error ?? roles.error}
+          onRetry={() => {
+            if (staff.isError) void staff.refetch()
+            if (roles.isError) void roles.refetch()
+          }}
+        />
+      ) : people.length === 0 ? (
+        <EmptyState
+          icon={<UserPlus size={20} />}
+          title="Todavía no hay nadie en el equipo"
+          action={
+            <Button icon={<UserPlus size={16} />} onClick={() => setInviting(true)}>
+              Invitar a alguien
+            </Button>
+          }
+        >
+          Invita a las personas de K'Plan que van a usar el portal; cada una entra con el rol que le des.
+        </EmptyState>
       ) : (
         <Table id="equipo" caption="Equipo interno">
           <thead>

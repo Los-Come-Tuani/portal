@@ -1,6 +1,7 @@
 import { MapPin, Search } from 'lucide-react'
 import { useState } from 'react'
-import { Button, Checkbox, Dialog, EmptyState, Input, SkeletonRows, useToast } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { Button, ButtonLink, Checkbox, Dialog, EmptyState, InlineError, Input, SkeletonRows, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useCities } from '@/data/hooks/use-applications'
 import { useAssignStops } from '@/data/hooks/use-organizations'
@@ -59,8 +60,34 @@ function AssignForm({ organization, onDone }: { organization: Organization; onDo
       />
       {cities.isPending || (!!cityId && available.isPending) ? (
         <SkeletonRows rows={4} />
+      ) : cities.isError || available.isError ? (
+        <InlineError
+          error={cities.error ?? available.error}
+          onRetry={() => void (cities.isError ? cities.refetch() : available.refetch())}
+          className="rounded-kp border border-divider p-4"
+        />
+      ) : places.length === 0 && search ? (
+        <EmptyState
+          icon={<MapPin size={20} />}
+          title="Ningún lugar sin dueño se llama así"
+          action={
+            <Button variant="secondary" size="sm" onClick={() => setSearch('')}>
+              Ver todos
+            </Button>
+          }
+          className="rounded-kp border border-divider py-8"
+        />
       ) : places.length === 0 ? (
-        <EmptyState icon={<MapPin size={20} />} title={`No hay lugares sin dueño en ${organization.city}`} className="rounded-kp border border-divider py-8">
+        <EmptyState
+          icon={<MapPin size={20} />}
+          title={`No hay lugares sin dueño en ${organization.city}`}
+          action={
+            <ButtonLink to={`${paths.admissions}?vista=lugares`} size="sm">
+              Ver lugares pedidos
+            </ButtonLink>
+          }
+          className="rounded-kp border border-divider py-8"
+        >
           Si su lugar todavía no existe, la organización lo pide desde "Mis lugares" y lo apruebas en Solicitudes.
         </EmptyState>
       ) : (

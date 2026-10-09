@@ -1,7 +1,7 @@
-import { ArrowRight, Check, Lock, Pencil, Plus, Users } from 'lucide-react'
+import { ArrowRight, Check, Lock, Pencil, Plus, ShieldCheck, Users } from 'lucide-react'
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { paths } from '@/app/router/paths'
-import { Button, ButtonLink, ErrorState, PageHeader, SkeletonRows } from '@/components/ui'
+import { Button, ButtonLink, EmptyState, ErrorState, PageHeader, SkeletonRows } from '@/components/ui'
 import { useStaffMembers, useStaffRoles } from '@/data/hooks/use-users'
 import { PERMISSION_GROUPS, type StaffRole } from '@/data/models'
 import { useDocumentTitle } from '@/hooks/use-document-title'
@@ -90,6 +90,18 @@ export function RolesPage() {
         <SkeletonRows rows={8} />
       ) : roles.isError ? (
         <ErrorState error={roles.error} onRetry={() => void roles.refetch()} />
+      ) : all.length === 0 ? (
+        <EmptyState
+          icon={<ShieldCheck size={20} />}
+          title="Todavía no hay roles"
+          action={
+            <Button icon={<Plus size={16} />} onClick={() => setEditing('nuevo')}>
+              Nuevo rol
+            </Button>
+          }
+        >
+          Arma un rol con los permisos que necesita cada parte del equipo y después dáselo a quien corresponda.
+        </EmptyState>
       ) : (
         <ScrollHint>
           <table className="w-full border-collapse text-left text-body">

@@ -1,6 +1,6 @@
 import { Search, UserCog } from 'lucide-react'
 import { useDeferredValue, useState } from 'react'
-import { Avatar, Button, Input, SkeletonRows, useToast } from '@/components/ui'
+import { Avatar, Button, InlineError, Input, SkeletonRows, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useAccounts, useSetStaffRole, useStaffMembers } from '@/data/hooks/use-users'
 import { USER_STATUS_LABELS, type Account, type StaffMember, type StaffRole } from '@/data/models'
@@ -41,6 +41,8 @@ export function RoleMembers({ role, roles }: { role: StaffRole; roles: readonly 
 
       {staff.isPending ? (
         <SkeletonRows rows={2} />
+      ) : staff.isError ? (
+        <InlineError error={staff.error} onRetry={() => void staff.refetch()} />
       ) : members.length === 0 ? (
         <p className="text-small text-muted">Nadie tiene este rol todavía.</p>
       ) : (
@@ -79,7 +81,7 @@ export function RoleMembers({ role, roles }: { role: StaffRole; roles: readonly 
         (found.isPending ? (
           <SkeletonRows rows={2} />
         ) : found.isError ? (
-          <p className="text-small text-danger">{errorMessage(found.error)}</p>
+          <InlineError error={found.error} onRetry={() => void found.refetch()} />
         ) : found.data.results.length === 0 ? (
           <p className="text-small text-muted">Ninguna cuenta coincide.</p>
         ) : (
