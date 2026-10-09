@@ -147,6 +147,9 @@ export interface ApplicantDraft {
 
 export const EMPTY_APPLICANT: ApplicantDraft = { firstName: '', lastName: '', email: '', code: '', password: '', passwordConfirm: '' }
 
+/** Lo que va en lugar del código cuando el API no lo pide (no tiene correo). */
+export const SKIPPED_SIGNUP_CODE = '000000'
+
 const applicantSchema = z
   .object({
     firstName: z.string().trim().min(1, { error: 'Escribe tu nombre' }).max(100, { error: 'Máximo 100 caracteres' }),

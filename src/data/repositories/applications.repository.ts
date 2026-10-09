@@ -27,8 +27,17 @@ export const applicationsRepository = {
     return z.array(apiOptionSchema).parse(await http.get<unknown>(endpoints.catalog.institutionTypes))
   },
 
+  /**
+   * Si el alta pide el código del correo. Un API desplegado sin correo (como develop-api) no puede
+   * mandarlo, y entonces se sigue sin él con `SKIPPED_SIGNUP_CODE`.
+   */
+  async signupCodeRequired(): Promise<boolean> {
+    const data = z.object({ code_required: z.boolean() }).parse(await http.get<unknown>(endpoints.auth.registerCode))
+    return data.code_required
+  },
+
   /** Manda el código de seis dígitos al correo; responde igual exista o no la cuenta. */
-  requestCode: (email: string) => http.post<void>(endpoints.auth.registerCode, { body: { email: email.trim() } }),
+  requestCode: (email: string) => http.post<unknown>(endpoints.auth.registerCode, { body: { email: email.trim() } }),
 
   /** Comprueba el código sin gastarlo, para saber si se puede seguir con el formulario. */
   verifyCode: (email: string, code: string) =>

@@ -32,6 +32,11 @@ export function useUploadFile(kind: UploadKind) {
   return useMutation({ mutationFn: (file: File) => uploadFile(kind, file) })
 }
 
+/** Si el alta pide el código del correo; mientras no se sabe, se asume que sí. */
+export function useSignupCodeRequired() {
+  return useQuery({ queryKey: queryKeys.signupCodeRequired, queryFn: applicationsRepository.signupCodeRequired, staleTime: Infinity })
+}
+
 export function useRequestCode() {
   return useMutation({ mutationFn: (email: string) => applicationsRepository.requestCode(email) })
 }

@@ -84,6 +84,7 @@ export const queryKeys = {
   },
   staffRoles: ['staff-roles'] as const,
   staffMembers: ['staff-members'] as const,
+  signupCodeRequired: ['signup-code-required'] as const,
   security: {
     twoFactor: ['security', 'two-factor'] as const,
   },

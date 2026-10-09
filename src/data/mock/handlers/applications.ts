@@ -311,7 +311,9 @@ export const applicationRoutes = [
   route('GET', endpoints.catalog.businessTypes, () => BUSINESS_TYPES, { isPublic: true }),
   route('GET', endpoints.catalog.institutionTypes, () => INSTITUTION_TYPES, { isPublic: true }),
 
-  route('POST', endpoints.auth.registerCode, () => undefined, { isPublic: true }),
+  // la demo pide el código (siempre 123456), como un API con correo
+  route('GET', endpoints.auth.registerCode, () => ({ code_required: true }), { isPublic: true }),
+  route('POST', endpoints.auth.registerCode, () => ({ code_required: true }), { isPublic: true }),
   route(
     'POST',
     endpoints.auth.registerVerify,

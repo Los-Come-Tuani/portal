@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react'
 import { Button, Field, Input, useToast } from '@/components/ui'
 import { env } from '@/config/env'
 import { errorMessageWithWait } from '@/data/api/errors'
-import { useRequestCode } from '@/data/hooks/use-applications'
-import { validateEmail, type ApplicantDraft, type FieldErrors } from '@/data/schemas/application.schema'
+import { useRequestCode, useSignupCodeRequired } from '@/data/hooks/use-applications'
+import { SKIPPED_SIGNUP_CODE, validateEmail, type ApplicantDraft, type FieldErrors } from '@/data/schemas/application.schema'
 
 /** Cuánto hay que esperar para pedir otro código: el API tampoco lo reenvía antes. */
 const RESEND_SECONDS = 60
@@ -15,9 +15,14 @@ interface AccountFieldsProps {
   update: (patch: Partial<ApplicantDraft>) => void
 }
 
-/** La cuenta de quien se postula: nombre, correo verificado con un código, y contraseña. */
+/**
+ * La cuenta de quien se postula: nombre, correo verificado con un código, y contraseña. Si el API
+ * no tiene correo, el código no llegaría: el campo no se muestra y se sigue sin él.
+ */
 export function AccountFields({ applicant, errors, update }: AccountFieldsProps) {
   const request = useRequestCode()
+  const codeRequired = useSignupCodeRequired()
+  const skipsCode = codeRequired.data === false
   const toast = useToast()
   const [sent, setSent] = useState(false)
   const [wait, setWait] = useState(0)
@@ -28,6 +33,10 @@ export function AccountFields({ applicant, errors, update }: AccountFieldsProps)
     const timer = window.setTimeout(() => setWait((seconds) => seconds - 1), 1000)
     return () => window.clearTimeout(timer)
   }, [wait])
+
+  useEffect(() => {
+    if (skipsCode && applicant.code !== SKIPPED_SIGNUP_CODE) update({ code: SKIPPED_SIGNUP_CODE })
+  }, [skipsCode, applicant.code, update])
 
   const sendCode = () => {
     const problem = validateEmail(applicant.email)
@@ -61,7 +70,7 @@ export function AccountFields({ applicant, errors, update }: AccountFieldsProps)
       <div className="flex flex-col gap-3 rounded-kp border border-divider bg-surface p-4">
         <Field
           label="Tu correo"
-          hint="Te mandamos un código para comprobar que es tuyo. Con este correo entras al portal."
+          hint={skipsCode ? 'Con este correo entras al portal.' : 'Te mandamos un código para comprobar que es tuyo. Con este correo entras al portal.'}
           error={errors['applicant.email'] ?? emailProblem ?? undefined}
         >
           {(control) => (
@@ -74,37 +83,43 @@ export function AccountFields({ applicant, errors, update }: AccountFieldsProps)
                 setEmailProblem(null)
                 // Otro correo necesita otro código.
                 setSent(false)
-                update({ email: event.target.value, code: '' })
+                update({ email: event.target.value, code: skipsCode ? SKIPPED_SIGNUP_CODE : '' })
               }}
             />
           )}
         </Field>
-        <Button
-          variant="secondary"
-          size="sm"
-          icon={<Mail size={14} />}
-          className="self-start"
-          loading={request.isPending}
-          disabled={wait > 0}
-          onClick={sendCode}
-        >
-          {wait > 0 ? `Reenviar en ${wait} s` : sent ? 'Reenviar el código' : 'Enviarme el código'}
-        </Button>
-        <Field label="Código del correo" error={errors['applicant.code']} hint={sent ? 'Son 6 dígitos.' : 'Pídelo con el botón de arriba.'}>
-          {(control) => (
-            <Input
-              {...control}
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={6}
-              placeholder="123456"
-              value={applicant.code}
-              onChange={(event) => update({ code: event.target.value.replace(/\D/g, '') })}
-            />
-          )}
-        </Field>
-        {/* El demo no manda correos: este es el código que sirve. */}
-        {env.useMocks && <p className="text-small text-muted">Modo demo: el código es 123456.</p>}
+        {skipsCode ? (
+          <p className="text-small text-muted">Por ahora no mandamos correos: sigue sin código.</p>
+        ) : (
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Mail size={14} />}
+              className="self-start"
+              loading={request.isPending}
+              disabled={wait > 0}
+              onClick={sendCode}
+            >
+              {wait > 0 ? `Reenviar en ${wait} s` : sent ? 'Reenviar el código' : 'Enviarme el código'}
+            </Button>
+            <Field label="Código del correo" error={errors['applicant.code']} hint={sent ? 'Son 6 dígitos.' : 'Pídelo con el botón de arriba.'}>
+              {(control) => (
+                <Input
+                  {...control}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  placeholder="123456"
+                  value={applicant.code}
+                  onChange={(event) => update({ code: event.target.value.replace(/\D/g, '') })}
+                />
+              )}
+            </Field>
+            {/* El demo no manda correos: este es el código que sirve. */}
+            {env.useMocks && <p className="text-small text-muted">Modo demo: el código es 123456.</p>}
+          </>
+        )}
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
