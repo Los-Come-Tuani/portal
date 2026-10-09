@@ -13,7 +13,7 @@ import { twoFactorLoginSchema } from '@/data/schemas/auth.schema'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { AuthLayout } from './AuthLayout'
 import { DEMO_ACCOUNTS } from './demo-accounts'
-import { forgetGoogleAccount } from './google-identity'
+import { forgetRejectedGoogleAccount } from './google-identity'
 import { GoogleSignInButton } from './GoogleSignInButton'
 import { useAuth } from './use-auth'
 
@@ -72,7 +72,7 @@ function CredentialsStep({ onTwoFactor }: { onTwoFactor: () => void }) {
         if ((await loginWithGoogle(credential)) === 'two-factor') onTwoFactor()
       } catch (caught) {
         setError(errorMessageWithWait(caught))
-        forgetGoogleAccount()
+        await forgetRejectedGoogleAccount(credential)
         setGoogleAttempt((attempt) => attempt + 1)
       } finally {
         setGoogleSubmitting(false)

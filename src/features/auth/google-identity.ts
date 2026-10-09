@@ -23,6 +23,7 @@ export interface GoogleIdentity {
     },
   ): void
   disableAutoSelect(): void
+  revoke(hint: string, done: (response: { successful: boolean; error?: string }) => void): void
 }
 
 declare global {
@@ -44,6 +45,42 @@ function loadedIdentity(): GoogleIdentity | undefined {
  */
 export function forgetGoogleAccount(): void {
   loadedIdentity()?.disableAutoSelect()
+}
+
+/** La cuenta del token de identidad (su `sub` o su correo), sin validarlo: solo para nombrarla ante Google. */
+function accountOf(credential: string): string | undefined {
+  const payload = credential.split('.')[1]
+  if (!payload) return undefined
+  try {
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(payload.length / 4) * 4, '=')
+    const claims = JSON.parse(atob(base64)) as { sub?: unknown; email?: unknown }
+    if (typeof claims.sub === 'string') return claims.sub
+    return typeof claims.email === 'string' ? claims.email : undefined
+  } catch {
+    return undefined
+  }
+}
+
+const REVOKE_TIMEOUT_MS = 3000
+
+/**
+ * Tras un intento que el API rechazó, Google retira el permiso que esa cuenta le dio a K'Plan. Si no,
+ * el botón queda como "Continuar como …" y el siguiente clic entra con la misma cuenta sin mostrar
+ * las demás.
+ */
+export function forgetRejectedGoogleAccount(credential: string): Promise<void> {
+  const identity = loadedIdentity()
+  identity?.disableAutoSelect()
+  const account = accountOf(credential)
+  if (!identity || !account) return Promise.resolve()
+
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, REVOKE_TIMEOUT_MS)
+    identity.revoke(account, () => {
+      clearTimeout(timer)
+      resolve()
+    })
+  })
 }
 
 /** Carga Google Identity Services una sola vez y devuelve su API de tokens de identidad. */
