@@ -3,15 +3,17 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { ButtonLink, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonRows, Table, Tabs, Tag, Td, Th, Tr } from '@/components/ui'
-import { useCircuits } from '@/data/hooks/use-circuits'
-import { bonusBadgesOf, circuitKind, CITIES, seasonState, type Circuit, type CircuitKind } from '@/data/models'
+import { useCircuitList } from '@/data/hooks/use-circuits'
+import { coverUrl, isUnpublished, seasonState, type Circuit, type CircuitKind } from '@/data/models'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useNow } from '@/hooks/use-now'
 import { formatDayMonth, plural } from '@/lib/format'
 import { CircuitKindTag } from './components/CircuitKindTag'
+import { useCircuitAccess } from './lib/access'
 import { bookingLabel, circuitStatus } from './lib/labels'
 
 type Filter = 'todos' | CircuitKind
+type Presence = 'en-uso' | 'publicados' | 'borradores' | 'retirados'
 
 const EMPTY_TEXT: Record<Filter, string> = {
   todos: 'No hay circuitos con esos filtros',
@@ -20,28 +22,36 @@ const EMPTY_TEXT: Record<Filter, string> = {
   private: 'No hay circuitos privados con esos filtros',
 }
 
-/** El catálogo de circuitos de la app, con los especiales de K'Plan primero. */
+const fold = (value: string) => value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
+
+/** El catálogo de circuitos de la app, con los especiales de K'Plan primero. La alcaldía ve los de su ciudad. */
 export function CircuitsPage() {
-  useDocumentTitle('Circuitos')
   const navigate = useNavigate()
   const { today } = useNow()
-  const circuits = useCircuits()
+  const { municipality, canCreate } = useCircuitAccess()
   const [filter, setFilter] = useState<Filter>('todos')
-  const [city, setCity] = useState('')
+  const [cityId, setCityId] = useState('')
   const [search, setSearch] = useState('')
+  const [presence, setPresence] = useState<Presence>('en-uso')
+  const circuits = useCircuitList(presence === 'retirados' ? { status: 'retired' } : {})
 
   const all = circuits.data ?? []
-  const count = (kind: CircuitKind) => all.filter((item) => circuitKind(item) === kind).length
+  const ownCity = municipality ? (all[0]?.city ?? municipality.city) : ''
+  useDocumentTitle(municipality && ownCity ? `Circuitos de ${ownCity}` : 'Circuitos')
+  const cities = [...new Map(all.map((item) => [item.cityId, item.city])).entries()].sort((a, b) => a[1].localeCompare(b[1], 'es'))
+  const inPresence = all.filter((item) => (presence === 'publicados' ? item.status === 'published' : presence === 'borradores' ? isUnpublished(item) : true))
+  const count = (kind: CircuitKind) => inPresence.filter((item) => item.kind === kind).length
   const kindOrder: Record<CircuitKind, number> = { kplan: 0, creative: 1, private: 2 }
-  const shown = all
-    .filter((item) => filter === 'todos' || circuitKind(item) === filter)
-    .filter((item) => !city || item.city === city)
-    .filter((item) => !search || `${item.title} ${item.shortTitle} ${item.city}`.toLowerCase().includes(search.trim().toLowerCase()))
-    .sort((a, b) => kindOrder[circuitKind(a)] - kindOrder[circuitKind(b)] || a.shortTitle.localeCompare(b.shortTitle, 'es'))
+  const term = fold(search.trim())
+  const shown = inPresence
+    .filter((item) => filter === 'todos' || item.kind === filter)
+    .filter((item) => !cityId || item.cityId === cityId)
+    .filter((item) => !term || fold(`${item.title} ${item.shortTitle} ${item.city}`).includes(term))
+    .sort((a, b) => kindOrder[a.kind] - kindOrder[b.kind] || a.shortTitle.localeCompare(b.shortTitle, 'es'))
 
-  const live = all.filter((item) => !item.draft)
-  const liveCount = (kind: CircuitKind) => live.filter((item) => circuitKind(item) === kind).length
-  const drafts = all.length - live.length
+  const live = presence === 'retirados' ? [] : all.filter((item) => item.status === 'published')
+  const liveCount = (kind: CircuitKind) => live.filter((item) => item.kind === kind).length
+  const drafts = presence === 'retirados' ? 0 : all.filter(isUnpublished).length
   const nextSeason = live
     .filter((item) => seasonState(item, today) === 'upcoming')
     .sort((a, b) => (a.availableFrom ?? '').localeCompare(b.availableFrom ?? ''))[0]
@@ -49,18 +59,25 @@ export function CircuitsPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title="Circuitos"
-        description="Los recorridos que el turista agenda en la app: los privados, los creativos de las alcaldías y los especiales de K'Plan, que dan insignias extra al completarlos."
+        title={municipality && ownCity ? `Circuitos de ${ownCity}` : 'Circuitos'}
+        description={
+          municipality
+            ? 'Los recorridos de tu ciudad en la app. Los creativos los organiza tu alcaldía: créalos, corrígelos y sácalos de la app cuando haga falta. Los del equipo de K\'Plan los ves sin editarlos.'
+            : "Los recorridos que el turista agenda en la app: los privados, los creativos de las alcaldías y los especiales de K'Plan, que dan insignias extra al completarlos."
+        }
         actions={
-          <ButtonLink to={paths.newCircuit} variant="primary" icon={<Plus size={16} />}>
-            Nuevo circuito
-          </ButtonLink>
+          canCreate && (
+            <ButtonLink to={paths.newCircuit} variant="primary" icon={<Plus size={16} />}>
+              Nuevo circuito
+            </ButtonLink>
+          )
         }
       />
 
-      {circuits.isSuccess && all.length > 0 && (
+      {circuits.isSuccess && live.length > 0 && (
         <p className="max-w-[72ch] text-lead text-muted">
-          La app tiene <strong className="font-semibold text-ink">{plural(live.length, 'circuito', 'circuitos')}</strong>:{' '}
+          La app tiene <strong className="font-semibold text-ink">{plural(live.length, 'circuito', 'circuitos')}</strong>
+          {municipality ? ` de ${ownCity}` : ''}:{' '}
           <strong className="font-semibold text-ink">{plural(liveCount('kplan'), "especial de K'Plan", "especiales de K'Plan")}</strong>,{' '}
           {liveCount('creative')} {liveCount('creative') === 1 ? 'creativo' : 'creativos'} de alcaldías y {liveCount('private')}{' '}
           {liveCount('private') === 1 ? 'privado' : 'privados'}.
@@ -85,7 +102,7 @@ export function CircuitsPage() {
           value={filter}
           onChange={setFilter}
           items={[
-            { value: 'todos', label: 'Todos', count: all.length },
+            { value: 'todos', label: 'Todos', count: inPresence.length },
             { value: 'kplan', label: "Especiales de K'Plan", count: count('kplan') },
             { value: 'creative', label: 'Creativos', count: count('creative') },
             { value: 'private', label: 'Privados', count: count('private') },
@@ -93,13 +110,21 @@ export function CircuitsPage() {
           className="flex-1"
         />
         <div className="flex flex-wrap gap-2">
-          <Select aria-label="Ciudad" value={city} onChange={(event) => setCity(event.target.value)} className="w-52">
-            <option value="">Todas las ciudades</option>
-            {CITIES.map((item) => (
-              <option key={item.name} value={item.name}>
-                {item.name}
-              </option>
-            ))}
+          {!municipality && (
+            <Select aria-label="Ciudad" value={cityId} onChange={(event) => setCityId(event.target.value)} className="w-48">
+              <option value="">Todas las ciudades</option>
+              {cities.map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </Select>
+          )}
+          <Select aria-label="Estado" value={presence} onChange={(event) => setPresence(event.target.value as Presence)} className="w-52">
+            <option value="en-uso">Publicados y borradores</option>
+            <option value="publicados">Publicados</option>
+            <option value="borradores">Borradores</option>
+            <option value="retirados">Retirados</option>
           </Select>
           <Input
             type="search"
@@ -120,16 +145,18 @@ export function CircuitsPage() {
       ) : shown.length === 0 ? (
         <EmptyState
           icon={<Route size={20} />}
-          title={EMPTY_TEXT[filter]}
+          title={presence === 'retirados' ? 'No hay circuitos retirados' : EMPTY_TEXT[filter]}
           action={
-            filter === 'kplan' && (
+            filter === 'kplan' &&
+            canCreate &&
+            !municipality && (
               <ButtonLink to={paths.newCircuit} icon={<Plus size={16} />}>
                 Crear un especial
               </ButtonLink>
             )
           }
         >
-          {filter === 'kplan' && 'Un especial junta paradas de una ciudad y da insignias extra a quien lo completa.'}
+          {filter === 'kplan' && presence !== 'retirados' && 'Un especial junta paradas de una ciudad y da insignias extra a quien lo completa.'}
         </EmptyState>
       ) : (
         <Table id="circuitos" caption="Circuitos">
@@ -155,15 +182,14 @@ export function CircuitsPage() {
 }
 
 function CircuitRow({ circuit, today, onOpen }: { circuit: Circuit; today: string; onOpen: () => void }) {
-  const kind = circuitKind(circuit)
-  const bonus = bonusBadgesOf(circuit)
   const status = circuitStatus(circuit, today)
+  const cover = coverUrl(circuit.images)
   return (
-    <Tr interactive onClick={onOpen} className={circuit.draft ? 'bg-canvas/50' : undefined}>
+    <Tr interactive onClick={onOpen} className={circuit.status !== 'published' ? 'bg-canvas/50' : undefined}>
       <Td>
         <div className="flex items-center gap-3">
-          {circuit.images[0] ? (
-            <img src={circuit.images[0]} alt="" loading="lazy" className="size-10 shrink-0 rounded-sm bg-placeholder object-cover" />
+          {cover ? (
+            <img src={cover} alt="" loading="lazy" className="size-10 shrink-0 rounded-sm bg-placeholder object-cover" />
           ) : (
             <span className="size-10 shrink-0 rounded-sm bg-paper" aria-hidden="true" />
           )}
@@ -180,8 +206,8 @@ function CircuitRow({ circuit, today, onOpen }: { circuit: Circuit; today: strin
         </div>
       </Td>
       <Td>
-        <CircuitKindTag kind={kind} />
-        {kind === 'creative' && circuit.organizer && <p className="mt-1 text-caption text-muted">{circuit.organizer}</p>}
+        <CircuitKindTag kind={circuit.kind} />
+        {circuit.kind === 'creative' && circuit.organizer && <p className="mt-1 text-caption text-muted">{circuit.organizer.name}</p>}
       </Td>
       <Td className="whitespace-nowrap">
         <p className="text-small text-ink tabular-nums">
@@ -195,7 +221,7 @@ function CircuitRow({ circuit, today, onOpen }: { circuit: Circuit; today: strin
         <span className="inline-flex items-center gap-1.5 text-small text-ink tabular-nums">
           <Medal size={14} className="text-badge-deep" aria-hidden="true" />
           {circuit.badges}
-          {bonus > 0 && <span className="font-semibold text-brand-strong">+ {bonus} extra</span>}
+          {circuit.bonusBadges > 0 && <span className="font-semibold text-brand-strong">+ {circuit.bonusBadges} extra</span>}
         </span>
       </Td>
       <Td className="text-small whitespace-nowrap text-ink tabular-nums">{bookingLabel(circuit)}</Td>

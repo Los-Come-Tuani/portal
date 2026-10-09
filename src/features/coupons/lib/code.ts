@@ -1,12 +1,13 @@
-/** Mientras se escribe: mayúsculas, sin símbolos, con la forma `KP-XXXX-XXXX`. */
-export function formatRedemptionCode(raw: string): string {
-  let chars = raw.toUpperCase().replace(/[^A-Z0-9]/g, '')
-  if (chars.length > 0 && !chars.startsWith('KP')) chars = `KP${chars.replace(/^K?P?/, '')}`
-  chars = chars.slice(0, 10)
-  const parts = [chars.slice(0, 2), chars.slice(2, 6), chars.slice(6, 10)].filter(Boolean)
-  return parts.join('-')
+import { COUPON_CODE_PATTERN } from '@/data/schemas/coupon.schema'
+import { normalizeCouponCode } from '@/data/schemas/coupon-api.schema'
+
+/** Mientras se escribe: mayúsculas, sin símbolos, en dos grupos de cuatro (`7F3Q-9M2D`). */
+export function formatCouponCode(raw: string): string {
+  const chars = normalizeCouponCode(raw).slice(0, 8)
+  return chars.length > 4 ? `${chars.slice(0, 4)}-${chars.slice(4)}` : chars
 }
 
+/** Ocho letras y números del alfabeto de los cupones (sin `I`, `O`, `0` ni `1`). */
 export function isCompleteCode(code: string): boolean {
-  return /^KP-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)
+  return COUPON_CODE_PATTERN.test(normalizeCouponCode(code))
 }

@@ -16,7 +16,7 @@ import {
   Store,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { AMENITIES, type PlaceProfileInput, type Post, type StopInput } from '@/data/models'
+import { AMENITIES, coverUrl, type PlaceProfileInput, type Post, type StopInput } from '@/data/models'
 import { cn } from '@/lib/cn'
 import { formatMoney } from '@/lib/format'
 
@@ -72,7 +72,7 @@ function IconRow({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 
 /** La ficha tal como la dibuja la app (stop_detail_view.dart), dentro de un teléfono. */
 export function AppPreview({ stop, profile, hasBadge, rating, reviewsCount, latestPost }: AppPreviewProps) {
-  const cover = stop.images?.[0]
+  const cover = coverUrl(stop.images ?? [])
   const amenities = AMENITIES.filter((amenity) => profile?.amenities.includes(amenity.id))
   const contact = profile?.contact
   const hasUpcoming =
@@ -189,7 +189,7 @@ export function AppPreview({ stop, profile, hasBadge, rating, reviewsCount, late
                 )}
                 {latestPost && (
                   <div className="mt-3 flex gap-2 rounded-kp bg-surface p-2">
-                    {latestPost.image && <img src={latestPost.image} alt="" className="size-10 shrink-0 rounded-sm object-cover" />}
+                    {latestPost.image?.url && <img src={latestPost.image.url} alt="" className="size-10 shrink-0 rounded-sm object-cover" />}
                     <div className="min-w-0">
                       <p className="line-clamp-2 text-[11px] font-semibold text-ink">{latestPost.title}</p>
                       <p className="text-[10px] text-muted">Novedad reciente</p>

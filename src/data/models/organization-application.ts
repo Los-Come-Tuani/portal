@@ -1,3 +1,10 @@
+/**
+ * El modelo de demo anterior a F3 (revisión por documento, etapas, alta asistida). Ya no hay
+ * pantallas ni rutas con él: la solicitud de una organización es `application.ts` y la cola del
+ * equipo, `verification.ts`. Queda como los datos con que se siembra el modo demo y de los que
+ * leen los estados de cuenta (cobro del alta asistida) y la propiedad de los lugares; se retira
+ * cuando esos dos pasen al modelo del API.
+ */
 import type { LocalDateTime } from './common'
 import type { OrganizationType } from './organization'
 import type { PlaceReadiness } from './place-request'
@@ -6,7 +13,6 @@ import {
   UNALTERED,
   VALID,
   type ApplicationStatus,
-  type DocumentPage,
   type DocumentTypeInfo,
   type ReviewDocument,
   type ReviewEvent,
@@ -186,67 +192,4 @@ export interface OrganizationApplication {
   assisted: AssistedOnboarding | null
   /** Sólo mientras está abierta y trae un lugar nuevo: lo mínimo para poder aprobarla. */
   newPlaceReadiness?: PlaceReadiness
-}
-
-export interface ApplicationDocumentInput {
-  type: OrganizationDocumentType
-  fileName: string
-  pages: DocumentPage[]
-}
-
-export interface OrganizationApplicationInput {
-  type: OrganizationType
-  name: string
-  legalName: string
-  ruc: string
-  kind: string
-  city: string
-  address: string
-  description: string
-  claimedStopIds: string[]
-  newPlace: NewPlace | null
-  representative: Representative
-  password: string
-  documents: ApplicationDocumentInput[]
-  accepted: boolean
-}
-
-/** Lo que llena el equipo en un alta asistida: sin contraseña, le llega una invitación. */
-export type AssistedApplicationInput = Omit<OrganizationApplicationInput, 'password'> & {
-  /** Cobrar la tarifa de alta asistida al aprobarla. */
-  charge: boolean
-}
-
-// ── Reglas ────────────────────────────────────────────────────────────────
-
-export function admissionRequirements(type: OrganizationType): { type: OrganizationDocumentType; required: boolean }[] {
-  const rules = ORGANIZATION_DOCUMENT_RULES[type]
-  return [
-    ...rules.required.map((item) => ({ type: item, required: true })),
-    ...rules.optional.map((item) => ({ type: item, required: false })),
-  ]
-}
-
-/** Por qué todavía no puede pasar a la decisión; `null` si ya puede. */
-export function admissionBlocker(application: OrganizationApplication): string | null {
-  if (application.status !== 'in_review') return 'La solicitud no está en revisión'
-  if (application.stage !== 'documents') return 'Ya está en la última etapa'
-  const byType = new Map(application.documents.map((document) => [document.type, document]))
-  if (ORGANIZATION_DOCUMENT_RULES[application.type].required.some((type) => !byType.has(type))) {
-    return 'Faltan documentos obligatorios: pide una corrección'
-  }
-  if (application.documents.some((document) => document.status === 'rejected')) return 'Hay documentos rechazados: pide una corrección'
-  if (application.documents.some((document) => document.status === 'pending')) return 'Revisa todos los documentos primero'
-  return null
-}
-
-/** Lo que le falta a quien se postuló para volver a mandar su solicitud; `null` si ya puede. */
-export function resubmitBlocker(application: OrganizationApplication): string | null {
-  if (application.status !== 'changes_requested') return 'No hay correcciones pendientes'
-  const byType = new Map(application.documents.map((document) => [document.type, document]))
-  const missing = ORGANIZATION_DOCUMENT_RULES[application.type].required.filter((type) => !byType.has(type))
-  if (missing.length > 0) return `Sube ${ORGANIZATION_DOCUMENT_INFO[missing[0]].label.toLowerCase()}`
-  const rejected = application.documents.filter((document) => document.status === 'rejected')
-  if (rejected.length > 0) return `Sube de nuevo: ${rejected.map((document) => ORGANIZATION_DOCUMENT_INFO[document.type].label.toLowerCase()).join(', ')}`
-  return null
 }

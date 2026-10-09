@@ -1,15 +1,31 @@
-import type { AdmissionFilters } from '../repositories/admissions.repository'
+import type { AccountFilters, CircuitFilters, ProviderQueueFilters, QueueFilters, StopFilters } from '../models'
 import type { EventFilters } from '../repositories/events.repository'
-import type { GuideApplicationFilters } from '../repositories/guides.repository'
 import type { OrganizationFilters } from '../repositories/organizations.repository'
 import type { PlaceRequestFilters } from '../repositories/place-requests.repository'
-import type { RedemptionFilters } from '../repositories/coupons.repository'
-import type { StopFilters } from '../repositories/places.repository'
-import type { UserFilters } from '../repositories/users.repository'
+import type { PaymentFilters, StatementFilters, WithdrawalFilters } from '../repositories/billing.repository'
+import type { CampaignFilters, RedemptionFilters } from '../repositories/coupons.repository'
+import type { DemoRequestFilters, ReleaseFilters } from '../repositories/landing.repository'
+import type { DisputeFilters, ReportFilters, SanctionFilters } from '../repositories/moderation.repository'
 import type { VisitFilters } from '../repositories/visits.repository'
 
 /** Todas las llaves de caché en un lugar, para invalidar sin adivinar. */
 export const queryKeys = {
+  catalog: {
+    cities: ['catalog', 'cities'] as const,
+    businessTypes: ['catalog', 'business-types'] as const,
+    institutionTypes: ['catalog', 'institution-types'] as const,
+  },
+  /** La solicitud de quien entró (F3). */
+  applications: {
+    mine: ['applications', 'mine'] as const,
+  },
+  /** La cola de verificación del equipo (F3). */
+  verification: {
+    all: ['verification'] as const,
+    list: (filters: QueueFilters) => ['verification', 'list', filters] as const,
+    detail: (requestId: string) => ['verification', 'detail', requestId] as const,
+    reasons: ['verification', 'reasons'] as const,
+  },
   organizations: {
     all: ['organizations'] as const,
     list: (filters: OrganizationFilters) => ['organizations', 'list', filters] as const,
@@ -18,24 +34,32 @@ export const queryKeys = {
   places: {
     all: ['places'] as const,
     list: (filters: StopFilters) => ['places', 'list', filters] as const,
+    page: (filters: StopFilters & { page: number; pageSize: number }) => ['places', 'page', filters] as const,
+    /** Los lugares activos de una ciudad (ruta pública `stop/`). */
+    city: (cityCode: string) => ['places', 'city', cityCode] as const,
     detail: (stopId: string) => ['places', 'detail', stopId] as const,
     profile: (stopId: string) => ['places', 'profile', stopId] as const,
-    posts: (stopId: string | undefined) => ['places', 'posts', stopId ?? 'all'] as const,
+    posts: (stopId: string) => ['places', 'posts', stopId] as const,
+    qr: (stopId: string) => ['places', 'qr', stopId] as const,
   },
   circuits: {
     all: ['circuits'] as const,
-    list: ['circuits', 'list'] as const,
+    list: (filters: CircuitFilters) => ['circuits', 'list', filters] as const,
+    /** Los publicados (ruta pública `circuit/`). */
+    published: ['circuits', 'published'] as const,
     detail: (circuitId: string) => ['circuits', 'detail', circuitId] as const,
-    sessions: (circuitId: string) => ['circuits', 'sessions', circuitId] as const,
+    departures: (circuitId: string) => ['circuits', 'departures', circuitId] as const,
   },
   events: {
     all: ['events'] as const,
     list: (filters: EventFilters) => ['events', 'list', filters] as const,
+    categories: ['catalog', 'event-categories'] as const,
   },
   coupons: {
     all: ['coupons'] as const,
-    list: (organizationId: string | undefined) => ['coupons', 'list', organizationId ?? 'all'] as const,
+    campaigns: (filters: CampaignFilters) => ['coupons', 'campaigns', filters] as const,
     redemptions: (filters: RedemptionFilters) => ['coupons', 'redemptions', filters] as const,
+    benefitTypes: ['catalog', 'benefit-types'] as const,
   },
   badges: {
     all: ['badges'] as const,
@@ -44,34 +68,53 @@ export const queryKeys = {
   },
   billing: {
     all: ['billing'] as const,
-    statements: (organizationId: string | undefined) => ['billing', 'statements', organizationId ?? 'all'] as const,
+    payments: (filters: PaymentFilters) => ['billing', 'payments', filters] as const,
+    withdrawals: (filters: WithdrawalFilters) => ['billing', 'withdrawals', filters] as const,
+    statements: (filters: StatementFilters) => ['billing', 'statements', filters] as const,
     pricing: ['billing', 'pricing'] as const,
   },
   visits: {
     all: ['visits'] as const,
     events: (filters: VisitFilters) => ['visits', 'events', filters] as const,
   },
-  users: {
-    all: ['users'] as const,
-    list: (filters: UserFilters) => ['users', 'list', filters] as const,
-    detail: (userId: string) => ['users', 'detail', userId] as const,
+  /** El directorio de cuentas ("Todos los usuarios"). */
+  accounts: {
+    all: ['accounts'] as const,
+    list: (filters: AccountFilters) => ['accounts', 'list', filters] as const,
   },
   staffRoles: ['staff-roles'] as const,
+  staffMembers: ['staff-members'] as const,
+  security: {
+    twoFactor: ['security', 'two-factor'] as const,
+  },
   placeRequests: {
     all: ['place-requests'] as const,
     list: (filters: PlaceRequestFilters) => ['place-requests', 'list', filters] as const,
   },
-  admissions: {
-    all: ['admissions'] as const,
-    list: (filters: AdmissionFilters) => ['admissions', 'list', filters] as const,
-    detail: (applicationId: string) => ['admissions', 'detail', applicationId] as const,
-    mine: ['admissions', 'mine'] as const,
-    reviewers: ['admissions', 'reviewers'] as const,
+  /** La bandeja de avisos de quien entró (F8). */
+  notifications: {
+    all: ['notifications'] as const,
+    unread: ['notifications', 'unread'] as const,
+    latest: ['notifications', 'latest'] as const,
   },
-  guides: {
-    all: ['guides'] as const,
-    list: (filters: GuideApplicationFilters) => ['guides', 'list', filters] as const,
-    reviewers: ['guides', 'reviewers'] as const,
-    detail: (applicationId: string) => ['guides', 'detail', applicationId] as const,
+  /** La moderación del equipo: reseñas impugnadas, reportes y sanciones (F7 y F8). */
+  moderation: {
+    all: ['moderation'] as const,
+    disputes: (filters: DisputeFilters) => ['moderation', 'disputes', filters] as const,
+    reports: (filters: ReportFilters) => ['moderation', 'reports', filters] as const,
+    sanctions: (filters: SanctionFilters) => ['moderation', 'sanctions', filters] as const,
+  },
+  /** Lo que alimenta la landing: solicitudes de demo y versiones de la app (F9). */
+  landing: {
+    all: ['landing'] as const,
+    demoRequests: (filters: DemoRequestFilters) => ['landing', 'demo-requests', filters] as const,
+    releases: (filters: ReleaseFilters) => ['landing', 'releases', filters] as const,
+  },
+  /** La cola de guías y traductores (F5). */
+  providers: {
+    all: ['providers'] as const,
+    list: (filters: ProviderQueueFilters) => ['providers', 'list', filters] as const,
+    detail: (requestId: string) => ['providers', 'detail', requestId] as const,
+    reasons: ['providers', 'reasons'] as const,
   },
 }

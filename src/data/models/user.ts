@@ -1,6 +1,8 @@
 import type { Permission } from './access'
 import type { ISODate, LocalDateTime } from './common'
 import type { GuideServiceRole } from './guide'
+import type { OrganizationRef } from './organization'
+import type { ProviderStatus } from './provider'
 
 /**
  * Todos los usuarios de K'Plan. `admin` es el equipo interno (lo que puede
@@ -56,10 +58,14 @@ export interface User {
 export interface SessionUser extends User {
   permissions: Permission[]
   staffRoleName: string | null
+  /** El segundo factor de la cuenta: si ya lo activó y si su rol lo exige. */
+  twoFactor: { enabled: boolean; required: boolean }
+  /** Lo que el API dice de su organización; `null` para el equipo y para el modo demo. */
+  organizationRef: OrganizationRef | null
 }
 
+/** Abrir una sesión: la API la guarda en cookies, así que solo devuelve a la persona. */
 export interface AuthResponse {
-  token: string
   user: SessionUser
 }
 
@@ -68,9 +74,63 @@ export interface LoginInput {
   password: string
 }
 
-export interface UserUpdate {
-  status?: UserStatus
-  staffRoleId?: string
+// ── El directorio de cuentas ("Todos los usuarios", `GET /auth/account/`) ──
+
+/** Los papeles por los que filtra el API: uno por pestaña. */
+export const ACCOUNT_ROLES = ['turista', 'guia', 'traductor', 'negocio', 'alcaldia', 'institucion', 'admin'] as const
+export type AccountRole = (typeof ACCOUNT_ROLES)[number]
+
+/**
+ * `pending` es una invitación del equipo sin aceptar o una cuenta que no terminó de activarse;
+ * `closing`, una cuenta que su dueño pidió cerrar.
+ */
+export const ACCOUNT_STATUSES = ['active', 'pending', 'suspended', 'closing', 'expelled'] as const
+export type AccountStatus = (typeof ACCOUNT_STATUSES)[number]
+
+export const ACCOUNT_STATUS_LABELS: Record<AccountStatus, string> = {
+  active: 'Activa',
+  pending: 'Sin activar',
+  suspended: 'Suspendida',
+  closing: 'Cerrándose',
+  expelled: 'Expulsada',
+}
+
+/** Una cuenta del directorio, con lo que el API dice de su papel. */
+export interface Account {
+  id: string
+  name: string
+  firstName: string
+  lastName: string
+  email: string
+  /** `null`: todavía no tiene un papel (un guía cuya solicitud sigue en revisión). */
+  role: UserRole | null
+  /** Solo guías y traductores. */
+  serviceRole: GuideServiceRole | null
+  /** `invited` es una persona del equipo que no ha aceptado la invitación. */
+  status: AccountStatus | 'invited'
+  superuser: boolean
+  /** Solo el equipo de K'Plan; un superusuario puede no tener. */
+  staffRole: { id: string; name: string } | null
+  organization: OrganizationRef | null
+  /** El perfil de guía o traductor, si tiene. */
+  provider: { id: string; status: ProviderStatus; services: string[] } | null
+  /** La ciudad de su organización o de su perfil de prestador. */
+  city: string | null
+  createdAt: ISODate
+}
+
+export interface AccountFilters {
+  role?: AccountRole
+  status?: AccountStatus
+  search?: string
+  page?: number
+  pageSize?: number
+}
+
+/** El API corrige el nombre desde el directorio; el correo tiene su propio procedimiento. */
+export interface AccountNameInput {
+  firstName: string
+  lastName: string
 }
 
 export interface StaffInviteInput {

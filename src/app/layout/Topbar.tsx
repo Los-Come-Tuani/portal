@@ -6,6 +6,7 @@ import { ORGANIZATION_STATUS_LABELS, ORGANIZATION_TYPE_LABELS } from '@/data/mod
 import { ORGANIZATION_STATUS_TONES } from '@/features/admin/organizations/status'
 import { useSession } from '@/features/auth/use-auth'
 import { useValidateCoupon } from '@/features/coupons/validate-coupon-context'
+import { NotificationBell } from '@/features/notifications/NotificationBell'
 import { paths } from '../router/paths'
 import { DemoMenu } from './DemoMenu'
 
@@ -43,6 +44,8 @@ export function Topbar({ onOpenNav }: { onOpenNav: () => void }) {
 
       <div className="ml-auto flex items-center gap-1 sm:gap-2">
         <DemoMenu />
+        {/* Mientras su rol le exija activar el 2FA, el API le responde 403 a todo lo demás. */}
+        {!(user.twoFactor.required && !user.twoFactor.enabled) && <NotificationBell />}
         {role === 'negocio' && organization?.status === 'active' && (
           <Button icon={<ScanLine size={16} />} onClick={() => validateCoupon.open()}>
             <span className="hidden sm:inline">Validar cupón</span>

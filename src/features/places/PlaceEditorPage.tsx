@@ -1,19 +1,28 @@
 ﻿import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, Medal, Star } from 'lucide-react'
+import { Archive, ArchiveRestore, ArrowLeft, Medal, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useForm, useWatch, type FieldValues, type Path, type UseFormReturn } from 'react-hook-form'
-import { Link, useBlocker, useParams, useSearchParams } from 'react-router'
+import { Link, useBlocker, useNavigate, useParams, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { ConfirmDialog, ErrorState, Panel, SaveBar, Skeleton, Tabs, Tag, useToast } from '@/components/ui'
+import { Button, ConfirmDialog, ErrorState, Panel, SaveBar, Skeleton, Switch, Tabs, Tag, useToast } from '@/components/ui'
 import { ApiError, errorMessage } from '@/data/api/errors'
-import { usePlace, usePlaceProfile, usePosts, useUpdatePlace, useUpdatePlaceProfile } from '@/data/hooks/use-places'
+import {
+  usePlace,
+  usePlaceProfile,
+  usePosts,
+  useRestorePlace,
+  useRetirePlace,
+  useSetPlaceBadge,
+  useUpdatePlace,
+  useUpdatePlaceProfile,
+} from '@/data/hooks/use-places'
 import type { PlaceProfileInput, StopInput } from '@/data/models'
 import { placeProfileInputSchema } from '@/data/schemas/profile.schema'
 import { stopInputSchema } from '@/data/schemas/stop.schema'
 import { useSession } from '@/features/auth/use-auth'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { cn } from '@/lib/cn'
-import { formatPercent } from '@/lib/format'
+import { formatPercent, plural } from '@/lib/format'
 import { AppPreview } from './components/AppPreview'
 import { PostsTab } from './components/PostsTab'
 import { OfferingsForm, ServicesContactForm } from './components/ProfileForms'
@@ -52,14 +61,19 @@ export function PlaceEditorPage() {
       return next
     })
 
-  const { isAdmin, organization } = useSession()
+  const { isAdmin, role, can } = useSession()
   const toast = useToast()
+  const navigate = useNavigate()
   const stop = usePlace(stopId)
   const profile = usePlaceProfile(stopId)
   const posts = usePosts(stopId)
   const updateStop = useUpdatePlace()
   const updateProfile = useUpdatePlaceProfile()
+  const setBadge = useSetPlaceBadge()
+  const retire = useRetirePlace()
+  const restore = useRestorePlace()
   const [saving, setSaving] = useState(false)
+  const [retiring, setRetiring] = useState(false)
   useDocumentTitle(stop.data?.name ?? 'Lugar')
 
   const stopForm = useForm<StopInput>({ resolver: zodResolver(stopInputSchema) })
@@ -135,9 +149,41 @@ export function PlaceEditorPage() {
   }
 
   const place = stop.data
-  const multiplePlaces = isAdmin || (organization?.stopIds.length ?? 0) > 1
+  // Un comercio tiene un solo lugar: no hay lista a la que volver.
+  const multiplePlaces = isAdmin || role === 'alcaldia'
   const score = completeness(place)
   const showPreview = section !== 'qr'
+  const managesPlaces = can('places.manage')
+  // Retirar es del equipo o de la alcaldía dueña; un comercio no retira el suyo.
+  const canRetire = managesPlaces || (role === 'alcaldia' && place.owner?.kind === 'municipality')
+
+  const toggleBadge = (hasBadge: boolean) =>
+    setBadge.mutate(
+      { stopId, hasBadge },
+      {
+        onSuccess: () => toast({ title: hasBadge ? `${place.name} da insignia` : `${place.name} ya no da insignia` }),
+        onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
+      },
+    )
+
+  const confirmRetire = () =>
+    retire.mutate(stopId, {
+      onSuccess: () => {
+        setRetiring(false)
+        toast({ title: `Retiraste ${place.name}`, description: 'Ya no sale en la app. Puedes devolverlo cuando quieras.' })
+        navigate(paths.places)
+      },
+      onError: (error) => {
+        setRetiring(false)
+        toast({ title: errorMessage(error), tone: 'error' })
+      },
+    })
+
+  const bringBack = () =>
+    restore.mutate(stopId, {
+      onSuccess: () => toast({ title: `${place.name} volvió a la app` }),
+      onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
+    })
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
@@ -155,33 +201,55 @@ export function PlaceEditorPage() {
           <div className="min-w-0">
             <h1 className="text-headline font-bold tracking-tight text-ink">{place.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-small text-muted">
-              {place.draft && (
-                <Tag tone="ink">
-                  {isAdmin
-                    ? 'Borrador: todavía no está en la app'
-                    : organization?.status === 'active'
-                      ? 'Borrador: se publica al aprobar tu pedido'
-                      : 'Borrador: se publica al aprobar tu solicitud'}
-                </Tag>
-              )}
+              {!place.active && <Tag tone="ink">Retirado: no está en la app</Tag>}
               <Tag tone="outline">{place.category}</Tag>
               <span>{place.city}</span>
+              {isAdmin && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>{place.owner?.name ?? "Equipo de K'Plan"}</span>
+                </>
+              )}
               <span aria-hidden="true">·</span>
               <span className="inline-flex items-center gap-1">
                 <Star size={13} className="text-star" fill="currentColor" strokeWidth={0} aria-hidden="true" />
                 {place.rating.toFixed(1)} ({place.reviewsCount} reseñas de turistas)
               </span>
               <span aria-hidden="true">·</span>
-              {place.hasBadge ? (
+              {managesPlaces ? (
+                <Switch label="Da insignia" checked={place.hasBadge} disabled={setBadge.isPending} onChange={toggleBadge} />
+              ) : place.hasBadge ? (
                 <Tag tone="badge" icon={<Medal size={12} aria-hidden="true" />}>
                   Da insignia
                 </Tag>
               ) : (
-                <Link to={paths.badges} className="font-semibold text-brand-strong hover:underline">
-                  Activar insignia
-                </Link>
+                <span title="La insignia de un lugar la activa el equipo de K'Plan">Sin insignia</span>
               )}
             </div>
+            {canRetire && (
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                {place.active ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    icon={<Archive size={15} />}
+                    disabled={place.publishedCircuits > 0}
+                    onClick={() => setRetiring(true)}
+                  >
+                    Retirar de la app
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="secondary" icon={<ArchiveRestore size={15} />} loading={restore.isPending} onClick={bringBack}>
+                    Devolver a la app
+                  </Button>
+                )}
+                {place.active && place.publishedCircuits > 0 && (
+                  <p className="text-caption text-muted">
+                    Está en {plural(place.publishedCircuits, 'circuito publicado', 'circuitos publicados')}: quítalo de ellos antes de retirarlo.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
           <div className="w-56">
             <div className="flex items-baseline justify-between text-small">
@@ -197,7 +265,7 @@ export function PlaceEditorPage() {
               aria-label="Ficha completa"
             >
               <div
-                className={cn('h-full rounded-full transition-[width] duration-500', place.draft ? 'bg-planned' : 'bg-confirmed')}
+                className={cn('h-full rounded-full transition-[width] duration-500', place.active ? 'bg-confirmed' : 'bg-planned')}
                 style={{ width: `${score * 100}%` }}
               />
             </div>
@@ -214,14 +282,14 @@ export function PlaceEditorPage() {
           {section === 'servicios' &&
             (profile.data ? <ServicesContactForm form={profileForm} /> : <Skeleton className="h-64" />)}
           {section === 'novedades' && <PostsTab stopId={stopId} />}
-          {section === 'qr' && <QrPoster stop={place} />}
+          {section === 'qr' && <QrPoster stop={place} managesPlaces={managesPlaces} />}
         </Panel>
 
         {showPreview && (
           <div className="hidden xl:sticky xl:top-24 xl:block">
             <AppPreview
               stop={stopDraft}
-              profile={profile.data ? profileDraft : undefined}
+              profile={profile.data && profileDraft?.amenities ? profileDraft : undefined}
               hasBadge={place.hasBadge}
               rating={place.rating}
               reviewsCount={place.reviewsCount}
@@ -249,6 +317,16 @@ export function PlaceEditorPage() {
         onConfirm={() => blocker.proceed?.()}
       >
         Si sales ahora, se pierden los cambios de la ficha.
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={retiring}
+        title={`¿Retirar ${place.name}?`}
+        confirmLabel="Retirar"
+        loading={retire.isPending}
+        onClose={() => setRetiring(false)}
+        onConfirm={confirmRetire}
+      >
+        Deja de salir en la app, pero no se borra: su ficha y sus novedades se guardan y puedes devolverlo cuando quieras.
       </ConfirmDialog>
     </div>
   )

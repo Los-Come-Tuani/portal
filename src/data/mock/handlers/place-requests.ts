@@ -1,15 +1,16 @@
 import { nowLocalDateTime } from '@/lib/dates'
 import { uniqueSlug } from '@/lib/slug'
 import { endpoints } from '../../api/endpoints'
-import { readinessGaps, type PlaceRequest, type Stop } from '../../models'
+import { readinessGaps, type PlaceRequest } from '../../models'
 import { placeRequestDecisionSchema, placeRequestInputSchema } from '../../schemas/place-request.schema'
-import type { MockDatabase } from '../db'
+import type { MockDatabase, MockStop } from '../db'
 import { fail, parseBody, requireUser, route } from '../http'
 import { hasPermission, isAdmin } from '../services/access'
 import { assertStopFree, ownerOf } from '../services/ownership'
 import { readinessOf } from '../services/readiness'
 
 const REVIEWERS = ['organizations.review', 'organizations.manage'] as const
+const VIEWERS = ['organizations.view'] as const
 
 function withReadiness(db: MockDatabase, request: PlaceRequest): PlaceRequest {
   if (request.kind !== 'new' || request.status !== 'pending') return request
@@ -21,7 +22,7 @@ export const placeRequestRoutes = [
   route('GET', endpoints.placeRequests.list, (context) => {
     const user = requireUser(context)
     const status = context.query.get('status')
-    const reviewer = isAdmin(user) && hasPermission(context.db, user, REVIEWERS)
+    const reviewer = isAdmin(user) && hasPermission(context.db, user, VIEWERS)
     if (isAdmin(user) && !reviewer) throw fail.forbidden()
     return context.db.placeRequests
       .filter((item) => reviewer || item.organizationId === user.organizationId)
@@ -39,7 +40,7 @@ export const placeRequestRoutes = [
       if (!organization || organization.status !== 'active') throw fail.conflict('Tu organización tiene que estar aprobada para pedir otro lugar')
       const input = parseBody(placeRequestInputSchema, context.body)
       const now = nowLocalDateTime()
-      let stop: Stop
+      let stop: MockStop
       if (input.kind === 'claim') {
         if (db.placeRequests.some((item) => item.organizationId === organization.id && item.stopId === input.stopId && item.status === 'pending')) {
           throw fail.invalid('Revisa el lugar', { stopId: 'Ya pediste este lugar: el equipo lo está revisando' })

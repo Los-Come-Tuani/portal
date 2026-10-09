@@ -13,24 +13,11 @@ export const organizationInputSchema = z.object({
   contactPhone: phoneSchema.refine((value) => value !== '', { error: 'Escribe un teléfono' }),
 })
 
-export const assignStopsSchema = z.object({
-  stopIds: z.array(z.string().min(1)).min(1, { error: 'Elige al menos un lugar' }),
-})
-
-export const pricingInputSchema = z.object({
-  couponFee: z.number({ error: 'Escribe la tarifa' }).int().min(0).max(10_000),
-  badgeActivationMonthly: z.number({ error: 'Escribe el precio' }).int().min(0).max(100_000),
-  badgePacks: z
-    .array(
-      z.object({
-        id: z.string(),
-        badges: z.number({ error: 'Cantidad' }).int().min(10, { error: 'Mínimo 10' }).max(10_000),
-        price: z.number({ error: 'Precio' }).int().min(0).max(1_000_000),
-      }),
-    )
-    .min(1, { error: 'Deja al menos un paquete' })
-    .max(6),
-  assistedOnboardingFee: z.number({ error: 'Escribe la tarifa' }).int().min(0).max(100_000),
+/** Las tarifas de K'Plan, con los límites del API (`PUT pricing/`). Sólo córdobas enteros. */
+export const tariffInputSchema = z.object({
+  commissionRate: z.number({ error: 'Escribe el porcentaje' }).min(0, { error: 'No puede ser negativo' }).max(100, { error: 'Hasta 100 %' }),
+  badgeMonthly: z.number({ error: 'Escribe el monto' }).int({ error: 'En córdobas, sin decimales' }).min(0).max(1_000_000),
+  couponFee: z.number({ error: 'Escribe el monto' }).int({ error: 'En córdobas, sin decimales' }).min(0).max(1_000_000),
 })
 
 export const loginSchema = z.object({

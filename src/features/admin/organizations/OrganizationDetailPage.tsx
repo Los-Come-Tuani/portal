@@ -4,14 +4,15 @@ import { Link, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
 import { Button, ButtonLink, ConfirmDialog, ErrorState, IconButton, Panel, Skeleton, Tag, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
-import { useAdmissions } from '@/data/hooks/use-admissions'
 import { useBadgeCampaigns } from '@/data/hooks/use-badges'
 import { useStatements } from '@/data/hooks/use-billing'
-import { useCoupons } from '@/data/hooks/use-coupons'
+import { useCampaigns } from '@/data/hooks/use-coupons'
 import { useEvents } from '@/data/hooks/use-events'
 import { useOrganization, useRemoveStop, useSaveOrganization } from '@/data/hooks/use-organizations'
 import { usePlaces } from '@/data/hooks/use-places'
+import { useVerificationQueue } from '@/data/hooks/use-verification'
 import {
+  coverUrl,
   ORGANIZATION_STATUS_LABELS,
   ORGANIZATION_TYPE_LABELS,
   type Organization,
@@ -44,19 +45,26 @@ const CONFIRM_TEXT: Record<OrganizationStatus, string> = {
 export function OrganizationDetailPage() {
   const { organizationId = '' } = useParams()
   const organization = useOrganization(organizationId)
-  const places = usePlaces({ organizationId })
-  const coupons = useCoupons(organizationId)
-  const events = useEvents({ organizerId: organizationId })
+  const places = usePlaces(
+    { ownerKind: organization.data?.type === 'negocio' ? 'business' : 'municipality', ownerId: organizationId },
+    !!organization.data,
+  )
+  const session = useSession()
+  const coupons = useCampaigns({ businessId: organizationId }, session.can('content.moderate') && organization.data?.type === 'negocio')
+  // `cultural-event/` no filtra por organizador: se cuentan los suyos entre los que ve el equipo.
+  const events = useEvents({ organizerId: organizationId }, session.can('content.moderate') && !!organization.data && organization.data.type !== 'negocio')
   const campaigns = useBadgeCampaigns(organizationId)
-  const statements = useStatements(organizationId)
+  const statements = useStatements(
+    { businessId: organizationId, status: 'pending', pageSize: 100 },
+    session.can('billing.view') && organization.data?.type === 'negocio',
+  )
   const save = useSaveOrganization()
   const remove = useRemoveStop()
   const toast = useToast()
-  const canManage = useSession().can('organizations.manage')
-  const admissions = useAdmissions()
-  const admission = admissions.data
-    ?.filter((item) => item.organizationId === organizationId)
-    .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0]
+  const canManage = session.can('organizations.manage')
+  // La solicitud abierta de esta organización, si la tiene: lleva a revisarla.
+  const openRequests = useVerificationQueue({ status: 'open', pageSize: 100 })
+  const admission = openRequests.data?.results.find((item) => item.organizationId === organizationId)
   const [editing, setEditing] = useState(false)
   const [assigning, setAssigning] = useState(false)
   const [removing, setRemoving] = useState<Stop | null>(null)
@@ -67,8 +75,7 @@ export function OrganizationDetailPage() {
   if (!organization.data) return <Skeleton className="h-96" />
 
   const org = organization.data
-  const due = (statements.data ?? []).filter((statement) => statement.status === 'due' && statement.total > 0)
-  const open = statements.data?.find((statement) => statement.status === 'open')
+  const due = (statements.data?.results ?? []).filter((statement) => statement.total > 0)
 
   const changeStatus = (current: Organization, to: OrganizationStatus) => {
     save.mutate(
@@ -150,15 +157,15 @@ export function OrganizationDetailPage() {
                 {places.data?.map((stop) => (
                   <li key={stop.id} className="flex items-center gap-2 pr-3 hover:bg-canvas">
                     <Link to={paths.place(stop.id)} className="group flex min-w-0 flex-1 items-center gap-4 py-3 pl-5">
-                      {stop.images[0] ? (
-                        <img src={stop.images[0]} alt="" loading="lazy" className="size-12 rounded-sm bg-placeholder object-cover" />
+                      {coverUrl(stop.images) ? (
+                        <img src={coverUrl(stop.images)} alt="" loading="lazy" className="size-12 rounded-sm bg-placeholder object-cover" />
                       ) : (
                         <span className="flex size-12 items-center justify-center rounded-sm bg-paper text-caption text-muted">Sin foto</span>
                       )}
                       <span className="min-w-0 flex-1">
                         <span className="flex flex-wrap items-center gap-2 text-body font-semibold text-ink">
                           {stop.name}
-                          {stop.draft && <Tag tone="outline">Borrador</Tag>}
+                          {!stop.active && <Tag tone="outline">Fuera de la app</Tag>}
                         </span>
                         <span className="block text-small text-muted">
                           {stop.category}
@@ -167,7 +174,7 @@ export function OrganizationDetailPage() {
                       </span>
                       <ArrowRight size={16} className="text-muted group-hover:text-ink" aria-hidden="true" />
                     </Link>
-                    {canManage && !stop.draft && (
+                    {canManage && stop.active && (
                       <IconButton size="sm" tone="danger" label={`Quitarle ${stop.name}`} icon={<X size={16} />} onClick={() => setRemoving(stop)} />
                     )}
                   </li>
@@ -184,7 +191,9 @@ export function OrganizationDetailPage() {
               </div>
               <div>
                 <dt className="text-small text-muted">Eventos</dt>
-                <dd className="text-lead font-semibold text-ink">{plural(events.data?.length ?? 0, 'evento', 'eventos')}</dd>
+                <dd className="text-lead font-semibold text-ink">
+                  {plural(events.data?.length ?? 0, 'evento', 'eventos')}
+                </dd>
               </div>
               <div>
                 <dt className="text-small text-muted">Campañas de insignias</dt>
@@ -217,20 +226,18 @@ export function OrganizationDetailPage() {
           </Panel>
 
           <Panel title="Cobros">
-            {statements.isPending ? (
+            {statements.isPending && statements.fetchStatus !== 'idle' ? (
               <Skeleton className="h-16" />
+            ) : !statements.data ? (
+              <p className="text-small text-muted">Los estados de cuenta son de los comercios.</p>
             ) : (
               <div className="flex flex-col gap-3 text-body">
-                <p className="flex items-baseline justify-between gap-4">
-                  <span className="text-muted">Mes en curso</span>
-                  <span className="font-semibold text-ink tabular-nums">{formatMoney(open?.total ?? 0)}</span>
-                </p>
                 {due.length === 0 ? (
                   <p className="text-small text-confirmed">Al día con sus pagos.</p>
                 ) : (
                   due.map((statement) => (
                     <p key={statement.id} className="flex items-baseline justify-between gap-4 text-danger">
-                      <span>Por pagar: {formatMonth(statement.period)}</span>
+                      <span>Por pagar: {formatMonth(statement.period.slice(0, 7))}</span>
                       <span className="font-semibold tabular-nums">{formatMoney(statement.total)}</span>
                     </p>
                   ))
@@ -252,7 +259,7 @@ export function OrganizationDetailPage() {
         onConfirm={() =>
           removing &&
           remove.mutate(
-            { id: org.id, stopId: removing.id },
+            removing.id,
             {
               onSuccess: () => {
                 toast({ title: `${removing.name} quedó sin dueño` })

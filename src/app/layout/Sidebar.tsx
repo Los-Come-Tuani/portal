@@ -1,10 +1,11 @@
-import { ChevronDown, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { ChevronDown, ChevronsUpDown, LogOut, PanelLeftClose, PanelLeftOpen, ShieldCheck } from 'lucide-react'
 import { useEffect, useId, useRef, useState, type FocusEvent, type MouseEvent } from 'react'
-import { Link, matchPath, NavLink, useLocation } from 'react-router'
+import { Link, matchPath, NavLink, useLocation, useNavigate } from 'react-router'
 import { Logo } from '@/components/brand/Logo'
 import { Avatar, Menu, MenuItem } from '@/components/ui'
-import { useGuideApplications } from '@/data/hooks/use-guides'
-import { useAdmissions } from '@/data/hooks/use-admissions'
+import { usePendingDemoCount } from '@/data/hooks/use-landing'
+import { useOpenProviderCount } from '@/data/hooks/use-providers'
+import { useOpenRequestCount } from '@/data/hooks/use-verification'
 import { usePlaceRequests } from '@/data/hooks/use-place-requests'
 import { ROLE_LABELS } from '@/data/models'
 import { useAuth, useSession } from '@/features/auth/use-auth'
@@ -43,19 +44,22 @@ function isActive(pathname: string, item: { to: string; end?: boolean }): boolea
 
 function usePendingCounts(): Record<NavCount, number> {
   const { can } = useSession()
-  const guides = useGuideApplications({ status: 'in_review' }, can('guides.review', 'guides.decide'))
-  const reviewsOrganizations = can('organizations.review', 'organizations.manage')
-  const admissions = useAdmissions({ status: 'in_review' }, reviewsOrganizations)
+  const guides = useOpenProviderCount(can('guides.view'))
+  const reviewsOrganizations = can('organizations.view')
+  const openRequests = useOpenRequestCount(reviewsOrganizations)
   const placeRequests = usePlaceRequests({ status: 'pending' }, reviewsOrganizations)
+  const demos = usePendingDemoCount(can('demos.view'))
   return {
-    pendingGuides: guides.data?.length ?? 0,
-    pendingAdmissions: (admissions.data?.length ?? 0) + (placeRequests.data?.length ?? 0),
+    pendingGuides: guides ?? 0,
+    pendingAdmissions: (openRequests ?? 0) + (placeRequests.data?.length ?? 0),
+    pendingDemos: demos ?? 0,
   }
 }
 
 export function SidebarContent({ preferences, collapsible = false, onNavigate }: SidebarContentProps) {
   const session = useSession()
   const { logout } = useAuth()
+  const navigate = useNavigate()
   const { pathname } = useLocation()
   const counts = usePendingCounts()
   const entries = navigationFor(session)
@@ -222,6 +226,16 @@ export function SidebarContent({ preferences, collapsible = false, onNavigate }:
                     : ROLE_LABELS[session.role]}
                 </p>
               </div>
+              <MenuItem
+                icon={<ShieldCheck size={16} />}
+                onSelect={() => {
+                  close()
+                  navigate(paths.security)
+                  onNavigate?.()
+                }}
+              >
+                Seguridad
+              </MenuItem>
               <MenuItem
                 icon={<LogOut size={16} />}
                 onSelect={() => {

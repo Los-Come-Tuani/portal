@@ -4,10 +4,12 @@ import {
   CalendarDays,
   CalendarHeart,
   FileCheck2,
+  Globe,
   Layers,
   MapPin,
   Medal,
   Receipt,
+  Route,
   TicketPercent,
   Users,
   Wallet,
@@ -17,7 +19,7 @@ import type { Session } from '@/features/auth/use-auth'
 import { paths } from '../router/paths'
 
 /** Un número que la barra lateral busca y muestra junto al módulo. */
-export type NavCount = 'pendingGuides' | 'pendingAdmissions'
+export type NavCount = 'pendingGuides' | 'pendingAdmissions' | 'pendingDemos'
 
 export interface NavLinkEntry {
   kind: 'link'
@@ -71,25 +73,33 @@ export function navigationFor({ role, organization, can }: Session): NavEntry[] 
     return [
       can('agenda.view') && agenda,
       group('organizaciones', 'Organizaciones', Building2, [
-        can('organizations.review', 'organizations.manage') && { to: paths.admissions, label: 'Solicitudes', count: 'pendingAdmissions' },
-        can('organizations.review', 'organizations.manage') && { to: paths.organizations, label: 'Todas' },
+        can('organizations.view') && { to: paths.admissions, label: 'Solicitudes', count: 'pendingAdmissions' },
+        can('organizations.view') && { to: paths.organizations, label: 'Todas' },
       ]),
-      can('guides.review', 'guides.decide') && link(paths.guides, 'Guías y traductores', BadgeCheck, { count: 'pendingGuides' }),
+      can('guides.view') && link(paths.guides, 'Guías y traductores', BadgeCheck, { count: 'pendingGuides' }),
       group('contenido', 'Contenido', Layers, [
-        can('places.manage') && { to: paths.places, label: 'Lugares' },
-        can('circuits.manage') && { to: paths.circuits, label: 'Circuitos' },
+        can('places.view') && { to: paths.places, label: 'Lugares' },
+        can('circuits.view') && { to: paths.circuits, label: 'Circuitos' },
         can('content.moderate') && { to: paths.coupons, label: 'Cupones' },
         can('content.moderate') && { to: paths.events, label: 'Eventos' },
-        can('content.moderate') && { to: paths.badges, label: 'Insignias' },
+        can('places.view') && { to: paths.badges, label: 'Insignias' },
+        can('content.moderate') && { to: paths.reviewDisputes, label: 'Reseñas impugnadas' },
       ]),
       group('usuarios', 'Usuarios', Users, [
-        can('users.manage') && { to: paths.users, label: 'Todos los usuarios', end: true },
+        can('users.view') && { to: paths.users, label: 'Todos los usuarios', end: true },
         can('staff.manage') && { to: paths.staff, label: 'Equipo interno' },
         can('staff.manage') && { to: paths.staffRoles, label: 'Roles y permisos' },
+        can('content.moderate', 'users.manage') && { to: paths.reports, label: 'Reportes' },
+        can('users.view') && { to: paths.sanctions, label: 'Sanciones' },
       ]),
       group('finanzas', 'Finanzas', Wallet, [
-        can('billing.manage') && { to: paths.collections, label: 'Cobros' },
-        can('billing.manage') && { to: paths.pricing, label: 'Tarifas' },
+        can('billing.view') && { to: paths.collections, label: 'Cobros' },
+        can('billing.view') && { to: paths.withdrawals, label: 'Retiros de guías' },
+        can('billing.view') && { to: paths.pricing, label: 'Tarifas' },
+      ]),
+      group('sitio', 'Sitio web', Globe, [
+        can('demos.view') && { to: paths.demoRequests, label: 'Solicitudes de demo', count: 'pendingDemos' },
+        can('releases.view') && { to: paths.releases, label: 'Versiones de la app' },
       ]),
     ].filter((entry): entry is NavEntry => !!entry)
   }
@@ -102,8 +112,10 @@ export function navigationFor({ role, organization, can }: Session): NavEntry[] 
     return [link(paths.application, 'Mi solicitud', FileCheck2), ...(placeCount > 0 ? [places] : [])]
   }
 
-  if (role === 'alcaldia') return [agenda, places, events, badges, billing]
-  return [agenda, places, link(paths.coupons, 'Cupones', TicketPercent), events, badges, billing]
+  // Los estados de cuenta (Pagos) son de los comercios: la alcaldía no paga a K'Plan.
+  if (role === 'alcaldia') return [agenda, places, link(paths.circuits, 'Circuitos', Route), events, badges]
+  // Los eventos los programan las instituciones y las alcaldías: el comercio no.
+  return [agenda, places, link(paths.coupons, 'Cupones', TicketPercent), badges, billing]
 }
 
 /** A dónde entra cada quien: la agenda, o el primer módulo que su rol permite. */

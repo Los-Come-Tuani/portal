@@ -1,102 +1,123 @@
-import { BadgeCheck, Search } from 'lucide-react'
-import { useState } from 'react'
+import { BadgeCheck, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
+import { Avatar, Button, EmptyState, ErrorState, PageHeader, SegmentedControl, SkeletonRows, Table, Tabs, Tag, Td, Th, Tr } from '@/components/ui'
+import { useProviderQueue } from '@/data/hooks/use-providers'
 import {
-  Avatar,
-  EmptyState,
-  ErrorState,
-  Input,
-  PageHeader,
-  SegmentedControl,
-  SkeletonRows,
-  Table,
-  Tabs,
-  Tag,
-  Td,
-  Th,
-  Tr,
-} from '@/components/ui'
-import { useGuideApplications, useReviewers } from '@/data/hooks/use-guides'
-import { SERVICE_ROLE_LABELS, type GuideApplication } from '@/data/models'
+  PROCEDURE_LABELS,
+  PROVIDER_STAGE_LABELS,
+  QUEUE_TABS,
+  REQUEST_STATUS_LABELS,
+  SERVICE_CODES,
+  servicesLabel,
+  type ProviderProcedure,
+  type ProviderRequestSummary,
+  type QueueStatus,
+  type ServiceCode,
+} from '@/data/models'
 import { useSession } from '@/features/auth/use-auth'
+import { STAGE_LIMIT_MINUTES } from '@/features/verification/status'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useNow } from '@/hooks/use-now'
 import { cn } from '@/lib/cn'
-import { toLocalDateTime } from '@/lib/dates'
+import { nowLocalDateTime } from '@/lib/dates'
 import { formatDate, formatDateTime, formatWaiting, plural } from '@/lib/format'
-import { ReviewSegments } from '@/features/verification/components/ReviewSegments'
-import { STAGE_LIMIT_MINUTES, waitingMinutes } from '@/features/verification/status'
-import { QUEUE_TABS, queueTab, reviewSegments, type QueueTab } from './lib/queue'
+import { REQUEST_STATUS_TONES, waitedMinutes } from '../admissions/status'
 
-type Scope = 'todas' | 'mias'
+type Tab = Extract<QueueStatus, 'open' | 'approved' | 'rejected' | 'all'>
 
-const TAB_HELP: Record<QueueTab, string> = {
-  documents: 'Revisa cada documento contra su lista. Si todos quedan aceptados, pasa la solicitud a antecedentes.',
-  background: 'Verifica con la Policía, INTUR y sus referencias. Con todo verificado, pasa a decisión.',
-  decision: 'Documentos y antecedentes ya revisados: falta aprobar o rechazar.',
-  changes_requested: 'Se le pidió una corrección. Vuelven a documentos cuando el guía sube lo que falta desde la app.',
-  approved: 'Aparecen en la app como verificados.',
-  rejected: 'No pasaron la verificación. Pueden volver a enviar su solicitud desde la app.',
+const TAB_HELP: Record<Tab, string> = {
+  open: 'Se atienden por orden de llegada. Quien revisa acepta o rechaza cada documento; con todo aceptado, quien decide aprueba o rechaza.',
+  approved: 'Guías y traductores que el turista ya encuentra en la app, y renovaciones aprobadas.',
+  rejected: 'Recibieron el motivo por correo y pueden corregir y volver a enviar desde la app.',
+  all: 'Todas las solicitudes, las más recientes primero.',
 }
 
+const SERVICE_OPTIONS: { value: ServiceCode | 'all'; label: string }[] = [
+  { value: 'all', label: 'Todos' },
+  ...SERVICE_CODES.map((value) => ({ value, label: value === 'guia' ? 'Guías' : 'Traductores' })),
+]
+
+const PROCEDURE_OPTIONS: { value: ProviderProcedure | 'all'; label: string }[] = [
+  { value: 'all', label: 'Todas' },
+  { value: 'application', label: 'Postulaciones' },
+  { value: 'renewal', label: 'Renovaciones' },
+]
+
+const PAGE_SIZE = 20
+
+/** En qué va lo abierto: cuántos documentos se revisaron, o que ya falta decidir. */
+function Progress({ request }: { request: ProviderRequestSummary }) {
+  if (!request.stage) return <Tag tone={REQUEST_STATUS_TONES[request.status]}>{REQUEST_STATUS_LABELS[request.status]}</Tag>
+  const { counts } = request
+  return (
+    <div className="flex flex-col gap-1">
+      <Tag tone={request.stage === 'decision' ? 'confirmed' : 'planned'}>{PROVIDER_STAGE_LABELS[request.stage]}</Tag>
+      <p className="text-caption text-muted tabular-nums">
+        {request.stage === 'decision'
+          ? 'Todo aceptado'
+          : `${counts.accepted + counts.rejected} de ${counts.total} revisados${counts.rejected > 0 ? ` · ${counts.rejected} rechazado${counts.rejected > 1 ? 's' : ''}` : ''}`}
+      </p>
+    </div>
+  )
+}
+
+/** Los guías y traductores que se postularon desde la app, y las renovaciones de documentos. */
 export function GuideApplicationsPage() {
   useDocumentTitle('Guías y traductores')
   const navigate = useNavigate()
-  const { user, can } = useSession()
-  const applications = useGuideApplications()
-  const reviewers = useReviewers()
-  const { today, minutes } = useNow()
-  const now = toLocalDateTime(today, minutes)
+  const { user } = useSession()
+  useNow() // la espera de lo abierto se vuelve a calcular cada minuto
   const [params, setParams] = useSearchParams()
-  const [search, setSearch] = useState('')
 
-  const all = applications.data ?? []
-  const countOf = (tab: QueueTab) => all.filter((item) => queueTab(item) === tab).length
-  const fallbackTab: QueueTab = !can('guides.review')
-    ? 'decision'
-    : ((['documents', 'background', 'decision'] as const).find((tab) => countOf(tab) > 0) ?? 'documents')
-  const tab = (QUEUE_TABS.find((item) => item.value === params.get('etapa'))?.value ?? fallbackTab) as QueueTab
-  const scope: Scope = params.get('de') === 'mi' ? 'mias' : 'todas'
+  const tab = (QUEUE_TABS.find((item) => item.value === params.get('estado'))?.value ?? 'open') as Tab
+  const service = SERVICE_CODES.find((item) => item === params.get('servicio'))
+  const procedure = (['application', 'renewal'] as const).find((item) => item === params.get('tramite'))
+  const page = Math.max(1, Number(params.get('pagina')) || 1)
+  const queue = useProviderQueue({ status: tab, service, procedure, page, pageSize: PAGE_SIZE })
+  const open = useProviderQueue({ status: 'open', page: 1, pageSize: 1 })
 
-  const update = (next: { tab?: QueueTab; scope?: Scope }) => {
+  const update = (next: { tab?: Tab; service?: ServiceCode | 'all'; procedure?: ProviderProcedure | 'all'; page?: number }) => {
     const value = new URLSearchParams(params)
-    value.set('etapa', next.tab ?? tab)
-    if ((next.scope ?? scope) === 'mias') value.set('de', 'mi')
-    else value.delete('de')
+    const set = (key: string, raw: string | undefined, empty: string) => {
+      if (raw === undefined) return
+      if (raw === empty) value.delete(key)
+      else value.set(key, raw)
+    }
+    set('estado', next.tab, 'open')
+    set('servicio', next.service, 'all')
+    set('tramite', next.procedure, 'all')
+    // Cambiar un filtro vuelve a la primera página.
+    if (next.page && next.page > 1) value.set('pagina', String(next.page))
+    else value.delete('pagina')
     setParams(value, { replace: true })
   }
 
+  const rows = queue.data?.results ?? []
   const decided = tab === 'approved' || tab === 'rejected'
-  const shown = all
-    .filter((item) => queueTab(item) === tab)
-    .filter((item) => scope === 'todas' || item.assigneeId === user.id)
-    .filter((item) => !search || `${item.name} ${item.email} ${item.city}`.toLowerCase().includes(search.trim().toLowerCase()))
-    .sort((a, b) => (decided ? b.stageSince.localeCompare(a.stageSince) : a.stageSince.localeCompare(b.stageSince)))
-
-  const inReview = all.filter((item) => item.status === 'in_review')
-  const oldest = inReview.reduce((max, item) => Math.max(max, waitingMinutes(item.stageSince, now)), 0)
-  const reviewerName = (id: string | null) => reviewers.data?.find((reviewer) => reviewer.id === id)?.name ?? null
+  const oldest = tab === 'open' && page === 1 && rows[0] ? waitedMinutes(rows[0].submittedAt) : 0
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Guías y traductores"
-        description="Envían sus documentos desde la app. Nadie aparece como verificado hasta pasar los documentos, los antecedentes y la decisión final."
+        description="Se postulan y renuevan sus documentos desde la app. Nadie aparece para el turista hasta que se revisan sus documentos y alguien con permiso para decidir lo aprueba."
       />
 
-      {applications.isSuccess && (
+      {open.isSuccess && (
         <p className="max-w-[72ch] text-lead text-muted">
-          {inReview.length === 0 ? (
-            'No hay solicitudes en revisión.'
+          {open.data.elements === 0 ? (
+            'No hay solicitudes abiertas.'
           ) : (
             <>
-              Hay <strong className="font-semibold text-ink">{plural(inReview.length, 'solicitud', 'solicitudes')}</strong> en
-              revisión: <strong className="font-semibold text-ink tabular-nums">{countOf('documents')}</strong> en documentos,{' '}
-              <strong className="font-semibold text-ink tabular-nums">{countOf('background')}</strong> en antecedentes y{' '}
-              <strong className="font-semibold text-ink tabular-nums">{countOf('decision')}</strong> esperando decisión. La que más
-              espera lleva <strong className={cn('font-semibold', oldest > STAGE_LIMIT_MINUTES ? 'text-danger' : 'text-ink')}>{formatWaiting(oldest)}</strong> en
-              su etapa.
+              Hay <strong className="font-semibold text-ink">{plural(open.data.elements, 'solicitud abierta', 'solicitudes abiertas')}</strong>.
+              {oldest > 0 && (
+                <>
+                  {' '}
+                  La que más espera lleva{' '}
+                  <strong className={cn('font-semibold', oldest > STAGE_LIMIT_MINUTES ? 'text-danger' : 'text-ink')}>{formatWaiting(oldest)}</strong>.
+                </>
+              )}
             </>
           )}
         </p>
@@ -104,153 +125,110 @@ export function GuideApplicationsPage() {
 
       <div className="flex flex-col gap-4">
         <Tabs
-          label="Etapa"
+          label="Estado"
           value={tab}
-          onChange={(value) => update({ tab: value })}
-          items={QUEUE_TABS.map((item) => ({ ...item, count: countOf(item.value) }))}
+          onChange={(value) => update({ tab: value as Tab })}
+          items={QUEUE_TABS.map((item) => ({ ...item, count: item.value === 'open' ? open.data?.elements : undefined }))}
         />
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="max-w-[68ch] text-small text-muted">{TAB_HELP[tab]}</p>
+          <p className="max-w-[60ch] text-small text-muted">{TAB_HELP[tab]}</p>
           <div className="flex flex-wrap items-center gap-2">
-            <SegmentedControl
-              label="Responsable"
-              size="sm"
-              value={scope}
-              onChange={(value) => update({ scope: value })}
-              options={[
-                { value: 'todas', label: 'Todas' },
-                { value: 'mias', label: 'Asignadas a mí' },
-              ]}
-            />
-            <Input
-              type="search"
-              aria-label="Buscar solicitante"
-              placeholder="Buscar"
-              leading={<Search size={16} />}
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              className="w-56"
-            />
+            <SegmentedControl label="Qué ofrece" size="sm" value={service ?? 'all'} onChange={(value) => update({ service: value })} options={SERVICE_OPTIONS} />
+            <SegmentedControl label="Trámite" size="sm" value={procedure ?? 'all'} onChange={(value) => update({ procedure: value })} options={PROCEDURE_OPTIONS} />
           </div>
         </div>
       </div>
 
-      {applications.isPending ? (
+      {queue.isPending ? (
         <SkeletonRows rows={5} />
-      ) : applications.isError ? (
-        <ErrorState error={applications.error} onRetry={() => void applications.refetch()} />
-      ) : shown.length === 0 ? (
-        <EmptyState icon={<BadgeCheck size={20} />} title={scope === 'mias' ? 'No tienes solicitudes en esta etapa' : 'No hay solicitudes en esta etapa'}>
-          {scope === 'mias' ? 'Mira las de todo el equipo con "Todas" y toma una sin responsable.' : 'Cuando un guía o traductor envíe sus documentos desde la app, aparece aquí.'}
+      ) : queue.isError ? (
+        <ErrorState error={queue.error} onRetry={() => void queue.refetch()} />
+      ) : rows.length === 0 ? (
+        <EmptyState icon={<BadgeCheck size={20} />} title="No hay solicitudes aquí">
+          {tab === 'open'
+            ? 'Cuando un guía o traductor se postule o renueve un documento desde la app, aparece en esta bandeja.'
+            : 'Cambia el estado o los filtros para ver otras.'}
         </EmptyState>
       ) : (
-        <Table id={`guias-${tab}`} caption={`Solicitudes: ${QUEUE_TABS.find((item) => item.value === tab)?.label}`}>
-          <thead>
-            <tr>
-              <Th>Solicitante</Th>
-              <Th>Ofrece</Th>
-              <Th>Ciudad</Th>
-              {!decided && tab !== 'changes_requested' && <Th className="w-44">Revisión</Th>}
-              <Th>{decided ? 'Decidida' : tab === 'changes_requested' ? 'Esperando al guía' : 'En la etapa'}</Th>
-              <Th>Responsable</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map((application) => (
-              <ApplicationRow
-                key={application.id}
-                application={application}
-                tab={tab}
-                now={now}
-                assignee={reviewerName(application.assigneeId)}
-                isMine={application.assigneeId === user.id}
-                onOpen={() => navigate(paths.guideApplication(application.id))}
-              />
-            ))}
-          </tbody>
-        </Table>
+        <>
+          <Table id="guias" caption={`Solicitudes de guías y traductores: ${QUEUE_TABS.find((item) => item.value === tab)?.label}`}>
+            <thead>
+              <tr>
+                <Th>Solicitante</Th>
+                <Th>Ofrece</Th>
+                <Th>Ciudad</Th>
+                <Th>{tab === 'open' ? 'Paso' : 'Estado'}</Th>
+                <Th>{decided ? 'Decidida' : 'Esperando'}</Th>
+                <Th>Responsable</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((request) => {
+                const waiting = waitedMinutes(request.submittedAt)
+                const late = !request.resolvedAt && waiting > STAGE_LIMIT_MINUTES
+                return (
+                  <Tr key={request.id} interactive onClick={() => navigate(paths.guideApplication(request.id))}>
+                    <Td>
+                      <Link
+                        to={paths.guideApplication(request.id)}
+                        onClick={(event) => event.stopPropagation()}
+                        className="font-semibold text-ink hover:underline"
+                      >
+                        {request.applicant.name}
+                      </Link>
+                      <p className="truncate text-caption text-muted">{request.applicant.email}</p>
+                    </Td>
+                    <Td>
+                      <p className="text-small text-ink">{servicesLabel(request.services)}</p>
+                      {request.procedure === 'renewal' && <p className="text-caption text-muted">{PROCEDURE_LABELS.renewal}</p>}
+                    </Td>
+                    <Td className="whitespace-nowrap">{request.city?.name ?? 'Todo el país'}</Td>
+                    <Td>
+                      <Progress request={request} />
+                    </Td>
+                    <Td className="whitespace-nowrap">
+                      {request.resolvedAt ? (
+                        <span className="text-muted">{formatDate(nowLocalDateTime(new Date(request.resolvedAt)).slice(0, 10))}</span>
+                      ) : (
+                        <>
+                          <p className={cn('text-small font-semibold tabular-nums', late ? 'text-danger' : 'text-ink')}>{formatWaiting(waiting)}</p>
+                          <p className="text-caption text-muted">desde {formatDateTime(nowLocalDateTime(new Date(request.submittedAt)))}</p>
+                        </>
+                      )}
+                    </Td>
+                    <Td>
+                      {request.takenBy ? (
+                        <span className="flex items-center gap-2">
+                          <Avatar name={request.takenBy.name} size="sm" />
+                          <span className="text-small whitespace-nowrap text-ink">{request.takenBy.id === user.id ? 'Tú' : request.takenBy.name}</span>
+                        </span>
+                      ) : (
+                        <Tag tone="outline">Sin responsable</Tag>
+                      )}
+                    </Td>
+                  </Tr>
+                )
+              })}
+            </tbody>
+          </Table>
+
+          {queue.data && queue.data.pages > 1 && (
+            <nav aria-label="Páginas" className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-small text-muted tabular-nums">
+                Página {queue.data.current} de {queue.data.pages} · {plural(queue.data.elements, 'solicitud', 'solicitudes')}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="secondary" icon={<ChevronLeft size={16} />} disabled={!queue.data.hasPrevious} onClick={() => update({ page: page - 1 })}>
+                  Anterior
+                </Button>
+                <Button size="sm" variant="secondary" icon={<ChevronRight size={16} />} disabled={!queue.data.hasNext} onClick={() => update({ page: page + 1 })}>
+                  Siguiente
+                </Button>
+              </div>
+            </nav>
+          )}
+        </>
       )}
     </div>
-  )
-}
-
-function ApplicationRow({
-  application,
-  tab,
-  now,
-  assignee,
-  isMine,
-  onOpen,
-}: {
-  application: GuideApplication
-  tab: QueueTab
-  now: string
-  assignee: string | null
-  isMine: boolean
-  onOpen: () => void
-}) {
-  const decided = tab === 'approved' || tab === 'rejected'
-  const waiting = waitingMinutes(application.stageSince, now)
-  const late = !decided && tab !== 'changes_requested' && waiting > STAGE_LIMIT_MINUTES
-  const segments = reviewSegments(application)
-  const done = segments.filter((segment) => segment.state === 'done').length
-
-  return (
-    <Tr interactive onClick={onOpen}>
-      <Td>
-        <div className="flex items-center gap-3">
-          <img src={application.photoUrl} alt="" loading="lazy" className="size-9 shrink-0 rounded-full bg-placeholder object-cover" />
-          <div className="min-w-0">
-            <Link
-              to={paths.guideApplication(application.id)}
-              onClick={(event) => event.stopPropagation()}
-              className="font-semibold text-ink hover:underline"
-            >
-              {application.name}
-            </Link>
-            <p className="truncate text-caption text-muted">{application.email}</p>
-          </div>
-        </div>
-      </Td>
-      <Td>
-        <p className="text-small text-ink">{SERVICE_ROLE_LABELS[application.serviceRole]}</p>
-        <p className="text-caption text-muted">{application.languages.join(', ')}</p>
-      </Td>
-      <Td className="whitespace-nowrap">{application.city}</Td>
-      {!decided && tab !== 'changes_requested' && (
-        <Td>
-          <ReviewSegments segments={segments} className="w-36" />
-          <p className="mt-1.5 text-caption text-muted tabular-nums">
-            {tab === 'documents'
-              ? `${done} de ${segments.length} documentos`
-              : tab === 'background'
-                ? `${done} de ${segments.length} verificaciones`
-                : segments.some((segment) => segment.state === 'problem')
-                  ? 'Con observaciones'
-                  : 'Todo en orden'}
-          </p>
-        </Td>
-      )}
-      <Td className="whitespace-nowrap">
-        {decided ? (
-          <span className="text-muted">{formatDate(application.stageSince.slice(0, 10))}</span>
-        ) : (
-          <>
-            <p className={cn('text-small font-semibold tabular-nums', late ? 'text-danger' : 'text-ink')}>{formatWaiting(waiting)}</p>
-            <p className="text-caption text-muted">desde {formatDateTime(application.stageSince)}</p>
-          </>
-        )}
-      </Td>
-      <Td>
-        {assignee ? (
-          <span className="flex items-center gap-2">
-            <Avatar name={assignee} size="sm" />
-            <span className="text-small whitespace-nowrap text-ink">{isMine ? 'Tú' : assignee}</span>
-          </span>
-        ) : (
-          <Tag tone="outline">Sin responsable</Tag>
-        )}
-      </Td>
-    </Tr>
   )
 }

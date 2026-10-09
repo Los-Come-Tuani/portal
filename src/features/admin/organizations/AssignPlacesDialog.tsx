@@ -2,8 +2,9 @@ import { MapPin, Search } from 'lucide-react'
 import { useState } from 'react'
 import { Button, Checkbox, Dialog, EmptyState, Input, SkeletonRows, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
+import { useCities } from '@/data/hooks/use-applications'
 import { useAssignStops } from '@/data/hooks/use-organizations'
-import { useAvailablePlaces } from '@/data/hooks/use-places'
+import { usePlaces } from '@/data/hooks/use-places'
 import type { Organization } from '@/data/models'
 import { plural } from '@/lib/format'
 
@@ -15,7 +16,7 @@ export function AssignPlacesDialog({ open, organization, onClose }: { open: bool
       onClose={onClose}
       size="lg"
       title={`Asignar lugares a ${organization.name}`}
-      description={`Lugares de ${organization.city} que ya están en la app, no administra nadie y nadie ha pedido. Empieza a editarlos y a ver sus llegadas de inmediato.`}
+      description={`Lugares de ${organization.city} que ya están en la app y no administra nadie. Empieza a editarlos y a ver sus llegadas de inmediato.`}
     >
       <AssignForm key={String(open)} organization={organization} onDone={onClose} />
     </Dialog>
@@ -23,7 +24,9 @@ export function AssignPlacesDialog({ open, organization, onClose }: { open: bool
 }
 
 function AssignForm({ organization, onDone }: { organization: Organization; onDone: () => void }) {
-  const available = useAvailablePlaces(organization.city)
+  const cities = useCities()
+  const cityId = cities.data?.find((city) => city.name.localeCompare(organization.city, 'es', { sensitivity: 'base' }) === 0)?.id
+  const available = usePlaces({ ownerKind: 'none', cityId, active: true }, !!cityId)
   const save = useAssignStops()
   const toast = useToast()
   const [picked, setPicked] = useState<string[]>([])
@@ -34,7 +37,7 @@ function AssignForm({ organization, onDone }: { organization: Organization; onDo
 
   const assign = () =>
     save.mutate(
-      { id: organization.id, stopIds: picked },
+      { organization, stopIds: picked },
       {
         onSuccess: () => {
           toast({ title: `Asignaste ${plural(picked.length, 'lugar', 'lugares')} a ${organization.name}` })
@@ -54,7 +57,7 @@ function AssignForm({ organization, onDone }: { organization: Organization; onDo
         value={search}
         onChange={(event) => setSearch(event.target.value)}
       />
-      {available.isPending ? (
+      {cities.isPending || (!!cityId && available.isPending) ? (
         <SkeletonRows rows={4} />
       ) : places.length === 0 ? (
         <EmptyState icon={<MapPin size={20} />} title={`No hay lugares sin dueño en ${organization.city}`} className="rounded-kp border border-divider py-8">

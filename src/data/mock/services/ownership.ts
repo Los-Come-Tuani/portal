@@ -1,5 +1,4 @@
-import type { Stop } from '../../models'
-import type { MockDatabase } from '../db'
+import type { MockDatabase, MockStop } from '../db'
 import { fail } from '../http'
 
 export function ownerOf(db: MockDatabase, stopId: string) {
@@ -26,7 +25,7 @@ export function assertStopFree(
   db: MockDatabase,
   stopId: string,
   { organizationId = null, city, field }: { organizationId?: string | null; city?: string; field: string },
-): Stop {
+): MockStop {
   const invalid = (message: string) => fail.invalid('Revisa los lugares', { [field]: message })
   const stop = db.stops.find((item) => item.id === stopId && !item.draft)
   if (!stop) throw invalid('Uno de los lugares ya no está en la app')

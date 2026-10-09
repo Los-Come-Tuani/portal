@@ -1,40 +1,42 @@
-import { Car, Mail, Phone } from 'lucide-react'
+import { Car, Mail, MapPin, Phone } from 'lucide-react'
 import { Panel, Tag } from '@/components/ui'
-import { plural } from '@/lib/format'
-import { SERVICE_ROLE_LABELS, type GuideApplication } from '@/data/models'
+import { LEVEL_LABELS, servicesLabel, type ProviderRequestDetail } from '@/data/models'
 
-/** Lo que el guía puso en su perfil: lo que se verifica contra los documentos. */
-export function ApplicantProfile({ application }: { application: GuideApplication }) {
+/** Lo que la persona dice de sí: los documentos lo tienen que respaldar. */
+export function ApplicantProfile({ request }: { request: ProviderRequestDetail }) {
+  const { profile } = request
   return (
     <Panel title="Perfil en la app" description="Lo que dice de sí; los documentos lo tienen que respaldar.">
       <div className="flex flex-col gap-4">
-        <p className="text-body text-ink">{application.bio}</p>
+        {profile.photoUrl && <img src={profile.photoUrl} alt="" className="size-20 rounded-full bg-placeholder object-cover" />}
+        {profile.presentation ? <p className="text-body text-ink">{profile.presentation}</p> : <p className="text-body text-muted">Sin presentación.</p>}
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-body">
           <div>
             <dt className="text-small text-muted">Ofrece</dt>
-            <dd className="text-ink">{SERVICE_ROLE_LABELS[application.serviceRole]}</dd>
+            <dd className="text-ink">{servicesLabel(request.services)}</dd>
           </div>
           <div>
-            <dt className="text-small text-muted">Experiencia</dt>
-            <dd className="text-ink tabular-nums">{plural(application.yearsExperience, 'año', 'años')}</dd>
+            <dt className="text-small text-muted">Dónde</dt>
+            <dd className="flex items-center gap-1.5 text-ink">
+              <MapPin size={15} className="text-muted" aria-hidden="true" />
+              {request.city?.name ?? 'Todo el país'}
+            </dd>
           </div>
           <div className="col-span-2">
             <dt className="text-small text-muted">Idiomas</dt>
             <dd className="mt-1 flex flex-wrap gap-1.5">
-              {application.languages.map((language) => (
-                <Tag key={language}>{language}</Tag>
+              {profile.languages.map((language) => (
+                <Tag key={language.code}>
+                  {language.label} · {LEVEL_LABELS[language.level].toLowerCase()}
+                </Tag>
               ))}
             </dd>
-          </div>
-          <div className="col-span-2">
-            <dt className="text-small text-muted">Especialidades</dt>
-            <dd className="text-ink">{application.specialties.join(' · ')}</dd>
           </div>
           <div className="col-span-2">
             <dt className="sr-only">Vehículo</dt>
             <dd className="flex items-center gap-2 text-ink">
               <Car size={16} className="text-muted" aria-hidden="true" />
-              {application.hasTransport ? 'Pone su propio vehículo' : 'No pone vehículo'}
+              {profile.carriesTourists ? 'Lleva turistas en su vehículo' : 'No lleva turistas en su vehículo'}
             </dd>
           </div>
         </dl>
@@ -43,19 +45,19 @@ export function ApplicantProfile({ application }: { application: GuideApplicatio
   )
 }
 
-export function ApplicantContact({ application }: { application: GuideApplication }) {
+export function ApplicantContact({ request }: { request: ProviderRequestDetail }) {
   return (
     <Panel title="Contacto">
       <ul className="flex flex-col gap-3 text-body">
         <li className="flex items-center gap-2.5">
           <Mail size={16} className="text-muted" aria-hidden="true" />
-          <a href={`mailto:${application.email}`} className="truncate text-ink underline decoration-outline underline-offset-4 hover:decoration-ink">
-            {application.email}
+          <a href={`mailto:${request.applicant.email}`} className="truncate text-ink underline decoration-outline underline-offset-4 hover:decoration-ink">
+            {request.applicant.email}
           </a>
         </li>
         <li className="flex items-center gap-2.5 text-ink tabular-nums">
           <Phone size={16} className="text-muted" aria-hidden="true" />
-          {application.phone}
+          {request.profile.phone}
         </li>
       </ul>
     </Panel>

@@ -1,4 +1,4 @@
-import type { LocalDateTime } from './common'
+import type { LocalDateTime, Photo } from './common'
 
 /*
  * Secciones nuevas del perfil de un lugar. La app todavía no las muestra:
@@ -44,21 +44,22 @@ export interface PlaceProfile {
   amenities: AmenityId[]
   languages: string[]
   contact: PlaceContact
-  updatedAt: LocalDateTime
+  /** `null`: nadie la ha llenado todavía. */
+  updatedAt: LocalDateTime | null
 }
 
 export type PlaceProfileInput = Omit<PlaceProfile, 'stopId' | 'updatedAt'>
 
+/** `hidden` sigue guardada pero no sale en la app (`visible: false` en el API). */
 export type PostStatus = 'published' | 'hidden'
 
 /** Una novedad: publicación corta con foto (menú de temporada, avisos…). */
 export interface Post {
   id: string
   stopId: string
-  organizationId: string
   title: string
   body: string
-  image: string
+  image: Photo | null
   publishedAt: LocalDateTime
   status: PostStatus
 }

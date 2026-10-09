@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { ErrorState, Skeleton } from '@/components/ui'
-import { CITIES, type BadgeCampaign, type EventItem, type Stop } from '@/data/models'
+import { CITIES, type BadgeCampaign, type CulturalEvent, type Stop } from '@/data/models'
 import { useSession } from '@/features/auth/use-auth'
 import { diffDays, monthGrid, monthKey } from '@/lib/dates'
 import { AgendaSummary } from './components/AgendaSummary'
@@ -47,13 +47,13 @@ function campaignSpans(campaigns: BadgeCampaign[], dates: string[], places: read
     })
 }
 
-function eventChips(events: EventItem[]): EventChip[] {
-  return events.map((event) => ({
-    id: event.id,
-    date: event.date,
-    time: event.startTime,
-    title: event.title,
-  }))
+/** Un evento de varios días sale en cada uno de los días que se ven. */
+function eventChips(events: CulturalEvent[], dates: string[]): EventChip[] {
+  return events.flatMap((event) =>
+    dates
+      .filter((date) => date >= event.startDate && date <= event.endDate)
+      .map((date) => ({ id: `${event.id}-${date}`, date, time: event.startTime, title: event.name })),
+  )
 }
 
 export function Agenda({ state }: { state: AgendaState }) {
@@ -74,7 +74,7 @@ export function Agenda({ state }: { state: AgendaState }) {
     () => (showsOnePlace ? null : new Map((places ?? []).map((stop) => [stop.id, stop.name]))),
     [showsOnePlace, places],
   )
-  const chips = useMemo(() => eventChips(data.events), [data.events])
+  const chips = useMemo(() => eventChips(data.events, data.dates), [data.events, data.dates])
   const loading = data.visits.isPending || data.places.isPending
   const selectDate = (date: string) => state.set({ date, hour: null })
 

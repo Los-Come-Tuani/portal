@@ -1,43 +1,32 @@
-﻿import { ChevronDown, CircleCheck, Receipt } from 'lucide-react'
+﻿import { ChevronDown, Receipt } from 'lucide-react'
 import { useState } from 'react'
-import { Button, Dialog, EmptyState, ErrorState, PageHeader, Panel, SkeletonRows, Tag, useToast } from '@/components/ui'
-import { env } from '@/config/env'
-import { errorMessage } from '@/data/api/errors'
-import { usePayStatement, useStatements } from '@/data/hooks/use-billing'
-import { STATEMENT_STATUS_LABELS, type Statement } from '@/data/models'
-import { useSession } from '@/features/auth/use-auth'
+import { EmptyState, ErrorState, PageHeader, Pager, SkeletonRows, Tag } from '@/components/ui'
+import { useStatements, useTariffs } from '@/data/hooks/use-billing'
+import { MONTHLY_STATEMENT_STATUS_LABELS } from '@/data/models'
+import { TARIFF_CODES } from '@/data/schemas/finance-api.schema'
+import { STATEMENT_TONES, statementMonth } from '@/features/admin/finance/lib/statements'
 import { useDocumentTitle } from '@/hooks/use-document-title'
-import { useNow } from '@/hooks/use-now'
-import { formatDate, formatDateTime, formatMoney, formatMonth } from '@/lib/format'
+import { formatDateTime, formatMoney } from '@/lib/format'
 import { StatementView } from './components/StatementView'
 
-const STATUS_TONES = { open: 'planned', due: 'danger', paid: 'confirmed' } as const
-
-function capitalize(text: string) {
-  return text.charAt(0).toUpperCase() + text.slice(1)
-}
-
+/**
+ * Los estados de cuenta del comercio (`billing/statement/`): cada mes, la insignia de su lugar y los
+ * cupones que validó. K'Plan los cobra fuera de línea; aquí se ve qué se debe y qué ya se pagó.
+ */
 export function BillingPage() {
   useDocumentTitle('Pagos')
-  const { organizationId } = useSession()
-  const { today } = useNow()
-  const dueLabel = (date: string) => `${date < today ? 'Venció' : 'Vence'} el ${formatDate(date)}`
-  const statements = useStatements(organizationId)
-  const pay = usePayStatement()
-  const toast = useToast()
-  const [paying, setPaying] = useState<Statement | null>(null)
-
-  const list = statements.data ?? []
-  const open = list.find((statement) => statement.status === 'open')
-  const due = list.filter((statement) => statement.status === 'due' && statement.total > 0)
-  const history = list.filter((statement) => statement.status !== 'open')
+  const [page, setPage] = useState(1)
+  const statements = useStatements({ page, pageSize: 12 })
+  const pending = (statements.data?.results ?? []).filter((statement) => statement.status === 'pending' && statement.total > 0)
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Pagos"
-        description="Lo que le pagas a K'Plan, mes por mes. Sólo se cobra lo que K'Plan te generó: cupones validados e insignias."
+        description="Lo que le pagas a K'Plan, mes por mes: la insignia de tu lugar y los cupones que validaste. El equipo de K'Plan te contacta para cobrarlo."
       />
+
+      <TariffsPanel />
 
       {statements.isPending ? (
         <SkeletonRows rows={4} />
@@ -45,117 +34,74 @@ export function BillingPage() {
         <ErrorState error={statements.error} onRetry={() => void statements.refetch()} />
       ) : (
         <>
-          {due.map((statement) => (
-            <div
-              key={statement.id}
-              role="alert"
-              className="flex flex-wrap items-center justify-between gap-4 rounded-kp border border-danger/30 bg-danger/6 px-5 py-4"
-            >
-              <div>
-                <p className="text-body font-semibold text-ink">
-                  {capitalize(formatMonth(statement.period))}: {formatMoney(statement.total)} por pagar
-                </p>
-                <p className={statement.dueDate < today ? 'text-small font-medium text-danger' : 'text-small text-muted'}>
-                  {dueLabel(statement.dueDate)}.
-                </p>
-              </div>
-              <Button onClick={() => setPaying(statement)}>Pagar {formatMoney(statement.total)}</Button>
+          {pending.map((statement) => (
+            <div key={statement.id} role="status" className="flex flex-wrap items-center justify-between gap-4 rounded-kp border border-danger/30 bg-danger/6 px-5 py-4">
+              <p className="text-body font-semibold text-ink">
+                {statementMonth(statement)}: {formatMoney(statement.total)} por pagar
+              </p>
+              <p className="text-small text-muted">Emitido el {formatDateTime(statement.issuedAt)}</p>
             </div>
           ))}
 
-          {open && (
-            <Panel
-              title={`${capitalize(formatMonth(open.period))}, hasta hoy`}
-              description="El mes en curso: se cierra el último día y se paga en los primeros diez del siguiente."
-              actions={<Tag tone={STATUS_TONES.open}>{STATEMENT_STATUS_LABELS.open}</Tag>}
-            >
-              <StatementView statement={open} />
-            </Panel>
+          {statements.data.results.length === 0 ? (
+            <EmptyState icon={<Receipt size={20} />} title="Todavía no tienes estados de cuenta">
+              Se emiten el primer día de cada mes, con la insignia de tu lugar y los cupones que validaste el mes anterior.
+            </EmptyState>
+          ) : (
+            <ul className="divide-y divide-divider rounded-kp border border-divider bg-surface">
+              {statements.data.results.map((statement) => (
+                <li key={statement.id}>
+                  <details className="group">
+                    <summary className="flex cursor-pointer list-none flex-wrap items-center gap-4 px-5 py-4 transition-colors hover:bg-canvas [&::-webkit-details-marker]:hidden">
+                      <ChevronDown size={16} aria-hidden="true" className="text-muted transition-transform duration-200 group-open:rotate-180" />
+                      <span className="min-w-0 flex-1 text-body font-semibold text-ink">{statementMonth(statement)}</span>
+                      <span className="text-small text-muted">
+                        {statement.paidAt ? `Pagado el ${formatDateTime(statement.paidAt)}` : `Emitido el ${formatDateTime(statement.issuedAt)}`}
+                      </span>
+                      <Tag tone={STATEMENT_TONES[statement.status]}>{MONTHLY_STATEMENT_STATUS_LABELS[statement.status]}</Tag>
+                      <span className="w-28 text-right text-body font-semibold text-ink tabular-nums">{formatMoney(statement.total)}</span>
+                    </summary>
+                    <div className="border-t border-divider bg-canvas/40 px-5 py-5 sm:pl-14">
+                      <StatementView statement={statement} />
+                    </div>
+                  </details>
+                </li>
+              ))}
+            </ul>
           )}
-
-          <section className="flex flex-col gap-3" aria-labelledby="history-title">
-            <h2 id="history-title" className="text-title font-semibold text-ink">
-              Meses anteriores
-            </h2>
-            {history.length === 0 ? (
-              <EmptyState icon={<Receipt size={20} />} title="Todavía no hay meses cerrados" />
-            ) : (
-              <ul className="divide-y divide-divider rounded-kp border border-divider bg-surface">
-                {history.map((statement) => (
-                  <li key={statement.id}>
-                    <details className="group">
-                      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-4 px-5 py-4 transition-colors hover:bg-canvas [&::-webkit-details-marker]:hidden">
-                        <ChevronDown
-                          size={16}
-                          aria-hidden="true"
-                          className="text-muted transition-transform duration-200 group-open:rotate-180"
-                        />
-                        <span className="min-w-0 flex-1 text-body font-semibold text-ink">
-                          {capitalize(formatMonth(statement.period))}
-                        </span>
-                        <span className="text-small text-muted">
-                          {statement.paidAt ? `Pagado el ${formatDateTime(statement.paidAt)}` : dueLabel(statement.dueDate)}
-                        </span>
-                        <Tag tone={STATUS_TONES[statement.status]}>{STATEMENT_STATUS_LABELS[statement.status]}</Tag>
-                        <span className="w-28 text-right text-body font-semibold text-ink tabular-nums">
-                          {formatMoney(statement.total)}
-                        </span>
-                      </summary>
-                      <div className="border-t border-divider bg-canvas/40 px-5 py-5 sm:pl-14">
-                        <StatementView statement={statement} />
-                      </div>
-                    </details>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          <Pager page={statements.data} onChange={setPage} noun={{ one: 'mes', many: 'meses' }} />
         </>
       )}
-
-      <Dialog
-        open={paying !== null}
-        onClose={() => setPaying(null)}
-        title={paying ? `Pagar ${formatMonth(paying.period)}` : 'Pagar'}
-        size="sm"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setPaying(null)}>
-              Cancelar
-            </Button>
-            <Button
-              loading={pay.isPending}
-              onClick={() =>
-                paying &&
-                pay.mutate(paying.id, {
-                  onSuccess: () => {
-                    setPaying(null)
-                    toast({ title: 'Pago registrado', description: 'Gracias. Ya está al día.' })
-                  },
-                  onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
-                })
-              }
-            >
-              Confirmar pago
-            </Button>
-          </>
-        }
-      >
-        {paying && (
-          <div className="flex flex-col gap-3 text-body">
-            <p className="flex items-baseline justify-between">
-              <span className="text-muted">Total</span>
-              <span className="text-title font-bold text-ink tabular-nums">{formatMoney(paying.total)}</span>
-            </p>
-            {env.useMocks && (
-              <p className="flex items-start gap-2 rounded-kp bg-paper p-3 text-small text-ink">
-                <CircleCheck size={16} className="mt-0.5 shrink-0 text-confirmed" aria-hidden="true" />
-                Modo demo: todavía no hay pasarela de pago, así que el pago sólo se registra.
-              </p>
-            )}
-          </div>
-        )}
-      </Dialog>
     </div>
+  )
+}
+
+/** Las tarifas vigentes (`pricing/`): lo que se suma a cada estado de cuenta. */
+function TariffsPanel() {
+  const tariffs = useTariffs()
+  if (!tariffs.data) return null
+  const value = (code: string) => tariffs.data.find((tariff) => tariff.code === code)?.value
+  const rows = [
+    { code: TARIFF_CODES.badge, label: 'Insignia de tu lugar', value: value(TARIFF_CODES.badge), unit: 'al mes' },
+    { code: TARIFF_CODES.coupon, label: 'Cada cupón que validas', value: value(TARIFF_CODES.coupon), unit: 'por cupón' },
+  ].filter((row) => row.value !== undefined)
+  if (rows.length === 0) return null
+
+  return (
+    <section aria-labelledby="tariffs-title" className="rounded-kp border border-divider bg-surface px-5 py-4">
+      <h2 id="tariffs-title" className="text-body font-semibold text-ink">
+        Tarifas vigentes
+      </h2>
+      <dl className="mt-3 grid gap-x-8 gap-y-2 text-small sm:grid-cols-2">
+        {rows.map((row) => (
+          <div key={row.code} className="flex items-baseline justify-between gap-4">
+            <dt className="text-muted">{row.label}</dt>
+            <dd className="text-ink">
+              <span className="font-semibold tabular-nums">{formatMoney(row.value ?? 0)}</span> {row.unit}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   )
 }

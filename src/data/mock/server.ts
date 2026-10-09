@@ -1,36 +1,39 @@
 /**
  * Backend de demo: responde las mismas rutas que tendrá la API (ver
  * src/data/api/endpoints.ts) con los datos de src/data/mock/json, guardando
- * los cambios en localStorage. Se usa cuando VITE_API_URL está vacía.
+ * los cambios en localStorage. Solo se usa con VITE_USE_MOCKS=true
+ * (`npm run dev:demo`).
  */
 import { env } from '@/config/env'
 import type { TransportRequest, TransportResponse } from '../api/http-client'
 import { getDatabase, saveDatabase } from './db'
-import { admissionRoutes } from './handlers/admissions'
-import { authRoutes, userFromToken } from './handlers/auth'
-import { uploadRoutes } from './handlers/uploads'
+import { applicationRoutes } from './handlers/applications'
+import { authRoutes, userFromSession } from './handlers/auth'
 import { badgeRoutes } from './handlers/badges'
 import { billingRoutes } from './handlers/billing'
 import { circuitRoutes } from './handlers/circuits'
 import { couponRoutes } from './handlers/coupons'
 import { eventRoutes } from './handlers/events'
-import { guideRoutes } from './handlers/guides'
+import { landingRoutes } from './handlers/landing'
+import { moderationRoutes } from './handlers/moderation'
 import { organizationRoutes } from './handlers/organizations'
 import { placeRequestRoutes } from './handlers/place-requests'
 import { placeRoutes } from './handlers/places'
+import { providerRoutes } from './handlers/providers'
 import { staffRoleRoutes, userRoutes } from './handlers/users'
+import { verificationRoutes } from './handlers/verification'
 import { visitRoutes } from './handlers/visits'
 import { MockHttpError, matchRoute, type MockRoute } from './http'
 import { hasPermission } from './services/access'
 
 const routes: MockRoute[] = [
   ...authRoutes,
-  ...uploadRoutes,
-  ...admissionRoutes,
+  ...applicationRoutes,
+  ...verificationRoutes,
   ...placeRequestRoutes,
   ...userRoutes,
   ...staffRoleRoutes,
-  ...guideRoutes,
+  ...providerRoutes,
   ...organizationRoutes,
   ...placeRoutes,
   ...circuitRoutes,
@@ -38,6 +41,8 @@ const routes: MockRoute[] = [
   ...couponRoutes,
   ...badgeRoutes,
   ...billingRoutes,
+  ...moderationRoutes,
+  ...landingRoutes,
   ...visitRoutes,
 ]
 
@@ -61,7 +66,7 @@ export async function handleMockRequest(request: TransportRequest): Promise<Tran
 
     try {
       const db = getDatabase()
-      const user = userFromToken(db, request.token)
+      const user = userFromSession(db)
       if (!candidate.isPublic && !user) throw new MockHttpError(401, 'Sesión expirada, vuelve a iniciar sesión')
       if (candidate.roles && (!user || !candidate.roles.includes(user.role))) {
         throw new MockHttpError(403, 'No tienes permiso para hacer esto')

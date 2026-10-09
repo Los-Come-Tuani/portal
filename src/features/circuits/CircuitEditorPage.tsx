@@ -2,11 +2,12 @@ import { ArrowLeft, Trash2 } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { Link, useBlocker, useNavigate, useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { ConfirmDialog, ErrorState, IconButton, Panel, SaveBar, Skeleton, Switch, Tag, useToast } from '@/components/ui'
+import { ConfirmDialog, ErrorState, Field, IconButton, Input, Panel, SaveBar, Skeleton, Switch, Tag, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
-import { useCircuit, useDeleteCircuit, useGroupSessions, useSaveCircuit } from '@/data/hooks/use-circuits'
-import { useOrganizations } from '@/data/hooks/use-organizations'
-import { usePlaces } from '@/data/hooks/use-places'
+import { useCities } from '@/data/hooks/use-applications'
+import { useCircuit, useCircuitList, useDepartures, useRetireCircuit, useSaveCircuit } from '@/data/hooks/use-circuits'
+import { useOwnCity } from '@/data/hooks/use-own-city'
+import { useCityStops } from '@/data/hooks/use-places'
 import type { Circuit, CircuitInput, Stop } from '@/data/models'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useNow } from '@/hooks/use-now'
@@ -14,8 +15,9 @@ import { checkStartTimes } from '@/lib/circuits'
 import { plural } from '@/lib/format'
 import { CircuitForm } from './components/CircuitForm'
 import { CircuitKindTag } from './components/CircuitKindTag'
-import { GroupSessionsPanel } from './components/GroupSessionsPanel'
+import { DeparturesPanel } from './components/DeparturesPanel'
 import { ItineraryPreview } from './components/ItineraryPreview'
+import { useCircuitAccess } from './lib/access'
 import { emptyCircuit, serverErrors, toCircuitInput, validateCircuit, type CircuitErrors } from './lib/form'
 import { circuitStatus } from './lib/labels'
 
@@ -23,6 +25,17 @@ import { circuitStatus } from './lib/labels'
 function scrollToFirstError() {
   requestAnimationFrame(() =>
     document.querySelector('main [aria-invalid="true"], main p.text-danger')?.scrollIntoView({ block: 'center', behavior: 'smooth' }),
+  )
+}
+
+/** Lo que se cancela al sacar un circuito de la app, si tiene salidas próximas. */
+function CancelledBookings({ departures, booked }: { departures: number; booked: number }) {
+  if (departures === 0) return null
+  return (
+    <p className="font-medium text-danger">
+      Se cancelan {plural(departures, 'salida próxima', 'salidas próximas')}
+      {booked > 0 ? ` con ${plural(booked, 'persona que reservó', 'personas que reservaron')}` : ''}.
+    </p>
   )
 }
 
@@ -47,22 +60,46 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
   const navigate = useNavigate()
   const toast = useToast()
   const { today } = useNow()
-  const places = usePlaces({})
-  const alcaldias = useOrganizations({ type: 'alcaldia' })
+  const access = useCircuitAccess()
+  const { manages, municipality } = access
+  const municipalityMode = !manages && !!municipality
+  const editable = circuit ? access.canEdit(circuit) : access.canCreate
+  const readOnly = !editable
+
+  // La alcaldía crea en su ciudad: la sesión no la trae, sale de sus lugares o de sus circuitos.
+  const ownCity = useOwnCity(municipalityMode && !circuit ? municipality : null)
+  const known = useCircuitList({}, municipalityMode && !circuit && !ownCity.city && !ownCity.isPending)
+  const cities = useCities()
   const save = useSaveCircuit()
-  const remove = useDeleteCircuit()
-  const wasGroup = !!circuit && (circuit.isCreativeCircuit || (circuit.isKplanCircuit && circuit.bookingMode === 'group'))
-  const sessions = useGroupSessions(circuit?.id, wasGroup)
-  const enrolled = (sessions.data ?? []).reduce((sum, session) => sum + session.joinedCount, 0)
-  const initial = useMemo(() => (circuit ? toCircuitInput(circuit) : emptyCircuit()), [circuit])
+  const retire = useRetireCircuit()
+  const departures = useDepartures(circuit?.id, !!circuit && circuit.status !== 'retired')
+  const openDepartures = (departures.data ?? []).filter((departure) => !departure.cancelled && departure.date >= today)
+  const booked = openDepartures.reduce((sum, departure) => sum + departure.booked, 0)
+
+  const initial = useMemo(() => (circuit ? toCircuitInput(circuit) : emptyCircuit({ kind: municipalityMode ? 'creative' : 'kplan', cityId: '' })), [circuit, municipalityMode])
   const [draft, setDraft] = useState<CircuitInput>(initial)
   const [errors, setErrors] = useState<CircuitErrors>({})
-  const [deleting, setDeleting] = useState(false)
+  const [retiring, setRetiring] = useState(false)
+  const [unpublishing, setUnpublishing] = useState<CircuitInput | null>(null)
+  const [confirmName, setConfirmName] = useState('')
   useDocumentTitle(circuit?.shortTitle ?? 'Nuevo circuito')
 
-  const stops = useMemo(() => (places.data ?? []).filter((stop) => !stop.draft), [places.data])
-  const ordered = draft.stopIds.map((id) => stops.find((stop) => stop.id === id)).filter((stop): stop is Stop => !!stop && stop.city === draft.city)
-  const flaggedTimes = checkStartTimes({ stops: ordered, travelMode: draft.travelMode, legMinutes: draft.legMinutes }, draft.startTimes)
+  const cityId = draft.cityId || (municipalityMode ? (ownCity.city?.id ?? known.data?.[0]?.cityId ?? '') : '')
+  const view = cityId === draft.cityId ? draft : { ...draft, cityId }
+  const cityOptions = useMemo(() => {
+    const options = (cities.data ?? []).filter((item) => item.active).map((item) => ({ id: item.id, name: item.name, code: item.code }))
+    if (circuit && !options.some((item) => item.id === circuit.cityId)) options.push({ id: circuit.cityId, name: circuit.city, code: circuit.cityCode })
+    const sample = known.data?.[0]
+    if (sample && !options.some((item) => item.id === sample.cityId)) options.push({ id: sample.cityId, name: sample.city, code: sample.cityCode })
+    return options.sort((a, b) => a.name.localeCompare(b.name, 'es'))
+  }, [cities.data, circuit, known.data])
+  const city = (cities.data ?? []).find((item) => item.id === cityId) ?? cityOptions.find((item) => item.id === cityId)
+  const cityStops = useCityStops(city?.code)
+  const stops = useMemo(() => cityStops.data ?? [], [cityStops.data])
+  const stopNames = useMemo(() => Object.fromEntries((circuit?.stops ?? []).map((stop) => [stop.id, stop.name])), [circuit])
+
+  const ordered = view.stopIds.map((id) => stops.find((stop) => stop.id === id)).filter((stop): stop is Stop => !!stop && stop.cityId === cityId)
+  const flaggedTimes = checkStartTimes({ stops: ordered, travelMode: view.travelMode, legMinutes: view.legMinutes }, view.startTimes)
     .filter((check) => check.blocking.length > 0)
     .map((check) => check.startTime)
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
@@ -84,6 +121,7 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
   }
 
   const update = (patch: Partial<CircuitInput>) => {
+    if (readOnly) return
     setDraft((current) => ({ ...current, ...patch }))
     setErrors((current) => {
       const next = { ...current }
@@ -93,25 +131,36 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
   }
 
   const submit = () => {
-    const { data, errors: found } = validateCircuit(draft)
+    const { data, errors: found } = validateCircuit(view, { cityRequired: manages })
     if (!data) {
       setErrors(found)
       toast({ title: 'Revisa los campos marcados', tone: 'error' })
       scrollToFirstError()
       return
     }
+    // Sacarlo de la app cancela sus próximas salidas y reservas: se confirma antes.
+    if (circuit?.status === 'published' && data.draft) {
+      setUnpublishing(data)
+      return
+    }
+    persist(data)
+  }
+
+  const persist = (data: CircuitInput) => {
     save.mutate(
       { id: circuit?.id, input: data },
       {
         onSuccess: (saved) => {
+          setUnpublishing(null)
           toast({
             title: circuit ? 'Cambios guardados' : `Creaste ${saved.shortTitle}`,
-            description: saved.draft ? 'Es un borrador: no está en la app hasta que lo publiques.' : 'Así lo ve el turista en la app.',
+            description: saved.status === 'published' ? 'Así lo ve el turista en la app.' : 'No está en la app hasta que lo publiques.',
           })
           if (circuit) setDraft(toCircuitInput(saved))
           else leave(paths.circuit(saved.id))
         },
         onError: (error) => {
+          setUnpublishing(null)
           const fromServer = serverErrors(error)
           toast({ title: fromServer ? (Object.values(fromServer)[0] ?? errorMessage(error)) : errorMessage(error), tone: 'error' })
           if (fromServer) {
@@ -123,9 +172,23 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
     )
   }
 
+  const closeRetire = () => {
+    setRetiring(false)
+    setConfirmName('')
+  }
+
   const status = circuit ? circuitStatus(circuit, today) : null
-  const group = draft.kind === 'creative' || (draft.kind === 'kplan' && draft.bookingMode === 'group')
   const title = draft.shortTitle.trim() || (circuit ? circuit.shortTitle : 'Nuevo circuito')
+  const organizerName = municipalityMode ? (municipality?.name ?? null) : (circuit?.organizer?.name ?? null)
+  const readOnlyNotice = !circuit
+    ? null
+    : circuit.status === 'retired'
+      ? 'Se retiró: ya no está en la app ni se edita. Los itinerarios que lo seguían lo conservan.'
+      : readOnly && municipality
+        ? "Este circuito lo publica el equipo de K'Plan en tu ciudad: lo ves, pero no lo editas."
+        : readOnly
+          ? 'Tu rol puede ver los circuitos, pero no cambiarlos.'
+          : null
 
   return (
     <div className="flex flex-col gap-6">
@@ -138,7 +201,7 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
           <div className="min-w-0">
             <h1 className="text-headline font-bold tracking-tight text-ink">{title}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-small text-muted">
-              <CircuitKindTag kind={draft.kind} />
+              <CircuitKindTag kind={view.kind} />
               {status && <Tag tone={status.tone}>{status.label}</Tag>}
               {status?.detail && <span>{status.detail}</span>}
               {circuit && circuit.reviewsCount > 0 && (
@@ -151,71 +214,97 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
               )}
             </div>
           </div>
-          {circuit && (
-            <IconButton
-              label={enrolled > 0 ? `No se puede borrar: tiene ${plural(enrolled, 'persona inscrita', 'personas inscritas')}` : 'Borrar circuito'}
-              icon={<Trash2 size={17} />}
-              tone="danger"
-              disabled={enrolled > 0}
-              onClick={() => setDeleting(true)}
-            />
-          )}
+          {circuit && editable && <IconButton label="Retirar circuito" icon={<Trash2 size={17} />} tone="danger" onClick={() => setRetiring(true)} />}
         </div>
+        {readOnlyNotice && <p className="rounded-kp bg-paper px-4 py-3 text-small text-ink">{readOnlyNotice}</p>}
       </header>
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_23rem]">
         <div className="flex min-w-0 flex-col gap-6">
           <Panel>
-            {places.isPending ? (
+            {cities.isPending || (!!city && cityStops.isPending) ? (
               <Skeleton className="h-[36rem]" />
             ) : (
-              <CircuitForm draft={draft} errors={errors} update={update} stops={stops} alcaldias={alcaldias.data ?? []} flaggedTimes={flaggedTimes} />
+              <fieldset disabled={readOnly} className="min-w-0">
+                <CircuitForm
+                  draft={view}
+                  errors={errors}
+                  update={update}
+                  stops={stops}
+                  stopNames={stopNames}
+                  cities={cityOptions}
+                  cityName={city?.name ?? ''}
+                  organizerName={organizerName}
+                  municipalityMode={municipalityMode || (!manages && !!circuit)}
+                  flaggedTimes={flaggedTimes}
+                />
+              </fieldset>
             )}
           </Panel>
-          {circuit && group && <GroupSessionsPanel circuitId={circuit.id} />}
+          {circuit && circuit.status !== 'retired' && <DeparturesPanel departures={departures} published={circuit.status === 'published'} />}
         </div>
 
         <aside className="flex flex-col gap-4 xl:sticky xl:top-24">
           <Panel bodyClassName="flex flex-col gap-2 p-5">
             <Switch
-              checked={!draft.draft}
+              checked={!view.draft}
               onChange={(published) => update({ draft: !published })}
-              disabled={!draft.draft && !circuit?.draft && enrolled > 0}
+              disabled={readOnly}
               label="Publicado en la app"
               description={
-                !draft.draft && !circuit?.draft && enrolled > 0
-                  ? `Tiene ${plural(enrolled, 'persona inscrita', 'personas inscritas')} en horarios de grupo: no se puede sacar de la app mientras los tenga.`
-                  : draft.draft
-                    ? 'Es un borrador: el equipo lo ve aquí, el turista no.'
-                    : flaggedTimes.length > 0
-                      ? 'Primero corrige las horas de salida marcadas en rojo.'
-                      : 'El turista lo ve en la app al guardar.'
+                view.draft
+                  ? circuit?.status === 'published'
+                    ? 'Al guardar sale de la app hasta que lo vuelvas a publicar, y se cancelan sus próximas salidas de guía con sus reservas.'
+                    : 'Es un borrador: lo ves aquí, el turista no.'
+                  : flaggedTimes.length > 0
+                    ? 'Primero corrige las horas de salida marcadas en rojo.'
+                    : 'El turista lo ve en la app al guardar. Publicarlo pide al menos una foto y una hora de salida.'
               }
             />
             {errors.draft && <p className="text-caption font-medium text-danger">{errors.draft}</p>}
           </Panel>
           <ItineraryPreview
             stops={ordered}
-            travelMode={draft.travelMode}
-            legMinutes={draft.legMinutes}
-            startTimes={draft.startTimes}
-            kind={draft.kind}
-            bonusBadges={draft.bonusBadges}
-            city={draft.city}
+            travelMode={view.travelMode}
+            legMinutes={view.legMinutes}
+            startTimes={view.startTimes}
+            kind={view.kind}
+            bonusBadges={view.bonusBadges}
+            city={city?.name ?? ''}
           />
         </aside>
       </div>
 
-      <SaveBar
-        visible={dirty || !circuit}
-        saving={save.isPending}
-        onSave={submit}
-        onDiscard={discard}
-        message={circuit ? 'Tienes cambios sin guardar' : draft.draft ? 'Se crea como borrador' : 'Se publica en la app al crearlo'}
-        saveLabel={circuit ? 'Guardar cambios' : 'Crear circuito'}
-        discardLabel={circuit ? 'Descartar' : 'Cancelar'}
-      />
+      {editable && (
+        <SaveBar
+          visible={dirty || !circuit}
+          saving={save.isPending}
+          onSave={submit}
+          onDiscard={discard}
+          message={circuit ? 'Tienes cambios sin guardar' : view.draft ? 'Se crea como borrador' : 'Se publica en la app al crearlo'}
+          saveLabel={circuit ? 'Guardar cambios' : 'Crear circuito'}
+          discardLabel={circuit ? 'Descartar' : 'Cancelar'}
+        />
+      )}
 
+      {circuit && (
+        <ConfirmDialog
+          open={unpublishing !== null}
+          title={`¿Sacar ${circuit.shortTitle} de la app?`}
+          confirmLabel="Sacar de la app"
+          loading={save.isPending}
+          onClose={() => setUnpublishing(null)}
+          onConfirm={() => unpublishing && persist(unpublishing)}
+        >
+          <div className="flex flex-col gap-3">
+            <p>
+              El turista deja de verlo hasta que lo vuelvas a publicar. Se cancelan sus próximas salidas de guía y sus reservas: el pago pendiente se
+              anula, el cobrado queda por reembolsar, y el turista y el guía reciben un aviso.
+            </p>
+            <CancelledBookings departures={openDepartures.length} booked={booked} />
+          </div>
+        </ConfirmDialog>
+      )}
       <ConfirmDialog
         open={blocker.state === 'blocked'}
         title="Tienes cambios sin guardar"
@@ -225,28 +314,39 @@ function CircuitEditor({ circuit }: { circuit: Circuit | null }) {
       >
         Si sales ahora, se pierden los cambios del circuito.
       </ConfirmDialog>
-      <ConfirmDialog
-        open={deleting}
-        title={`¿Borrar ${circuit?.shortTitle ?? 'este circuito'}?`}
-        confirmLabel="Borrar circuito"
-        loading={remove.isPending}
-        onClose={() => setDeleting(false)}
-        onConfirm={() =>
-          circuit &&
-          remove.mutate(circuit.id, {
-            onSuccess: () => {
-              toast({ title: `Borraste ${circuit.shortTitle}` })
-              leave(paths.circuits)
-            },
-            onError: (error) => {
-              setDeleting(false)
-              toast({ title: errorMessage(error), tone: 'error' })
-            },
-          })
-        }
-      >
-        Desaparece de la app y de "Mis circuitos" de quien lo tenía guardado. Si sólo quieres esconderlo un tiempo, apaga "Publicado en la app".
-      </ConfirmDialog>
+      {circuit && (
+        <ConfirmDialog
+          open={retiring}
+          title={`¿Retirar ${circuit.shortTitle} para siempre?`}
+          confirmLabel="Retirar circuito"
+          loading={retire.isPending}
+          confirmDisabled={confirmName.trim() !== circuit.shortTitle.trim()}
+          onClose={closeRetire}
+          onConfirm={() =>
+            retire.mutate(circuit.id, {
+              onSuccess: () => {
+                toast({ title: `Retiraste ${circuit.shortTitle}` })
+                leave(paths.circuits)
+              },
+              onError: (error) => {
+                closeRetire()
+                toast({ title: errorMessage(error), tone: 'error' })
+              },
+            })
+          }
+        >
+          <div className="flex flex-col gap-4">
+            <p>
+              Sale de la app y ya no se puede editar ni volver a publicar. Los itinerarios que lo seguían lo conservan. Se cancelan sus próximas salidas
+              de guía y sus reservas, y el turista y el guía reciben un aviso. Si sólo quieres esconderlo un tiempo, apaga "Publicado en la app".
+            </p>
+            <CancelledBookings departures={openDepartures.length} booked={booked} />
+            <Field label={`Para confirmar, escribe ${circuit.shortTitle}`}>
+              {(control) => <Input {...control} value={confirmName} autoComplete="off" onChange={(event) => setConfirmName(event.target.value)} />}
+            </Field>
+          </div>
+        </ConfirmDialog>
+      )}
     </div>
   )
 }

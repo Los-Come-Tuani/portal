@@ -2,35 +2,54 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { Button, Checkbox, ConfirmDialog, Dialog, Field, Input, useToast } from '@/components/ui'
+import { Button, Checkbox, ConfirmDialog, Dialog, Field, Input, Switch, useToast } from '@/components/ui'
 import { ApiError, errorMessage } from '@/data/api/errors'
 import { useDeleteStaffRole, useSaveStaffRole } from '@/data/hooks/use-users'
-import { PERMISSION_GROUPS, type StaffRole, type StaffRoleInput } from '@/data/models'
+import { isImplied, PERMISSION_GROUPS, type StaffRole, type StaffRoleInput } from '@/data/models'
 import { staffRoleInputSchema } from '@/data/schemas/access.schema'
 import { plural } from '@/lib/format'
+import { RoleMembers } from './RoleMembers'
 
 interface RoleSheetProps {
   open: boolean
   /** `null` para crear uno nuevo. */
   role: StaffRole | null
   members: number
+  /** Todos los roles, para cambiar de rol a alguien desde aquí. */
+  roles: readonly StaffRole[]
   onClose: () => void
 }
 
-export function RoleSheet({ open, role, members, onClose }: RoleSheetProps) {
+export function RoleSheet({ open, role, members, roles, onClose }: RoleSheetProps) {
   return (
     <Dialog
       open={open}
       onClose={onClose}
       variant="sheet"
-      title={role ? `Editar: ${role.name}` : 'Nuevo rol'}
+      title={role ? (role.system ? role.name : `Editar: ${role.name}`) : 'Nuevo rol'}
       description={
         role
-          ? `${plural(members, 'persona tiene', 'personas tienen')} este rol. Los cambios les aplican cuando recarguen el portal.`
+          ? role.system
+            ? `${plural(members, 'persona tiene', 'personas tienen')} este rol. Es de sistema: sus permisos no se editan, pero sí a quién se le da.`
+            : `${plural(members, 'persona tiene', 'personas tienen')} este rol. Los cambios les aplican cuando recarguen el portal.`
           : 'Arma el rol con los permisos justos para el trabajo de esa persona.'
       }
     >
-      <RoleForm key={role?.id ?? 'nuevo'} role={role} members={members} onDone={onClose} />
+      <div className="flex flex-col gap-6">
+        {role && <RoleMembers role={role} roles={roles} />}
+        {role?.system ? (
+          <div className="flex justify-end border-t border-divider pt-5">
+            <Button variant="ghost" onClick={onClose}>
+              Cerrar
+            </Button>
+          </div>
+        ) : (
+          <>
+            {role && <hr className="border-divider" />}
+            <RoleForm key={role?.id ?? 'nuevo'} role={role} members={members} onDone={onClose} />
+          </>
+        )}
+      </div>
     </Dialog>
   )
 }
@@ -49,8 +68,8 @@ function RoleForm({ role, members, onDone }: { role: StaffRole | null; members: 
   } = useForm<StaffRoleInput>({
     resolver: zodResolver(staffRoleInputSchema),
     defaultValues: role
-      ? { name: role.name, description: role.description, permissions: [...role.permissions] }
-      : { name: '', description: '', permissions: [] },
+      ? { name: role.name, description: role.description, permissions: [...role.permissions], requiresTwoFactor: role.requiresTwoFactor }
+      : { name: '', description: '', permissions: [], requiresTwoFactor: true },
   })
 
   const submit = handleSubmit((input) =>
@@ -106,26 +125,44 @@ function RoleForm({ role, members, onDone }: { role: StaffRole | null; members: 
               <div key={group.label} className="rounded-kp border border-divider bg-surface">
                 <p className="border-b border-divider px-4 py-2.5 text-small font-semibold text-ink">{group.label}</p>
                 <div className="flex flex-col gap-3 px-4 py-3">
-                  {group.permissions.map((permission) => (
-                    <Checkbox
-                      key={permission.id}
-                      label={permission.label}
-                      description={permission.description}
-                      checked={field.value.includes(permission.id)}
-                      onChange={(event) =>
-                        field.onChange(
-                          event.target.checked
-                            ? [...field.value, permission.id]
-                            : field.value.filter((item) => item !== permission.id),
-                        )
-                      }
-                    />
-                  ))}
+                  {group.permissions.map((permission) => {
+                    // Quien puede revisar o administrar un módulo ya lo ve: no hace falta marcarlo.
+                    const included = isImplied(permission.id, field.value)
+                    return (
+                      <Checkbox
+                        key={permission.id}
+                        label={permission.label}
+                        description={included ? `${permission.description} Ya lo incluye otro permiso de este módulo.` : permission.description}
+                        checked={included || field.value.includes(permission.id)}
+                        disabled={included}
+                        onChange={(event) =>
+                          field.onChange(
+                            event.target.checked
+                              ? [...field.value, permission.id]
+                              : field.value.filter((item) => item !== permission.id),
+                          )
+                        }
+                      />
+                    )
+                  })}
                 </div>
               </div>
             ))}
             {fieldState.error && <p className="text-caption font-medium text-danger">{fieldState.error.message}</p>}
           </fieldset>
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="requiresTwoFactor"
+        render={({ field }) => (
+          <Switch
+            checked={field.value}
+            onChange={field.onChange}
+            label="Exigir la verificación en dos pasos"
+            description="Quien tenga este rol entra, pero no puede usar el portal hasta activarla. Lo recomendado para el equipo."
+          />
         )}
       />
 

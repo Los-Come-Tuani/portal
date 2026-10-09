@@ -1,361 +1,401 @@
-import { ArrowLeft, ArrowRight, Mail, MessageSquareWarning, Phone } from 'lucide-react'
-import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { ArrowLeft, Check, Undo2, UserRoundCheck, X } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { useParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Button, ErrorState, Panel, Skeleton, Tag, useToast } from '@/components/ui'
-import { errorMessage } from '@/data/api/errors'
-import { useAdmission, useAdmissionAction, useAdmissionReviewers } from '@/data/hooks/use-admissions'
-import { useOrganizations } from '@/data/hooks/use-organizations'
-import { usePlaces } from '@/data/hooks/use-places'
+import { Button, ButtonLink, Dialog, ErrorState, Field, PageHeader, Panel, Select, Skeleton, Tag, Textarea, useToast } from '@/components/ui'
+import { ApiError, errorMessage } from '@/data/api/errors'
+import { useRejectionReasons, useVerificationAction, useVerificationRequest } from '@/data/hooks/use-verification'
 import {
-  admissionBlocker,
-  admissionRequirements,
-  APPLICATION_STATUS_LABELS,
-  ADMISSION_STAGE_LABELS,
-  ORGANIZATION_DOCUMENT_INFO,
-  ORGANIZATION_TYPE_LABELS,
-  readinessGaps,
-  type OrganizationApplication,
-  type OrganizationDocumentType,
-  type Reviewer,
+  CURRENCY_LABELS,
+  DOCUMENT_LABELS,
+  HOURS_DAYS,
+  isDecidable,
+  ORGANIZATION_KIND_LABELS,
+  REQUEST_STATUS_LABELS,
+  type Currency,
+  type DayHours,
+  type RequestDetail,
 } from '@/data/models'
 import { useSession } from '@/features/auth/use-auth'
-import { DecisionPanel } from '@/features/verification/components/DecisionPanel'
-import { DocumentReviewSheet } from '@/features/verification/components/DocumentReviewSheet'
-import { DocumentsPanel } from '@/features/verification/components/DocumentsPanel'
-import { AssigneeMenu, Notice, RequestChangesDialog } from '@/features/verification/components/ReviewControls'
-import { ReviewHistory } from '@/features/verification/components/ReviewHistory'
-import { StageTrack } from '@/features/verification/components/StageTrack'
-import { APPLICATION_STATUS_TONES, waitingMinutes } from '@/features/verification/status'
+import { Notice } from '@/features/verification/components/Notice'
 import { useDocumentTitle } from '@/hooks/use-document-title'
-import { useNow } from '@/hooks/use-now'
-import { toLocalDateTime } from '@/lib/dates'
-import { formatDate, formatDateTime, formatMoney } from '@/lib/format'
-import { admissionSteps } from './lib/queue'
+import { cn } from '@/lib/cn'
+import { nowLocalDateTime } from '@/lib/dates'
+import { formatDateTime } from '@/lib/format'
+import { REQUEST_STATUS_TONES } from './status'
 
-export function AdmissionPage() {
-  const { applicationId = '' } = useParams()
-  const application = useAdmission(applicationId)
-  const reviewers = useAdmissionReviewers()
-  useDocumentTitle(application.data?.name ?? 'Solicitud')
+/** Una fecha del API (`2026-10-05T14:30:00Z`) con la hora de Nicaragua, como el resto del portal. */
+const when = (iso: string) => formatDateTime(nowLocalDateTime(new Date(iso)))
 
-  if (application.isError) return <ErrorState error={application.error} onRetry={() => void application.refetch()} />
-  if (!application.data) return <Skeleton className="h-96" />
-  return <AdmissionView application={application.data} reviewers={reviewers.data ?? []} />
+function Item({ label, children, wide }: { label: string; children: ReactNode; wide?: boolean }) {
+  return (
+    <div className={cn('min-w-0', wide && 'sm:col-span-2')}>
+      <dt className="text-small text-muted">{label}</dt>
+      <dd className="break-words text-ink">{children || '—'}</dd>
+    </div>
+  )
 }
 
-function AdmissionView({ application, reviewers }: { application: OrganizationApplication; reviewers: readonly Reviewer[] }) {
-  const action = useAdmissionAction(application.id)
+function hoursText(row: DayHours | undefined): string {
+  if (!row) return 'Sin horario'
+  return row.closed ? 'Cerrado' : `${row.opens} a ${row.closes}`
+}
+
+function priceText(price: number, currency: string): string {
+  const symbol = CURRENCY_LABELS[currency as Currency]?.split(' ')[0] ?? currency
+  return `${price} ${symbol}`
+}
+
+function Organization({ request }: { request: RequestDetail }) {
+  const { business, institution, municipality } = request
+  const type = business?.businessType.label ?? institution?.institutionType.label
+  const phone = business ? [business.phone, business.alternatePhone].filter(Boolean).join(' · ') : (institution ?? municipality)?.phone
+  const email = (institution ?? municipality)?.contactEmail
+
+  return (
+    <Panel title="La organización">
+      <dl className="grid gap-x-6 gap-y-4 text-body sm:grid-cols-2">
+        <Item label="Clase">{ORGANIZATION_KIND_LABELS[request.kind]}</Item>
+        <Item label="Nombre">{request.organizationName}</Item>
+        <Item label="Ciudad">{request.city.name}</Item>
+        {type && <Item label={business ? 'A qué se dedica' : 'Tipo'}>{type}</Item>}
+        {business && <Item label="RUC">{business.ruc}</Item>}
+        <Item label="Teléfono">{phone}</Item>
+        {email && (
+          <Item label="Correo de contacto">
+            <a href={`mailto:${email}`} className="font-semibold text-brand-strong hover:underline">
+              {email}
+            </a>
+          </Item>
+        )}
+        {business && <Item label="Dirección">{business.address}</Item>}
+        {business && (
+          <Item label="Ubicación">
+            <a
+              href={`https://www.openstreetmap.org/?mlat=${business.latitude}&mlon=${business.longitude}#map=17/${business.latitude}/${business.longitude}`}
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-brand-strong hover:underline"
+            >
+              {business.latitude.toFixed(5)}, {business.longitude.toFixed(5)}
+            </a>
+          </Item>
+        )}
+      </dl>
+    </Panel>
+  )
+}
+
+function Business({ request }: { request: RequestDetail }) {
+  const { business } = request
+  if (!business) return null
+  const photo = request.documents.find((document) => document.kind === 'signature_dish_photo')
+  return (
+    <>
+      <Panel title="Horario">
+        <dl className="grid gap-x-6 gap-y-3 text-body sm:grid-cols-2">
+          {HOURS_DAYS.map(({ weekday, label }) => (
+            <Item key={weekday} label={label}>
+              {hoursText(business.hours.find((row) => row.weekday === weekday))}
+            </Item>
+          ))}
+        </dl>
+      </Panel>
+      {business.signatureDish && (
+        <Panel title="Platillo estrella">
+          <div className="flex flex-wrap gap-5">
+            {photo?.url && <img src={photo.url} alt={business.signatureDish.name} className="size-32 shrink-0 rounded-kp bg-placeholder object-cover" />}
+            <dl className="grid min-w-0 flex-1 gap-3 text-body">
+              <Item label="Nombre">{business.signatureDish.name}</Item>
+              <Item label="Precio de referencia">{priceText(business.signatureDish.referencePrice, business.signatureDish.currency)}</Item>
+              {business.signatureDish.description && <Item label="Descripción">{business.signatureDish.description}</Item>}
+            </dl>
+          </div>
+        </Panel>
+      )}
+    </>
+  )
+}
+
+function Documents({ request }: { request: RequestDetail }) {
+  return (
+    <Panel title="Archivos" description="Los enlaces de lectura vencen a los pocos minutos: vuelve a abrir la solicitud si caducan.">
+      <ul className="flex flex-col divide-y divide-divider">
+        {request.documents.map((document) => (
+          <li key={document.kind} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+            <span className="text-body font-medium text-ink">{DOCUMENT_LABELS[document.kind]}</span>
+            {document.url ? (
+              <a href={document.url} target="_blank" rel="noreferrer" className="text-small font-semibold text-brand-strong hover:underline">
+                Abrir el archivo
+              </a>
+            ) : (
+              <span className="text-small text-muted">Sin enlace: el almacenamiento no está configurado</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  )
+}
+
+function History({ request }: { request: RequestDetail }) {
+  if (request.history.length === 0) return null
+  return (
+    <Panel title="Intentos anteriores" description="La misma organización ya se postuló antes: cada vez que se rechaza, corregir abre otra solicitud.">
+      <ul className="flex flex-col divide-y divide-divider">
+        {request.history.map((item) => (
+          <li key={item.id} className="py-3 first:pt-0 last:pb-0">
+            <p className="flex flex-wrap items-center gap-2">
+              <Tag tone={REQUEST_STATUS_TONES[item.status]}>{REQUEST_STATUS_LABELS[item.status]}</Tag>
+              <span className="text-small text-muted">Enviada el {when(item.submittedAt)}</span>
+            </p>
+            {item.reason && <p className="mt-1.5 text-body font-semibold text-ink">{item.reason.label}</p>}
+            {item.note && <p className="text-body text-ink">{item.note}</p>}
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  )
+}
+
+type Deciding = 'approve' | 'reject' | null
+
+/** Aprobar o rechazar: quien se postuló recibe un correo con la decisión y, si la rechazan, con el motivo. */
+function DecisionDialog({ request, deciding, onClose }: { request: RequestDetail; deciding: Deciding; onClose: () => void }) {
+  const action = useVerificationAction(request.id)
+  const reasons = useRejectionReasons(deciding === 'reject')
   const toast = useToast()
-  const { can, user } = useSession()
-  const { today, minutes } = useNow()
-  const [documentId, setDocumentId] = useState<string | null>(null)
-  const [requesting, setRequesting] = useState(false)
-  const organizations = useOrganizations()
-  const stopIds = [...application.claimedStopIds, ...(application.newStopId ? [application.newStopId] : [])]
-  const places = usePlaces({ ids: stopIds }, stopIds.length > 0)
+  const [form, setForm] = useState({ key: deciding, reason: '', note: '', errors: {} as Record<string, string> })
+  if (form.key !== deciding) setForm({ key: deciding, reason: '', note: '', errors: {} })
 
-  const inReview = application.status === 'in_review'
-  const filledByMe = application.assisted?.byId === user.id
-  const canReview = can('organizations.review', 'organizations.manage') && !filledByMe
-  const reviewingDocuments = canReview && inReview && application.stage === 'documents'
-  const blocker = application.stage === 'decision' ? null : admissionBlocker(application)
-  const pending = (kind: string) => action.isPending && action.variables?.kind === kind
-  const lastEvent = (kind: OrganizationApplication['history'][number]['kind']) => application.history.findLast((event) => event.kind === kind)
-  const who = application.type === 'negocio' ? 'El negocio' : 'La alcaldía'
-  const readerHint = `${who} lo lee tal cual en el portal.`
-  const ownerOf = (stopId: string) =>
-    organizations.data?.find((item) => item.id !== application.organizationId && item.stopIds.includes(stopId))
-  const conflicts = application.claimedStopIds.filter((stopId) => ownerOf(stopId))
-  const accepted = application.documents.filter((document) => document.status === 'accepted').length
-  const placeGaps = application.newPlaceReadiness ? readinessGaps(application.newPlaceReadiness) : []
-  const requirements = admissionRequirements(application.type)
+  const approving = deciding === 'approve'
+  const chosen = reasons.data?.find((item) => item.code === form.reason)
 
-  const advance = () =>
+  const fail = (error: Error) => {
+    if (error instanceof ApiError && Object.keys(error.fieldErrors).length > 0) setForm((current) => ({ ...current, errors: error.fieldErrors }))
+    else toast({ title: errorMessage(error), tone: 'error' })
+  }
+
+  const submit = () => {
+    if (!deciding) return
+    if (!approving) {
+      if (!form.reason) {
+        setForm((current) => ({ ...current, errors: { reason: 'Elige por qué se rechaza' } }))
+        return
+      }
+      if (chosen?.requiresText && !form.note.trim()) {
+        setForm((current) => ({ ...current, errors: { note: 'Con ese motivo hay que explicarle a la persona qué pasó' } }))
+        return
+      }
+    }
+    action.mutate(approving ? { kind: 'approve', note: form.note } : { kind: 'reject', input: { reason: form.reason, note: form.note } }, {
+      onSuccess: () => {
+        toast({ title: approving ? `${request.organizationName} ya es parte de K'Plan` : 'Rechazaste la solicitud', description: 'Le mandamos un correo a quien se postuló.' })
+        onClose()
+      },
+      onError: fail,
+    })
+  }
+
+  return (
+    <Dialog
+      open={deciding !== null}
+      onClose={onClose}
+      size="sm"
+      title={approving ? `Aprobar: ${request.organizationName}` : `Rechazar: ${request.organizationName}`}
+      description={
+        approving
+          ? 'La organización se hace visible para el turista. Quien se postuló entra al portal completo.'
+          : 'Quien se postuló recibe el motivo y puede corregir y volver a enviar la solicitud.'
+      }
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={action.isPending}>
+            Cancelar
+          </Button>
+          <Button variant={approving ? 'primary' : 'danger'} icon={approving ? <Check size={16} /> : <X size={16} />} onClick={submit} loading={action.isPending}>
+            {approving ? 'Aprobar' : 'Rechazar'}
+          </Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-5">
+        {!approving && (
+          <Field label="Motivo" error={form.errors.reason}>
+            {(control) => (
+              <Select
+                {...control}
+                value={form.reason}
+                disabled={!reasons.data}
+                data-autofocus
+                onChange={(event) => setForm((current) => ({ ...current, reason: event.target.value, errors: {} }))}
+              >
+                <option value="">{reasons.data ? 'Elige un motivo' : 'Cargando…'}</option>
+                {reasons.data?.map((item) => (
+                  <option key={item.code} value={item.code}>
+                    {item.label}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+        )}
+        <Field
+          label={approving ? 'Nota' : 'Qué debe corregir'}
+          optional={approving || !chosen?.requiresText}
+          hint="La lee quien se postuló, en el correo y en el portal."
+          error={form.errors.note}
+        >
+          {(control) => (
+            <Textarea
+              {...control}
+              rows={4}
+              maxLength={1000}
+              value={form.note}
+              onChange={(event) => setForm((current) => ({ ...current, note: event.target.value, errors: {} }))}
+            />
+          )}
+        </Field>
+      </div>
+    </Dialog>
+  )
+}
+
+function DecisionPanel({ request }: { request: RequestDetail }) {
+  const { user, can } = useSession()
+  const action = useVerificationAction(request.id)
+  const toast = useToast()
+  const [deciding, setDeciding] = useState<Deciding>(null)
+  const canAct = can('organizations.review', 'organizations.manage')
+  const canManage = can('organizations.manage')
+  const holder = request.takenBy
+  const mine = holder?.id === user.id
+
+  const run = (kind: 'take' | 'release') =>
     action.mutate(
-      { kind: 'advance' },
+      { kind },
       {
-        onSuccess: () => toast({ title: 'Pasó a decisión' }),
+        onSuccess: () => toast({ title: kind === 'take' ? 'La tomaste: queda en revisión a tu nombre' : 'La devolviste a la cola' }),
         onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
       },
     )
 
+  if (!isDecidable(request)) {
+    const resolution = request.resolution
+    return (
+      <Panel title="Decisión">
+        {resolution?.approved ? (
+          <Notice tone="confirmed" title="Aprobada">
+            {resolution.note || 'Sin nota.'}
+          </Notice>
+        ) : (
+          <Notice tone="danger" title={resolution?.reason ? `Rechazada: ${resolution.reason.label.toLowerCase()}` : 'Rechazada'}>
+            {resolution?.note || 'Sin nota.'}
+          </Notice>
+        )}
+        {resolution && <p className="mt-3 text-small text-muted">{when(resolution.resolvedAt)}{holder ? ` · ${mine ? 'Tú' : holder.name}` : ''}</p>}
+      </Panel>
+    )
+  }
+
+  return (
+    <Panel title="Decisión" description="Se atiende por orden de llegada. Quien se postuló recibe un correo con lo que decidas.">
+      <div className="flex flex-col gap-4">
+        <p className="text-body text-ink">
+          {holder ? (
+            mine ? (
+              'La tienes en revisión.'
+            ) : (
+              <>
+                La tiene en revisión <strong className="font-semibold">{holder.name}</strong>.
+              </>
+            )
+          ) : (
+            'Nadie la tiene todavía.'
+          )}
+        </p>
+        {!canAct ? (
+          <p className="text-small text-muted">Puedes verla, pero revisarla necesita el permiso de revisar organizaciones.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {!holder && (
+              <Button icon={<UserRoundCheck size={16} />} onClick={() => run('take')} loading={action.isPending}>
+                Tomarla
+              </Button>
+            )}
+            {(!holder || mine || canManage) && (
+              <>
+                <Button variant={holder ? 'primary' : 'secondary'} icon={<Check size={16} />} onClick={() => setDeciding('approve')}>
+                  Aprobar
+                </Button>
+                <Button variant="secondary" icon={<X size={16} />} onClick={() => setDeciding('reject')}>
+                  Rechazar
+                </Button>
+              </>
+            )}
+            {holder && (mine || canManage) && (
+              <Button variant="ghost" icon={<Undo2 size={16} />} onClick={() => run('release')} loading={action.isPending}>
+                Devolver a la cola
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+      <DecisionDialog request={request} deciding={deciding} onClose={() => setDeciding(null)} />
+    </Panel>
+  )
+}
+
+/** Una solicitud: lo que mandó la organización y lo que el equipo decide. */
+export function AdmissionPage() {
+  const { applicationId = '' } = useParams()
+  const request = useVerificationRequest(applicationId)
+  useDocumentTitle(request.data?.organizationName ?? 'Solicitud')
+  if (request.isError) return <ErrorState error={request.error} onRetry={() => void request.refetch()} />
+  if (!request.data) return <Skeleton className="h-96" />
+  const data = request.data
+
   return (
     <div className="flex flex-col gap-6">
-      <Link to={paths.admissions} className="inline-flex items-center gap-1.5 self-start text-small font-semibold text-muted hover:text-ink">
-        <ArrowLeft size={15} aria-hidden="true" />
-        Solicitudes
-      </Link>
-
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="text-headline font-bold tracking-tight text-ink">{application.name}</h1>
-          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-small text-muted">
-            <Tag tone="ink">{ORGANIZATION_TYPE_LABELS[application.type]}</Tag>
-            {application.assisted && (
-              <Tag tone="outline">
-                Alta asistida por {application.assisted.byName}
-                {application.assisted.fee > 0 ? ` · ${formatMoney(application.assisted.fee)}` : ' · sin costo'}
-              </Tag>
-            )}
-            <Tag tone={APPLICATION_STATUS_TONES[application.status]}>
-              {inReview ? `${APPLICATION_STATUS_LABELS.in_review} · ${ADMISSION_STAGE_LABELS[application.stage]}` : APPLICATION_STATUS_LABELS[application.status]}
-            </Tag>
-            <span>
-              {application.kind} · {application.city} ·{' '}
-              {application.assisted ? `${filledByMe ? 'la llenaste' : 'se llenó'} el` : 'envió su solicitud el'}{' '}
-              {formatDate(application.submittedAt.slice(0, 10))}
-            </span>
-          </div>
-        </div>
-        <AssigneeMenu
-          assigneeId={application.assigneeId}
-          reviewers={reviewers.filter((reviewer) => reviewer.id !== application.assisted?.byId)}
-          closed={!inReview && application.status !== 'changes_requested'}
-          onAssign={(assigneeId) => action.mutateAsync({ kind: 'assign', assigneeId })}
-          assigning={pending('assign')}
-        />
-      </header>
-
-      {filledByMe && inReview && (
-        <Notice tone="neutral" title="La llenaste tú">
-          Para que pase por la misma revisión que cualquier otra, sus documentos los revisa y la decide otra persona del equipo.
-        </Notice>
-      )}
-      {application.status === 'changes_requested' && (
-        <Notice tone="neutral" title={`Esperando a que ${who.toLowerCase()} corrija desde el portal`}>
-          {lastEvent('changes_requested')?.text.replace(/^Pidió una corrección: /, '')}
-        </Notice>
-      )}
-      {application.status === 'approved' && application.decidedAt && (
-        <Notice tone="confirmed" title={`Aprobada el ${formatDateTime(application.decidedAt)}`}>
-          {application.decisionNote || `Aprobada por ${lastEvent('approved')?.actorName ?? "el equipo de K'Plan"}. Su lugar está publicado en la app.`}
-        </Notice>
-      )}
-      {application.status === 'rejected' && application.decidedAt && (
-        <Notice tone="danger" title={`Rechazada el ${formatDateTime(application.decidedAt)} por ${lastEvent('rejected')?.actorName ?? "el equipo de K'Plan"}`}>
-          {application.decisionNote}
-        </Notice>
-      )}
-
-      <StageTrack
-        steps={admissionSteps(application)}
-        waitingMinutes={waitingMinutes(application.stageSince, toLocalDateTime(today, minutes))}
-        waitingLabel={`Esperando ${application.type === 'negocio' ? 'al negocio' : 'a la alcaldía'}`}
-        blocker={inReview && canReview ? blocker : null}
+      <PageHeader
+        title={data.organizationName}
+        description={`${ORGANIZATION_KIND_LABELS[data.kind]} · ${data.city.name}`}
         actions={
-          reviewingDocuments && (
-            <>
-              <Button variant="secondary" icon={<MessageSquareWarning size={16} />} onClick={() => setRequesting(true)}>
-                Pedir corrección
-              </Button>
-              <Button icon={<ArrowRight size={16} />} disabled={blocker !== null} loading={pending('advance')} onClick={advance}>
-                Pasar a decisión
-              </Button>
-            </>
-          )
+          <>
+            <Tag tone={REQUEST_STATUS_TONES[data.status]}>{REQUEST_STATUS_LABELS[data.status]}</Tag>
+            <span className="text-small text-muted">Enviada el {when(data.submittedAt)}</span>
+            <ButtonLink to={paths.admissions} variant="ghost" icon={<ArrowLeft size={16} />}>
+              Solicitudes
+            </ButtonLink>
+          </>
         }
       />
 
-      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="flex min-w-0 flex-col gap-6">
-          {application.stage === 'decision' && inReview && (
-            <DecisionPanel
-              subject={application.name}
-              description="Lo que se revisó, en una mirada. Al aprobar, entra al portal completo y su lugar se publica en la app."
-              summary={
-                <ul className="flex flex-col gap-2 text-body text-ink">
-                  <li>
-                    <span className="font-semibold tabular-nums">
-                      {accepted} de {application.documents.length}
-                    </span>{' '}
-                    documentos aceptados.
-                  </li>
-                  {application.newStopId &&
-                    (placeGaps.length > 0 ? (
-                      <li className="text-danger">
-                        A su lugar nuevo le falta {placeGaps.join(' y ')}: lo agrega {who.toLowerCase()} desde la ficha en su portal.
-                      </li>
-                    ) : (
-                      <li>Se publica su lugar nuevo.</li>
-                    ))}
-                  {application.assisted && application.assisted.fee > 0 && (
-                    <li>
-                      Se le cobra el alta asistida: <span className="font-semibold tabular-nums">{formatMoney(application.assisted.fee)}</span> en su
-                      estado de cuenta de este mes.
-                    </li>
-                  )}
-                  {application.claimedStopIds.length > 0 && (
-                    <li>
-                      Se le asignan <span className="font-semibold tabular-nums">{application.claimedStopIds.length}</span> lugares que ya están en la app.
-                    </li>
-                  )}
-                  {conflicts.length > 0 && (
-                    <li className="text-danger">
-                      {conflicts.length === 1 ? 'Un lugar ya lo administra' : `${conflicts.length} lugares ya los administra`} otra organización: resuélvelo
-                      antes de aprobar.
-                    </li>
-                  )}
-                </ul>
-              }
-              canDecide={canReview}
-              noPermission={filledByMe ? 'La llenaste tú: la decide otra persona del equipo.' : 'Tu rol no puede decidir solicitudes de organizaciones.'}
-              approveLabel="Aprobar y publicar"
-              approveEffect="Entra al portal completo, su lugar se publica en la app y los lugares que dijo administrar se le asignan."
-              rejectEffect="Su cuenta queda suspendida y no entra al portal. Al intentar entrar, lee tu nota."
-              noteHint="Obligatoria si la rechazas. La lee al entrar al portal."
-              approvedToast={`${application.name} ya está en K'Plan`}
-              approveBlocker={
-                conflicts.length > 0
-                  ? 'Resuelve los lugares con dueño antes de aprobar.'
-                  : placeGaps.length > 0
-                    ? `Se aprueba cuando su lugar tenga ${placeGaps.join(' y ')}.`
-                    : null
-              }
-              onDecide={(input) => action.mutateAsync({ kind: 'decide', input })}
-              deciding={pending('decide')}
-            />
-          )}
-          <DocumentsPanel
-            requirements={requirements.map((item) => ({
-              type: item.type,
-              info: ORGANIZATION_DOCUMENT_INFO[item.type],
-              required: item.required,
-            }))}
-            documents={application.documents}
-            canReview={reviewingDocuments}
-            onOpen={setDocumentId}
-          />
-          <Panel title={stopIds.length > 1 ? 'Sus lugares' : 'Su lugar'} description="Lo que va a aparecer en la app a su nombre." bodyClassName="p-0">
-            {stopIds.length === 0 ? (
-              <p className="p-5 text-body text-muted">No dijo administrar ningún lugar todavía.</p>
+          <Panel title="Quién se postuló">
+            {data.applicant ? (
+              <dl className="grid gap-x-6 gap-y-3 text-body sm:grid-cols-2">
+                <Item label="Nombre">{data.applicant.name}</Item>
+                <Item label="Correo">
+                  <a href={`mailto:${data.applicant.email}`} className="font-semibold text-brand-strong hover:underline">
+                    {data.applicant.email}
+                  </a>
+                </Item>
+              </dl>
             ) : (
-              <ul className="divide-y divide-divider">
-                {stopIds.map((stopId) => {
-                  const stop = places.data?.find((item) => item.id === stopId)
-                  const owner = ownerOf(stopId)
-                  const isNew = stopId === application.newStopId
-                  return (
-                    <li key={stopId}>
-                      <Link to={paths.place(stopId)} className="group flex items-center gap-4 px-5 py-3 hover:bg-canvas">
-                        {stop?.images[0] ? (
-                          <img src={stop.images[0]} alt="" loading="lazy" className="size-12 rounded-sm bg-placeholder object-cover" />
-                        ) : (
-                          <span className="flex size-12 items-center justify-center rounded-sm bg-paper text-caption text-muted">Sin foto</span>
-                        )}
-                        <span className="min-w-0 flex-1">
-                          <span className="flex flex-wrap items-center gap-2 text-body font-semibold text-ink">
-                            {stop?.name ?? stopId}
-                            {isNew && <Tag tone="outline">{stop?.draft ? 'Borrador' : 'Nuevo'}</Tag>}
-                          </span>
-                          <span className={owner ? 'block text-small text-danger' : 'block text-small text-muted'}>
-                            {owner ? `Ya lo administra ${owner.name}` : isNew ? `${stop?.category ?? ''} · ${application.assisted ? 'se creó con el alta asistida' : 'lo creó al postularse'}` : `${stop?.category ?? ''} · ya está en la app`}
-                          </span>
-                        </span>
-                        <ArrowRight size={16} className="text-muted group-hover:text-ink" aria-hidden="true" />
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
+              <p className="text-body text-muted">La organización ya no tiene una cuenta vigente.</p>
             )}
           </Panel>
+          <Organization request={data} />
+          <Business request={data} />
+          <Documents request={data} />
+          <History request={data} />
         </div>
-        <div className="flex min-w-0 flex-col gap-6">
-          <Panel title="Lo que declaró">
-            <dl className="grid gap-3 text-body">
-              {application.legalName && (
-                <div>
-                  <dt className="text-small text-muted">Razón social</dt>
-                  <dd className="text-ink">{application.legalName}</dd>
-                </div>
-              )}
-              {application.ruc && (
-                <div>
-                  <dt className="text-small text-muted">RUC</dt>
-                  <dd className="font-semibold text-ink tabular-nums">{application.ruc}</dd>
-                </div>
-              )}
-              <div>
-                <dt className="text-small text-muted">Dirección</dt>
-                <dd className="text-ink">
-                  {application.address}, {application.city}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-small text-muted">Qué ofrece</dt>
-                <dd className="text-ink">{application.description}</dd>
-              </div>
-            </dl>
-          </Panel>
-          <Panel title="Quién la representa">
-            <div className="flex flex-col gap-3 text-body">
-              <p>
-                <span className="block font-semibold text-ink">{application.representative.name}</span>
-                <span className="block text-small text-muted">
-                  {application.representative.role} · cédula <span className="tabular-nums">{application.representative.cedula}</span>
-                </span>
-              </p>
-              <a href={`mailto:${application.representative.email}`} className="flex items-center gap-2.5 text-ink underline decoration-outline underline-offset-4 hover:decoration-ink">
-                <Mail size={16} className="text-muted" aria-hidden="true" />
-                {application.representative.email}
-              </a>
-              <p className="flex items-center gap-2.5 text-ink tabular-nums">
-                <Phone size={16} className="text-muted" aria-hidden="true" />
-                {application.representative.phone}
-              </p>
-            </div>
-          </Panel>
-          <ReviewHistory history={application.history} applicantChannel="desde el portal" />
+        <div className="lg:sticky lg:top-24">
+          <DecisionPanel request={data} />
         </div>
       </div>
-
-      <DocumentReviewSheet
-        documents={application.documents}
-        infoOf={(type) => ORGANIZATION_DOCUMENT_INFO[type as OrganizationDocumentType]}
-        documentId={documentId}
-        canReview={reviewingDocuments}
-        reviewers={reviewers}
-        readerHint={readerHint}
-        onReview={async (id, input) => (await action.mutateAsync({ kind: 'document', documentId: id, input })).documents}
-        reviewing={pending('document')}
-        onSelect={setDocumentId}
-        isRequired={(type) => requirements.find((item) => item.type === type)?.required ?? true}
-        declaredOf={(type) => {
-          const representative = application.representative
-          if (type === 'cedula-representante') {
-            return [
-              { label: 'Nombre', value: representative.name },
-              { label: 'Cédula', value: representative.cedula, strong: true },
-            ]
-          }
-          if (type === 'carta-designacion') {
-            return [
-              { label: 'Alcaldía', value: application.name },
-              { label: 'Persona designada', value: `${representative.name} · ${representative.role}` },
-            ]
-          }
-          return [
-            { label: 'Razón social', value: application.legalName ?? application.name },
-            ...(application.ruc ? [{ label: 'RUC', value: application.ruc, strong: true }] : []),
-            ...(type === 'matricula-municipal' ? [{ label: 'Dirección', value: `${application.address}, ${application.city}` }] : []),
-            ...(type === 'ruc' ? [{ label: 'A qué se dedica', value: application.kind }] : []),
-          ]
-        }}
-      />
-      <RequestChangesDialog
-        open={requesting}
-        suggested={application.documents
-          .filter((document) => document.status === 'rejected' && document.note)
-          .map((document) => document.note)
-          .join(' ')}
-        readerHint={readerHint}
-        description="La solicitud se pausa hasta que suba lo que falta y la mande de nuevo desde el portal."
-        onSubmit={(note) => action.mutateAsync({ kind: 'request-changes', note })}
-        submitting={pending('request-changes')}
-        onClose={() => setRequesting(false)}
-        successToast={`${application.name} lo verá al entrar al portal.`}
-      />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { Building2, Inbox, Plus, Search } from 'lucide-react'
+import { Building2, Inbox, Search } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
@@ -33,16 +33,11 @@ export function OrganizationsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Organizaciones"
-        description="Los negocios y alcaldías que usan el portal. Todas entran con una solicitud: se postulan solas o el equipo la llena por ellas con un alta asistida."
+        description="Los comercios, instituciones y alcaldías que usan el portal. Todas entran con una solicitud que el equipo revisa."
         actions={
-          <>
-            <ButtonLink to={paths.admissions} icon={<Inbox size={16} />}>
-              Solicitudes
-            </ButtonLink>
-            <ButtonLink to={paths.assistedApplication} variant="primary" icon={<Plus size={16} />}>
-              Alta asistida
-            </ButtonLink>
-          </>
+          <ButtonLink to={paths.admissions} icon={<Inbox size={16} />}>
+            Solicitudes
+          </ButtonLink>
         }
       />
 

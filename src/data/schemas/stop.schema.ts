@@ -1,7 +1,16 @@
 import { z } from 'zod'
 import { parseClock, parseDuration } from '@/lib/time'
 import { STOP_CATEGORIES } from '../models/stop'
-import { clockSchema, imageUrlSchema, latLngSchema } from './common'
+import { clockSchema, latLngSchema, photoSchema } from './common'
+
+/** Un lugar nuevo: lo mínimo para ponerlo en el mapa; la ficha se completa después. */
+export const newStopInputSchema = z.object({
+  cityId: z.string().nullable(),
+  name: z.string().trim().min(3, { error: 'Escribe el nombre del lugar' }).max(80),
+  category: z.enum(STOP_CATEGORIES, { error: 'Elige una categoría' }),
+  address: z.string().trim().min(5, { error: 'Escribe la dirección' }).max(140),
+  coordinates: latLngSchema,
+})
 
 export const stopInputSchema = z
   .object({
@@ -19,10 +28,7 @@ export const stopInputSchema = z
       .min(40, { error: 'Cuéntale al turista qué va a encontrar (al menos 40 letras)' })
       .max(600, { error: 'Máximo 600 letras' }),
     tip: z.string().trim().max(140, { error: 'Máximo 140 letras' }),
-    images: z
-      .array(imageUrlSchema)
-      .min(1, { error: 'Agrega al menos una foto: la primera es la portada' })
-      .max(8, { error: 'Máximo 8 fotos' }),
+    images: z.array(photoSchema).max(8, { error: 'Máximo 8 fotos' }),
     coordinates: latLngSchema,
   })
   .superRefine((value, context) => {

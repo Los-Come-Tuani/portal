@@ -1,157 +1,92 @@
 ﻿import { zodResolver } from '@hookform/resolvers/zod'
-import { Medal, Plus, Trash2 } from 'lucide-react'
-import { useEffect } from 'react'
-import { useFieldArray, useForm, useWatch } from 'react-hook-form'
-import { Button, ErrorState, Field, IconButton, Input, PageHeader, Panel, SaveBar, Skeleton, useToast } from '@/components/ui'
-import { env } from '@/config/env'
+import { useEffect, useMemo } from 'react'
+import { useForm } from 'react-hook-form'
+import { ErrorState, Field, Input, PageHeader, Panel, SaveBar, Skeleton, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
-import { usePricing, useUpdatePricing } from '@/data/hooks/use-billing'
-import type { PricingInput } from '@/data/models'
-import { pricingInputSchema } from '@/data/schemas/admin.schema'
+import { useTariffs, useUpdateTariffs } from '@/data/hooks/use-billing'
+import type { TariffInput } from '@/data/models'
+import { tariffInputSchema } from '@/data/schemas/admin.schema'
+import { TARIFF_CODES, tariffInputOf } from '@/data/schemas/finance-api.schema'
+import { useSession } from '@/features/auth/use-auth'
 import { useDocumentTitle } from '@/hooks/use-document-title'
-import { formatDateTime, formatMoney } from '@/lib/format'
+import { formatDateTime } from '@/lib/format'
 
+/**
+ * Las tarifas de K'Plan (`pricing/`): la comisión de cada reserva, la insignia mensual del comercio
+ * y lo que paga por cupón validado. Las ve `billing.view` y las cambia `billing.manage`; cambiarlas
+ * no toca lo ya cerrado.
+ */
 export function PricingPage() {
   useDocumentTitle('Tarifas')
-  const pricing = usePricing()
-  const update = useUpdatePricing()
+  const { can } = useSession()
+  const manages = can('billing.manage')
+  const tariffs = useTariffs()
+  const update = useUpdateTariffs()
   const toast = useToast()
-  const form = useForm<PricingInput>({ resolver: zodResolver(pricingInputSchema) })
+  const current = useMemo(() => (tariffs.data ? tariffInputOf(tariffs.data) : null), [tariffs.data])
   const {
     register,
-    control,
     reset,
     handleSubmit,
     formState: { errors, isDirty },
-  } = form
-  const packs = useFieldArray({ control, name: 'badgePacks' })
-  const packValues = useWatch({ control, name: 'badgePacks' })
+  } = useForm<TariffInput>({ resolver: zodResolver(tariffInputSchema) })
 
   useEffect(() => {
-    if (pricing.data) {
-      reset({
-        couponFee: pricing.data.couponFee,
-        badgeActivationMonthly: pricing.data.badgeActivationMonthly,
-        badgePacks: pricing.data.badgePacks.map((pack) => ({ ...pack })),
-        assistedOnboardingFee: pricing.data.assistedOnboardingFee,
-      })
-    }
-  }, [pricing.data, reset])
+    if (current) reset(current)
+  }, [current, reset])
 
-  const save = handleSubmit((input) =>
-    update.mutate(input, {
-      onSuccess: () => toast({ title: 'Tarifas guardadas', description: 'Aplican a lo nuevo desde ahora.' }),
-      onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
-    }),
-  )
+  const save = handleSubmit((input) => {
+    if (!current) return
+    update.mutate(
+      { input, current },
+      {
+        onSuccess: () => toast({ title: 'Tarifas guardadas', description: 'Aplican a lo nuevo desde ahora.' }),
+        onError: (error) => toast({ title: errorMessage(error), tone: 'error' }),
+      },
+    )
+  })
 
-  if (pricing.isError) return <ErrorState error={pricing.error} onRetry={() => void pricing.refetch()} />
+  if (tariffs.isError) return <ErrorState error={tariffs.error} onRetry={() => void tariffs.refetch()} />
+
+  const updatedAt = tariffs.data?.map((item) => item.updatedAt).sort().at(-1)
+  const label = (code: string, fallback: string) => tariffs.data?.find((item) => item.code === code)?.label ?? fallback
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Tarifas"
-        description="Lo que K'Plan cobra a negocios y alcaldías. Los cambios aplican a lo nuevo: los canjes, activaciones y campañas ya registrados conservan su precio."
+        description="Lo que K'Plan se queda de cada reserva y lo que cobra a los comercios cada mes. Los cambios aplican a lo nuevo: las reservas cerradas y los estados de cuenta emitidos conservan su tarifa."
       />
-      {env.useMocks && (
-        <p className="max-w-[72ch] rounded-kp border border-dashed border-outline px-4 py-3 text-small text-muted">
-          Modo demo: estos montos son de prueba, no son precios definidos por K'Plan.
-        </p>
-      )}
+      {!manages && <p className="text-small text-muted">Tu rol ve las tarifas; cambiarlas es de quien administra la facturación.</p>}
 
-      {!pricing.data ? (
+      {!tariffs.data ? (
         <Skeleton className="h-96" />
       ) : (
         <form className="flex max-w-3xl flex-col gap-6" onSubmit={save} noValidate>
-          <Panel title="Cupones" description="Tarifa fija por cada canje que un negocio valida en el portal.">
-            <Field label="Por cupón canjeado" error={errors.couponFee?.message} className="max-w-56">
-              {(field) => <Input {...field} type="number" min={0} leading="C$" {...register('couponFee', { valueAsNumber: true })} />}
-            </Field>
-          </Panel>
-
-          <Panel title="Activar insignia" description="Cargo mensual por cada lugar que da insignia porque la organización la activó.">
-            <Field label="Al mes, por lugar" error={errors.badgeActivationMonthly?.message} className="max-w-56">
-              {(field) => (
-                <Input {...field} type="number" min={0} leading="C$" {...register('badgeActivationMonthly', { valueAsNumber: true })} />
-              )}
-            </Field>
-          </Panel>
-
-          <Panel
-            title="Paquetes de insignias extra"
-            description="Lo que se compra para una campaña ×2, ×3 o ×5."
-            actions={
-              <Button
-                size="sm"
-                variant="secondary"
-                icon={<Plus size={15} />}
-                disabled={packs.fields.length >= 6}
-                onClick={() => packs.append({ id: `pack-${Date.now().toString(36)}`, badges: 1000, price: 9000 })}
-              >
-                Agregar
-              </Button>
-            }
-          >
-            <ul className="flex flex-col gap-3">
-              {packs.fields.map((pack, index) => {
-                const value = packValues?.[index]
-                const unit = value && value.badges > 0 ? value.price / value.badges : 0
-                return (
-                  <li key={pack.id} className="grid items-start gap-3 sm:grid-cols-[10rem_10rem_1fr_auto]">
-                    <Field label="Insignias" error={errors.badgePacks?.[index]?.badges?.message}>
-                      {(field) => (
-                        <Input
-                          {...field}
-                          type="number"
-                          min={10}
-                          leading={<Medal size={15} className="text-badge-deep" />}
-                          {...register(`badgePacks.${index}.badges`, { valueAsNumber: true })}
-                        />
-                      )}
-                    </Field>
-                    <Field label="Precio" error={errors.badgePacks?.[index]?.price?.message}>
-                      {(field) => (
-                        <Input {...field} type="number" min={0} leading="C$" {...register(`badgePacks.${index}.price`, { valueAsNumber: true })} />
-                      )}
-                    </Field>
-                    <p className="text-small text-muted sm:pt-8 tabular-nums">{unit > 0 ? `${formatMoney(unit)} por insignia` : ''}</p>
-                    <IconButton
-                      label="Quitar paquete"
-                      icon={<Trash2 size={16} />}
-                      onClick={() => packs.remove(index)}
-                      disabled={packs.fields.length === 1}
-                      tone="danger"
-                      className="sm:mt-6"
-                    />
-                  </li>
-                )
-              })}
-            </ul>
-            {errors.badgePacks?.message && <p className="mt-2 text-caption font-medium text-danger">{errors.badgePacks.message}</p>}
-          </Panel>
-
-          <Panel
-            title="Alta asistida"
-            description="Cuando el equipo llena la solicitud por una organización. Se cobra una sola vez, al aprobarla, y sólo si al hacer el alta se marcó cobrarla."
-          >
-            <Field label="Por alta asistida" error={errors.assistedOnboardingFee?.message} className="max-w-56">
-              {(field) => (
-                <Input {...field} type="number" min={0} leading="C$" {...register('assistedOnboardingFee', { valueAsNumber: true })} />
-              )}
-            </Field>
-          </Panel>
-
-          <p className="text-small text-muted">Última actualización: {formatDateTime(pricing.data.updatedAt)}</p>
+          <fieldset disabled={!manages} className="flex min-w-0 flex-col gap-6">
+            <Panel title={label(TARIFF_CODES.commission, 'Comisión por reserva')} description="El porcentaje de cada reserva cerrada; el resto entra al saldo del guía.">
+              <Field label="Porcentaje" error={errors.commissionRate?.message} className="max-w-56">
+                {(field) => <Input {...field} type="number" min={0} max={100} step="0.5" trailing="%" {...register('commissionRate', { valueAsNumber: true })} />}
+              </Field>
+            </Panel>
+            <Panel title={label(TARIFF_CODES.badge, 'Insignia mensual')} description="Lo que paga un comercio al mes por la insignia de su lugar.">
+              <Field label="Al mes" error={errors.badgeMonthly?.message} className="max-w-56">
+                {(field) => <Input {...field} type="number" min={0} leading="C$" {...register('badgeMonthly', { valueAsNumber: true })} />}
+              </Field>
+            </Panel>
+            <Panel title={label(TARIFF_CODES.coupon, 'Cupón validado')} description="Lo que paga un comercio por cada cupón que valida en el mostrador.">
+              <Field label="Por cupón" error={errors.couponFee?.message} className="max-w-56">
+                {(field) => <Input {...field} type="number" min={0} leading="C$" {...register('couponFee', { valueAsNumber: true })} />}
+              </Field>
+            </Panel>
+          </fieldset>
+          {updatedAt && <p className="text-small text-muted">Última actualización: {formatDateTime(updatedAt)}</p>}
         </form>
       )}
 
-      <SaveBar
-        visible={isDirty}
-        saving={update.isPending}
-        onSave={() => void save()}
-        onDiscard={() => reset()}
-        message="Cambiaste tarifas sin guardar"
-      />
+      {manages && (
+        <SaveBar visible={isDirty} saving={update.isPending} onSave={() => void save()} onDiscard={() => current && reset(current)} message="Cambiaste tarifas sin guardar" />
+      )}
     </div>
   )
 }

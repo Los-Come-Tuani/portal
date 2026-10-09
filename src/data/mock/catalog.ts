@@ -3,15 +3,14 @@
  * `events` y `coupons` son copia de mobile/assets/mock; los demás son
  * propios del portal. `daysFromNow` / `daysAgo` sólo existen en el mock.
  */
+import type { TravelMode } from '@/lib/itinerary'
 import type {
-  BackgroundCheckType,
-  Circuit,
+  BookingMode,
+  CircuitCategory,
+  CircuitDifficulty,
   CircuitGroupSession,
   Coupon,
   DocumentStatus,
-  DocumentType,
-  EventItem,
-  GuideApplication,
   GuideServiceRole,
   LatLng,
   NewPlace,
@@ -19,11 +18,10 @@ import type {
   OrganizationApplication,
   OrganizationDocumentType,
   PlaceProfile,
-  Post,
   StaffRole,
-  Stop,
   User,
 } from '../models'
+import type { MockPost, MockStop } from './db'
 import circuitsJson from './json/circuits.json'
 import groupSessionsJson from './json/circuit_groups.json'
 import appCouponsJson from './json/coupons.json'
@@ -43,7 +41,20 @@ import staffRolesJson from './json/staff_roles.json'
 import stopsJson from './json/stops.json'
 import usersJson from './json/users.json'
 
-type AppEvent = Omit<EventItem, 'organizerId' | 'startTime' | 'endTime' | 'stopId' | 'status' | 'featured'>
+/** Un evento de mobile/assets/mock/events.json, en el formato de la app. */
+interface AppEvent {
+  id: string
+  title: string
+  /** `"León, León"`. */
+  location: string
+  date: string
+  category: string
+  address: string
+  description: string
+  images: string[]
+  price: number
+  coordinates: LatLng
+}
 type AppCoupon = Pick<Coupon, 'id' | 'title' | 'description' | 'discountLabel' | 'cost' | 'image'>
 
 export interface PortalEventSeed {
@@ -63,14 +74,49 @@ export interface PortalEventSeed {
   featured?: boolean
 }
 
-/** Los especiales de K'Plan de la demo: lo calculado se arma al sembrar y la temporada va en días desde hoy. */
-export type PortalCircuitSeed = Omit<
-  Circuit,
-  'duration' | 'durationShort' | 'badges' | 'badgesNote' | 'availableFrom' | 'availableUntil'
-> & { seasonFromDays?: number; seasonToDays?: number }
+/** Un circuito de mobile/assets/mock/circuits.json, en el formato de la app. */
+export interface AppCircuit {
+  id: string
+  title: string
+  shortTitle: string
+  subtitle: string
+  category: CircuitCategory
+  city: string
+  rating: number
+  reviewsCount: number
+  stopIds: string[]
+  travelMode: TravelMode
+  legMinutes?: Record<string, number>
+  duration: string
+  durationShort: string
+  badges: number
+  difficulty: CircuitDifficulty
+  priceAdult: number
+  priceChild: number
+  description: string
+  images: string[]
+  recommendations: string
+  meetingPoint: string
+  location: LatLng
+  includes: string
+  badgesNote: string
+  notes: string
+  startTimes: string[]
+  isCreativeCircuit?: boolean
+  organizer?: string
+}
+
+/** Los especiales de K'Plan de la demo: lo calculado se arma al leerlos y la temporada va en días desde hoy. */
+export type PortalCircuitSeed = Omit<AppCircuit, 'duration' | 'durationShort' | 'badges' | 'badgesNote'> & {
+  bonusBadges: number
+  bookingMode: BookingMode
+  draft?: boolean
+  seasonFromDays?: number
+  seasonToDays?: number
+}
 
 export type PortalCouponSeed = Omit<Coupon, 'validUntil' | 'createdAt'> & { validDays: number; daysAgo: number }
-export type PostSeed = Omit<Post, 'publishedAt'> & { daysAgo: number }
+export type PostSeed = Omit<MockPost, 'publishedAt'> & { daysAgo: number }
 export type ProfileSeed = Omit<PlaceProfile, 'updatedAt'>
 
 export type UserSeed = Omit<User, 'createdAt' | 'lastSeenAt' | 'serviceRole'> & {
@@ -93,30 +139,39 @@ export interface AppGuide {
   hasTransport: boolean
 }
 
-export type ApplicationSeed = Pick<
-  GuideApplication,
-  | 'id'
-  | 'name'
-  | 'city'
-  | 'phone'
-  | 'serviceRole'
-  | 'languages'
-  | 'specialties'
-  | 'yearsExperience'
-  | 'hasTransport'
-  | 'bio'
-  | 'references'
-  | 'stage'
-  | 'status'
-  | 'assigneeId'
-> & {
+/** Los documentos como los nombran los datos de demo (guide_applications.json). */
+export type SeedDocumentType =
+  | 'cedula'
+  | 'record-policia'
+  | 'carne-intur'
+  | 'primeros-auxilios'
+  | 'certificado-idioma'
+  | 'licencia-conducir'
+  | 'seguro-vehiculo'
+
+/** Un guía o traductor que se postuló en la demo, en días desde hoy. */
+export interface ApplicationSeed {
+  id: string
+  name: string
+  city: string
+  phone: string
+  serviceRole: GuideServiceRole
+  languages: string[]
+  specialties: string[]
+  yearsExperience: number
+  hasTransport: boolean
+  bio: string
+  references: { name: string; relation: string; phone: string }[]
+  stage: 'documents' | 'background' | 'decision'
+  status: 'in_review' | 'changes_requested' | 'approved' | 'rejected'
+  assigneeId: string | null
   submittedDaysAgo: number
   stageDaysAgo: number
-  documents: Partial<Record<DocumentType, DocumentStatus>>
-  checks: Partial<Record<BackgroundCheckType, 'clear' | 'flagged'>>
-  notes: Partial<Record<DocumentType | BackgroundCheckType, string>>
+  documents: Partial<Record<SeedDocumentType, 'pending' | 'accepted' | 'rejected'>>
+  checks: Partial<Record<string, 'clear' | 'flagged'>>
+  notes: Partial<Record<string, string>>
   /** Se le pidió corregir un documento y ya subió uno nuevo. */
-  correction?: { requestedDaysAgo: number; document: DocumentType; note: string }
+  correction?: { requestedDaysAgo: number; document: SeedDocumentType; note: string }
   decisionNote?: string
 }
 
@@ -150,8 +205,8 @@ export type AdmissionSeed = Pick<
 }
 
 export const catalog = {
-  stops: [...stopsJson, ...portalStopsJson] as Stop[],
-  circuits: circuitsJson as Circuit[],
+  stops: [...stopsJson, ...portalStopsJson] as MockStop[],
+  circuits: circuitsJson as AppCircuit[],
   groupSessions: groupSessionsJson as CircuitGroupSession[],
   portalCircuits: portalCircuitsJson as PortalCircuitSeed[],
   portalGroupSessions: portalCircuitGroupsJson as CircuitGroupSession[],
@@ -159,7 +214,7 @@ export const catalog = {
   appCoupons: appCouponsJson as AppCoupon[],
   organizations: organizationsJson as Organization[],
   users: usersJson as UserSeed[],
-  staffRoles: staffRolesJson as StaffRole[],
+  staffRoles: staffRolesJson as Omit<StaffRole, 'members' | 'requiresTwoFactor'>[],
   appGuides: appGuidesJson as AppGuide[],
   guideApplications: guideApplicationsJson as ApplicationSeed[],
   admissions: admissionsJson as AdmissionSeed[],
@@ -171,7 +226,7 @@ export const catalog = {
 
 const stopIndex = new Map(catalog.stops.map((stop) => [stop.id, stop]))
 
-export function catalogStop(stopId: string): Stop {
+export function catalogStop(stopId: string): MockStop {
   const stop = stopIndex.get(stopId)
   if (!stop) throw new Error(`La parada ${stopId} no está en el catálogo`)
   return stop

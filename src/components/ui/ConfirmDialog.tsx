@@ -9,6 +9,8 @@ interface ConfirmDialogProps {
   confirmLabel: string
   tone?: 'danger' | 'primary'
   loading?: boolean
+  /** Hasta que se confirme de otra forma (p. ej., escribir el nombre). */
+  confirmDisabled?: boolean
   onConfirm: () => void
   onClose: () => void
 }
@@ -21,6 +23,7 @@ export function ConfirmDialog({
   confirmLabel,
   tone = 'danger',
   loading,
+  confirmDisabled,
   onConfirm,
   onClose,
 }: ConfirmDialogProps) {
@@ -35,7 +38,7 @@ export function ConfirmDialog({
           <Button variant="ghost" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
-          <Button variant={tone} onClick={onConfirm} loading={loading}>
+          <Button variant={tone} onClick={onConfirm} loading={loading} disabled={confirmDisabled}>
             {confirmLabel}
           </Button>
         </>

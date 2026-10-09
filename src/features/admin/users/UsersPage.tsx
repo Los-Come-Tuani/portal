@@ -1,8 +1,9 @@
-import { Search, Users } from 'lucide-react'
-import { useState } from 'react'
+import { ChevronLeft, ChevronRight, Search, Users } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import {
   Avatar,
+  Button,
   EmptyState,
   ErrorState,
   Input,
@@ -16,61 +17,111 @@ import {
   Th,
   Tr,
 } from '@/components/ui'
-import { useGuideApplications } from '@/data/hooks/use-guides'
-import { useOrganizations } from '@/data/hooks/use-organizations'
-import { useStaffRoles, useUsers } from '@/data/hooks/use-users'
+import { useProviderQueue } from '@/data/hooks/use-providers'
+import { useAccounts } from '@/data/hooks/use-users'
 import {
-  APPLICATION_STATUS_LABELS,
-  USER_STATUS_LABELS,
-  type GuideApplication,
-  type User,
-  type UserRole,
-  type UserStatus,
+  ACCOUNT_STATUS_LABELS,
+  ACCOUNT_STATUSES,
+  PROVIDER_STATUS_LABELS,
+  type Account,
+  type AccountRole,
+  type AccountStatus,
+  type ProviderRequestSummary,
 } from '@/data/models'
 import { useSession } from '@/features/auth/use-auth'
 import { useDocumentTitle } from '@/hooks/use-document-title'
-import { formatDate, formatDateTime, plural } from '@/lib/format'
-import { APPLICATION_STATUS_TONES } from '@/features/verification/status'
+import { formatDate, plural } from '@/lib/format'
 import { UserSheet } from './UserSheet'
-import { USER_STATUS_TONES, userKind, usesApp } from './status'
+import { ACCOUNT_STATUS_TONES, accountKind, accountStatusLabel, usesApp } from './status'
 
-type Filter = 'todos' | UserRole
+type Filter = 'todos' | AccountRole
 
 const TABS: { value: Filter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
   { value: 'turista', label: 'Turistas' },
-  { value: 'guia', label: 'Guías y traductores' },
+  { value: 'guia', label: 'Guías' },
+  { value: 'traductor', label: 'Traductores' },
   { value: 'negocio', label: 'Negocios' },
   { value: 'alcaldia', label: 'Alcaldías' },
+  { value: 'institucion', label: 'Instituciones' },
   { value: 'admin', label: "Equipo K'Plan" },
 ]
 
+const PAGE_SIZE = 25
+const SEARCH_DELAY_MS = 300
+
+function Detail({ account }: { account: Account }) {
+  if (account.role === 'admin') {
+    return <span className="text-small text-ink">{account.staffRole?.name ?? (account.superuser ? 'Todos los permisos' : 'Sin rol')}</span>
+  }
+  if (account.organization) {
+    return (
+      <span className="text-small text-ink">
+        {account.organization.name}
+        {!account.organization.verified && <span className="text-muted"> · en revisión</span>}
+      </span>
+    )
+  }
+  if (account.provider) {
+    return (
+      <Tag tone={account.provider.status === 'active' ? 'confirmed' : account.provider.status === 'suspended' ? 'danger' : 'planned'}>
+        {account.provider.status === 'active' ? 'Verificado' : PROVIDER_STATUS_LABELS[account.provider.status]}
+      </Tag>
+    )
+  }
+  return <span className="text-small text-muted">{account.city ?? '—'}</span>
+}
+
+/** Todas las cuentas de K'Plan, con los filtros y la paginación del API. */
 export function UsersPage() {
   useDocumentTitle('Usuarios')
   const { can } = useSession()
-  const users = useUsers()
-  const organizations = useOrganizations()
-  const roles = useStaffRoles()
-  const applications = useGuideApplications({}, can('guides.review', 'guides.decide'))
   const [params, setParams] = useSearchParams()
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState<'todas' | UserStatus>('todas')
-  const [openId, setOpenId] = useState<string | null>(null)
-
   const filter = (TABS.find((item) => item.value === params.get('tipo'))?.value ?? 'todos') as Filter
-  const all = users.data ?? []
-  const countOf = (role: UserRole) => all.filter((user) => user.role === role).length
-  const suspended = all.filter((user) => user.status === 'suspended').length
-  const shown = all
-    .filter((user) => filter === 'todos' || user.role === filter)
-    .filter((user) => status === 'todas' || user.status === status)
-    .filter((user) => !search || `${user.name} ${user.email}`.toLowerCase().includes(search.trim().toLowerCase()))
+  const status = ACCOUNT_STATUSES.find((item) => item === params.get('estado'))
+  const search = params.get('buscar') ?? ''
+  const page = Math.max(1, Number(params.get('pagina')) || 1)
+  const [draft, setDraft] = useState(search)
+  const [open, setOpen] = useState<Account | null>(null)
 
-  const organizationOf = (user: User) => organizations.data?.find((item) => item.id === user.organizationId)
-  const roleOf = (user: User) => roles.data?.find((item) => item.id === user.staffRoleId)
-  const applicationOf = (user: User): GuideApplication | undefined =>
-    applications.data?.filter((item) => item.userId === user.id).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0]
-  const open = all.find((user) => user.id === openId) ?? null
+  const accounts = useAccounts({ role: filter === 'todos' ? undefined : filter, status, search, page, pageSize: PAGE_SIZE })
+  // El expediente de un guía, para llevar a su solicitud: solo cuando se abre uno.
+  const applications = useProviderQueue({ status: 'all', pageSize: 100 }, can('guides.view') && open?.role === 'guia')
+
+  const update = useCallback(
+    (next: { tipo?: Filter; estado?: AccountStatus | 'todas'; buscar?: string; pagina?: number }) =>
+      setParams(
+        (current) => {
+          const value = new URLSearchParams(current)
+          const set = (key: string, raw: string | undefined, empty: string) => {
+            if (raw === undefined) return
+            if (raw === empty) value.delete(key)
+            else value.set(key, raw)
+          }
+          set('tipo', next.tipo, 'todos')
+          set('estado', next.estado, 'todas')
+          set('buscar', next.buscar?.trim(), '')
+          // Cambiar un filtro vuelve a la primera página.
+          if (next.pagina && next.pagina > 1) value.set('pagina', String(next.pagina))
+          else value.delete('pagina')
+          return value
+        },
+        { replace: true },
+      ),
+    [setParams],
+  )
+
+  // La búsqueda va al API cuando se deja de escribir.
+  useEffect(() => {
+    if (draft.trim() === search) return
+    const timer = setTimeout(() => update({ buscar: draft }), SEARCH_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [draft, search, update])
+
+  const applicationOf = (account: Account): ProviderRequestSummary | undefined =>
+    applications.data?.results.filter((item) => item.applicant.id === account.id).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0]
+  const rows = accounts.data?.results ?? []
+  const filtered = filter !== 'todos' || !!status || !!search
 
   return (
     <div className="flex flex-col gap-6">
@@ -79,41 +130,26 @@ export function UsersPage() {
         description="Todas las cuentas de K'Plan: quienes usan la app (turistas, guías y traductores) y quienes entran al portal."
       />
 
-      {users.isSuccess && (
+      {accounts.isSuccess && (
         <p className="max-w-[84ch] text-lead text-muted">
-          K'Plan tiene <strong className="font-semibold text-ink">{plural(all.length, 'cuenta', 'cuentas')}</strong>:{' '}
-          <strong className="font-semibold text-ink">{plural(countOf('turista'), 'turista', 'turistas')}</strong>,{' '}
-          <strong className="font-semibold text-ink">{plural(countOf('guia'), 'guía o traductor', 'guías y traductores')}</strong>,{' '}
-          <strong className="font-semibold text-ink">{plural(countOf('negocio') + countOf('alcaldia'), 'cuenta', 'cuentas')}</strong> de
-          negocios y alcaldías y <strong className="font-semibold text-ink">{plural(countOf('admin'), 'persona', 'personas')}</strong> del
-          equipo.
-          {suspended > 0 && (
-            <>
-              {' '}
-              <strong className="font-semibold text-danger">{plural(suspended, 'está suspendida', 'están suspendidas')}</strong>.
-            </>
-          )}
+          {filtered ? 'Con estos filtros hay ' : "K'Plan tiene "}
+          <strong className="font-semibold text-ink">{plural(accounts.data.elements, 'cuenta', 'cuentas')}</strong>.
         </p>
       )}
 
       <div className="flex flex-col gap-4">
-        <Tabs
-          label="Tipo de usuario"
-          value={filter}
-          onChange={(value) => setParams(value === 'todos' ? {} : { tipo: value }, { replace: true })}
-          items={TABS.map((item) => ({ ...item, count: item.value === 'todos' ? all.length : countOf(item.value) }))}
-        />
+        <Tabs label="Tipo de usuario" value={filter} onChange={(value) => update({ tipo: value })} items={TABS} />
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Select
             aria-label="Estado de la cuenta"
-            value={status}
-            onChange={(event) => setStatus(event.target.value as typeof status)}
+            value={status ?? 'todas'}
+            onChange={(event) => update({ estado: event.target.value as AccountStatus | 'todas' })}
             className="w-52"
           >
             <option value="todas">Todos los estados</option>
-            {(['active', 'suspended', 'invited'] as const).map((value) => (
+            {ACCOUNT_STATUSES.map((value) => (
               <option key={value} value={value}>
-                {USER_STATUS_LABELS[value]}
+                {value === 'pending' ? 'Sin activar o invitación' : ACCOUNT_STATUS_LABELS[value]}
               </option>
             ))}
           </Select>
@@ -122,92 +158,87 @@ export function UsersPage() {
             aria-label="Buscar por nombre o correo"
             placeholder="Buscar por nombre o correo"
             leading={<Search size={16} />}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
             className="w-72"
           />
         </div>
       </div>
 
-      {users.isPending ? (
+      {accounts.isPending ? (
         <SkeletonRows rows={8} />
-      ) : users.isError ? (
-        <ErrorState error={users.error} onRetry={() => void users.refetch()} />
-      ) : shown.length === 0 ? (
+      ) : accounts.isError ? (
+        <ErrorState error={accounts.error} onRetry={() => void accounts.refetch()} />
+      ) : rows.length === 0 ? (
         <EmptyState icon={<Users size={20} />} title="Nadie coincide con estos filtros">
           Prueba con otro nombre, otro tipo de usuario o todos los estados.
         </EmptyState>
       ) : (
-        <Table id="usuarios" caption="Usuarios">
-          <thead>
-            <tr>
-              <Th>Usuario</Th>
-              <Th>Tipo</Th>
-              <Th>Detalle</Th>
-              <Th>Estado</Th>
-              <Th>Último acceso</Th>
-              <Th>Cuenta creada</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map((user) => {
-              const application = user.role === 'guia' ? applicationOf(user) : undefined
-              return (
-                <Tr key={user.id} interactive onClick={() => setOpenId(user.id)}>
+        <>
+          <Table id="usuarios" caption="Usuarios">
+            <thead>
+              <tr>
+                <Th>Usuario</Th>
+                <Th>Tipo</Th>
+                <Th>Detalle</Th>
+                <Th>Estado</Th>
+                <Th>Cuenta creada</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((account) => (
+                <Tr key={account.id} interactive onClick={() => setOpen(account)}>
                   <Td>
                     <button
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation()
-                        setOpenId(user.id)
+                        setOpen(account)
                       }}
                       className="flex items-center gap-3 text-left"
                     >
-                      <Avatar name={user.name} size="sm" />
+                      <Avatar name={account.name} size="sm" />
                       <span className="min-w-0">
-                        <span className="block font-semibold text-ink hover:underline">{user.name}</span>
-                        <span className="block truncate text-caption text-muted">{user.email}</span>
+                        <span className="block font-semibold text-ink hover:underline">{account.name}</span>
+                        <span className="block truncate text-caption text-muted">{account.email}</span>
                       </span>
                     </button>
                   </Td>
                   <Td>
-                    <p className="text-small whitespace-nowrap text-ink">{userKind(user)}</p>
-                    <p className="text-caption text-muted">{usesApp(user) ? 'Usa la app' : 'Entra al portal'}</p>
+                    <p className="text-small whitespace-nowrap text-ink">{accountKind(account)}</p>
+                    <p className="text-caption text-muted">{account.role === null ? '—' : usesApp(account) ? 'Usa la app' : 'Entra al portal'}</p>
                   </Td>
                   <Td>
-                    {user.role === 'admin' ? (
-                      <span className="text-small text-ink">{roleOf(user)?.name ?? 'Sin rol'}</span>
-                    ) : user.role === 'negocio' || user.role === 'alcaldia' ? (
-                      <span className="text-small text-ink">{organizationOf(user)?.name ?? '—'}</span>
-                    ) : application ? (
-                      <Tag tone={APPLICATION_STATUS_TONES[application.status]}>
-                        {application.status === 'approved' ? 'Verificado' : APPLICATION_STATUS_LABELS[application.status]}
-                      </Tag>
-                    ) : (
-                      <span className="text-small text-muted">{user.city ?? '—'}</span>
-                    )}
+                    <Detail account={account} />
                   </Td>
                   <Td>
-                    <Tag tone={USER_STATUS_TONES[user.status]}>{USER_STATUS_LABELS[user.status]}</Tag>
+                    <Tag tone={ACCOUNT_STATUS_TONES[account.status]}>{accountStatusLabel(account.status)}</Tag>
                   </Td>
-                  <Td className="whitespace-nowrap text-muted tabular-nums">
-                    {user.lastSeenAt ? formatDateTime(user.lastSeenAt) : 'Todavía no entra'}
-                  </Td>
-                  <Td className="whitespace-nowrap text-muted tabular-nums">{formatDate(user.createdAt)}</Td>
+                  <Td className="whitespace-nowrap text-muted tabular-nums">{formatDate(account.createdAt)}</Td>
                 </Tr>
-              )
-            })}
-          </tbody>
-        </Table>
+              ))}
+            </tbody>
+          </Table>
+
+          {accounts.data.pages > 1 && (
+            <nav aria-label="Páginas" className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-small text-muted tabular-nums">
+                Página {accounts.data.current} de {accounts.data.pages} · {plural(accounts.data.elements, 'cuenta', 'cuentas')}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="secondary" icon={<ChevronLeft size={16} />} disabled={!accounts.data.hasPrevious} onClick={() => update({ pagina: page - 1 })}>
+                  Anterior
+                </Button>
+                <Button size="sm" variant="secondary" icon={<ChevronRight size={16} />} disabled={!accounts.data.hasNext} onClick={() => update({ pagina: page + 1 })}>
+                  Siguiente
+                </Button>
+              </div>
+            </nav>
+          )}
+        </>
       )}
 
-      <UserSheet
-        user={open}
-        organization={open ? organizationOf(open) : undefined}
-        staffRole={open ? roleOf(open) : undefined}
-        application={open?.role === 'guia' ? applicationOf(open) : undefined}
-        onClose={() => setOpenId(null)}
-      />
+      <UserSheet account={open} application={open?.role === 'guia' ? applicationOf(open) : undefined} onClose={() => setOpen(null)} onChange={setOpen} />
     </div>
   )
 }

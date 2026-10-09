@@ -1,10 +1,12 @@
 import { endpoints } from '../../api/endpoints'
-import { assignStopsSchema, organizationInputSchema } from '../../schemas/admin.schema'
+import { organizationInputSchema } from '../../schemas/admin.schema'
 import { fail, MockHttpError, parseBody, requireUser, route } from '../http'
 import { findOrganization, hasPermission, isAdmin } from '../services/access'
-import { assertStopFree } from '../services/ownership'
 
-/** No hay alta directa: una organización entra con una solicitud (postulación o alta asistida). */
+/**
+ * No hay alta directa: una organización entra con una solicitud (postulación o alta asistida). Sus
+ * lugares se asignan y se quitan con `PUT place/{id}/owner/`, como en el API.
+ */
 export const organizationRoutes = [
   route(
     'GET',
@@ -45,31 +47,5 @@ export const organizationRoutes = [
       return organization
     },
     { permissions: ['organizations.manage', 'organizations.review'] },
-  ),
-  route(
-    'POST',
-    endpoints.organizations.stops(':id'),
-    ({ db, params, body }) => {
-      const organization = findOrganization(db, params.id)
-      if (organization.status !== 'active') throw fail.conflict('Sólo se le asignan lugares a una organización activa')
-      const { stopIds } = parseBody(assignStopsSchema, body)
-      for (const stopId of stopIds) assertStopFree(db, stopId, { organizationId: organization.id, city: organization.city, field: 'stopIds' })
-      organization.stopIds = [...new Set([...organization.stopIds, ...stopIds])]
-      return organization
-    },
-    { permissions: ['organizations.manage'] },
-  ),
-  route(
-    'DELETE',
-    endpoints.organizations.stop(':id', ':stopId'),
-    ({ db, params }) => {
-      const organization = findOrganization(db, params.id)
-      const stop = db.stops.find((item) => item.id === params.stopId)
-      if (!stop || !organization.stopIds.includes(stop.id)) throw fail.notFound('Ese lugar ya no es de esta organización')
-      if (stop.draft) throw fail.conflict('Un borrador se quita rechazando su pedido o su solicitud')
-      organization.stopIds = organization.stopIds.filter((id) => id !== stop.id)
-      return organization
-    },
-    { permissions: ['organizations.manage'] },
   ),
 ]
