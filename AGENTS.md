@@ -18,6 +18,6 @@ está en `C:\development\kplan\api\.cursor\memory\hoja-de-ruta.md`.
   `.env.local` y cualquier `.env*.local` no se versionan.
 - El modo demo es explícito (`VITE_USE_MOCKS=true`, `npm run dev:demo`). Un build de
   producción exige una `VITE_API_URL` con `https`; el publicado usa
-  `https://develop-api.kplan.dev` (`.env.production`). La rama `staging` se publica en
+  `https://azure-api.kplan.dev` (`.env.production`). La rama `staging` se publica en
   `https://staging-portal.kplan.dev`; `main` es producción (`https://portal.kplan.dev`).
 - Antes de cerrar: `npm run typecheck && npm run lint && npm test`.

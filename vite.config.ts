@@ -16,7 +16,7 @@ function assertProductionEnv(vars: Record<string, string>): void {
 
   const apiUrl = (vars.VITE_API_URL ?? '').trim()
   if (apiUrl === '') {
-    throw new Error('Build de producción sin VITE_API_URL. Defínela en .env.production o como variable de entorno del build, p. ej. https://develop-api.kplan.dev')
+    throw new Error('Build de producción sin VITE_API_URL. Defínela en .env.production o como variable de entorno del build, p. ej. https://azure-api.kplan.dev')
   }
 
   let url: URL
