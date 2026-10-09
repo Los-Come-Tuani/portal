@@ -22,6 +22,7 @@ import type {
 } from '../models'
 import type { MockEvent } from './services/agenda'
 import type { MockFinance } from './services/finance'
+import type { MockDemoRequest, MockRelease } from './services/landing'
 import type { MockDispute, MockNotification, MockReport, MockSanction } from './services/moderation'
 import type { MockCampaign, MockCouponCode } from './services/rewards'
 import type { MockApplication, MockFiles } from './services/applications'
@@ -141,6 +142,11 @@ export interface MockDatabase {
   sanctions: MockSanction[]
   /** La bandeja de avisos de cada cuenta (F8). */
   notifications: MockNotification[]
+  /** Las solicitudes de demo de la landing y las versiones de la app (F9), con las reglas del API. */
+  demoRequests: MockDemoRequest[]
+  releases: MockRelease[]
+  /** Los instaladores "subidos": la clave y su peso. La demo no guarda el archivo. */
+  installers: Record<string, number>
 }
 
 let database: MockDatabase | null = null

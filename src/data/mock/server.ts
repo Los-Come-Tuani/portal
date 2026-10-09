@@ -14,6 +14,7 @@ import { billingRoutes } from './handlers/billing'
 import { circuitRoutes } from './handlers/circuits'
 import { couponRoutes } from './handlers/coupons'
 import { eventRoutes } from './handlers/events'
+import { landingRoutes } from './handlers/landing'
 import { moderationRoutes } from './handlers/moderation'
 import { organizationRoutes } from './handlers/organizations'
 import { placeRequestRoutes } from './handlers/place-requests'
@@ -41,6 +42,7 @@ const routes: MockRoute[] = [
   ...badgeRoutes,
   ...billingRoutes,
   ...moderationRoutes,
+  ...landingRoutes,
   ...visitRoutes,
 ]
 

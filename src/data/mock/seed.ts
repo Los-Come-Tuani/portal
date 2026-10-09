@@ -4,6 +4,7 @@ import { catalog, type AppCircuit } from './catalog'
 import type { MockCircuit, MockDatabase } from './db'
 import { categoryCode, toWireClock, type MockEvent } from './services/agenda'
 import { seedFinance } from './services/finance'
+import { seedDemoRequests, seedReleases } from './services/landing'
 import { sanctionNotice, seedDisputes, seedReports, type MockSanction } from './services/moderation'
 import { CODE_ALPHABET, type MockCampaign, type MockCouponCode } from './services/rewards'
 import { seedActivations, seedCampaigns } from './generators/activity'
@@ -13,7 +14,7 @@ import { seedProviders } from './generators/providers'
 import { seedApplications } from './services/applications'
 
 /** Súbelo cuando cambie la forma de los datos: la demo se vuelve a sembrar. */
-export const SCHEMA_VERSION = 17
+export const SCHEMA_VERSION = 18
 
 /** Tarifas de demo: el admin las cambia en "Tarifas". No son precios reales. */
 const DEMO_PRICING = {
@@ -245,6 +246,7 @@ export function seedDatabase(today: ISODate): MockDatabase {
         },
       ]
     : []
+  const releases = seedReleases(today)
 
   return {
     version: SCHEMA_VERSION,
@@ -283,5 +285,8 @@ export function seedDatabase(today: ISODate): MockDatabase {
     ),
     sanctions: warnings,
     notifications: warnings.map(sanctionNotice),
+    demoRequests: seedDemoRequests(today),
+    releases,
+    installers: Object.fromEntries(releases.map((release) => [release.fileKey, release.size])),
   }
 }

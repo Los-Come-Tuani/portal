@@ -4,6 +4,7 @@ import {
   CalendarDays,
   CalendarHeart,
   FileCheck2,
+  Globe,
   Layers,
   MapPin,
   Medal,
@@ -18,7 +19,7 @@ import type { Session } from '@/features/auth/use-auth'
 import { paths } from '../router/paths'
 
 /** Un número que la barra lateral busca y muestra junto al módulo. */
-export type NavCount = 'pendingGuides' | 'pendingAdmissions'
+export type NavCount = 'pendingGuides' | 'pendingAdmissions' | 'newDemos'
 
 export interface NavLinkEntry {
   kind: 'link'
@@ -95,6 +96,10 @@ export function navigationFor({ role, organization, can }: Session): NavEntry[] 
         can('billing.view') && { to: paths.collections, label: 'Cobros' },
         can('billing.view') && { to: paths.withdrawals, label: 'Retiros de guías' },
         can('billing.view') && { to: paths.pricing, label: 'Tarifas' },
+      ]),
+      group('sitio', 'Sitio web', Globe, [
+        can('demos.view') && { to: paths.demoRequests, label: 'Solicitudes de demo', count: 'newDemos' },
+        can('releases.view') && { to: paths.releases, label: 'Versiones de la app' },
       ]),
     ].filter((entry): entry is NavEntry => !!entry)
   }

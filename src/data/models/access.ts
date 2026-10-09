@@ -24,6 +24,10 @@ export const PERMISSIONS = [
   'staff.manage',
   'billing.view',
   'billing.manage',
+  'demos.view',
+  'demos.manage',
+  'releases.view',
+  'releases.manage',
 ] as const
 
 export type Permission = (typeof PERMISSIONS)[number]
@@ -143,6 +147,31 @@ export const PERMISSION_GROUPS: { label: string; permissions: PermissionInfo[] }
       { id: 'billing.manage', label: 'Cobros y tarifas', description: "Ve los cobros y cambia las tarifas de K'Plan." },
     ],
   },
+  {
+    label: 'Sitio web',
+    permissions: [
+      {
+        id: 'demos.view',
+        label: 'Ver solicitudes de demo',
+        description: 'Ve quién pidió una demostración desde la landing, sin poder atenderla.',
+      },
+      {
+        id: 'demos.manage',
+        label: 'Atender solicitudes de demo',
+        description: 'Cambia el estado de las solicitudes de demo, anota el seguimiento y recibe el aviso de cada una nueva.',
+      },
+      {
+        id: 'releases.view',
+        label: 'Ver versiones de la app',
+        description: 'Ve los instaladores de la app y cuál se descarga desde la landing.',
+      },
+      {
+        id: 'releases.manage',
+        label: 'Publicar versiones de la app',
+        description: 'Sube los instaladores (APK, DMG, EXE), los publica en la landing y los retira.',
+      },
+    ],
+  },
 ]
 
 export const PERMISSION_INFO: Record<Permission, PermissionInfo> = Object.fromEntries(
@@ -157,9 +186,11 @@ export const PERMISSION_INFO: Record<Permission, PermissionInfo> = Object.fromEn
 export const IMPLIED_BY: Partial<Record<Permission, readonly Permission[]>> = {
   'billing.view': ['billing.manage'],
   'circuits.view': ['circuits.manage'],
+  'demos.view': ['demos.manage'],
   'guides.view': ['guides.review', 'guides.decide'],
   'organizations.view': ['organizations.review', 'organizations.manage'],
   'places.view': ['places.manage'],
+  'releases.view': ['releases.manage'],
   'users.view': ['users.manage'],
 }
 

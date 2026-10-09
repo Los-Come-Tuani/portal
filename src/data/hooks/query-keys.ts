@@ -4,6 +4,7 @@ import type { OrganizationFilters } from '../repositories/organizations.reposito
 import type { PlaceRequestFilters } from '../repositories/place-requests.repository'
 import type { PaymentFilters, StatementFilters, WithdrawalFilters } from '../repositories/billing.repository'
 import type { CampaignFilters, RedemptionFilters } from '../repositories/coupons.repository'
+import type { DemoRequestFilters, ReleaseFilters } from '../repositories/landing.repository'
 import type { DisputeFilters, ReportFilters, SanctionFilters } from '../repositories/moderation.repository'
 import type { VisitFilters } from '../repositories/visits.repository'
 
@@ -102,6 +103,12 @@ export const queryKeys = {
     disputes: (filters: DisputeFilters) => ['moderation', 'disputes', filters] as const,
     reports: (filters: ReportFilters) => ['moderation', 'reports', filters] as const,
     sanctions: (filters: SanctionFilters) => ['moderation', 'sanctions', filters] as const,
+  },
+  /** Lo que alimenta la landing: solicitudes de demo y versiones de la app (F9). */
+  landing: {
+    all: ['landing'] as const,
+    demoRequests: (filters: DemoRequestFilters) => ['landing', 'demo-requests', filters] as const,
+    releases: (filters: ReleaseFilters) => ['landing', 'releases', filters] as const,
   },
   /** La cola de guías y traductores (F5). */
   providers: {

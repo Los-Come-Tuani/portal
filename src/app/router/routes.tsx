@@ -259,6 +259,24 @@ export const router = createBrowserRouter([
                   },
                 ],
               },
+              {
+                element: <RequirePermission anyOf={['demos.view']} />,
+                children: [
+                  {
+                    path: 'demos',
+                    lazy: async () => ({ Component: (await import('@/features/admin/landing/DemoRequestsPage')).DemoRequestsPage }),
+                  },
+                ],
+              },
+              {
+                element: <RequirePermission anyOf={['releases.view']} />,
+                children: [
+                  {
+                    path: 'versiones',
+                    lazy: async () => ({ Component: (await import('@/features/admin/landing/ReleasesPage')).ReleasesPage }),
+                  },
+                ],
+              },
             ],
           },
           { path: '*', element: <NotFoundPage /> },

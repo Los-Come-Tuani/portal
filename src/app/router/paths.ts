@@ -32,4 +32,6 @@ export const paths = {
   staffRoles: '/usuarios/roles',
   reports: '/reportes',
   sanctions: '/sanciones',
+  demoRequests: '/demos',
+  releases: '/versiones',
 } as const

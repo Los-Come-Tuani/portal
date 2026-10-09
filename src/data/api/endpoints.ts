@@ -235,6 +235,25 @@ export const endpoints = {
     list: '/sanction/',
     lift: (sanctionId: string) => `/sanction/${id(sanctionId)}/lift/`,
   },
+  /** Las solicitudes de demo de la landing (F9, docs/landing.md): `demos.view` las ve y `demos.manage` las atiende. */
+  demoRequest: {
+    list: '/demo-request/',
+    detail: (requestId: string) => `/demo-request/${id(requestId)}/`,
+  },
+  /**
+   * Los instaladores de la app que se descargan desde la landing (F9): `releases.view` los ve y
+   * `releases.manage` los sube, publica y retira. `DELETE` sólo borra un borrador.
+   */
+  appRelease: {
+    list: '/app-release/',
+    /** `POST { platform, size }`: la URL firmada para subir el instalador. */
+    upload: '/app-release/upload/',
+    detail: (releaseId: string) => `/app-release/${id(releaseId)}/`,
+    publish: (releaseId: string) => `/app-release/${id(releaseId)}/publish/`,
+    withdraw: (releaseId: string) => `/app-release/${id(releaseId)}/withdraw/`,
+    /** `{ url }` firmada por cinco minutos, para probar el instalador; no cuenta como descarga. */
+    download: (releaseId: string) => `/app-release/${id(releaseId)}/download/`,
+  },
   visitEvents: '/api/visit-events',
   /** Sólo existe en el modo demo. */
   demoReset: '/api/demo/reset',

@@ -203,6 +203,29 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
     pantallas no se recorrieron en un navegador; la demo se probó con otro script temporal.
   - No hay cuenta de institución local: se crea con `/postular` (clase institución, hace falta el
     bucket local de la memoria del API para el documento) y se aprueba en `/solicitudes`.
+- **Hecho: F9, el panel de la landing** (2026-10-08, rama `feat/landing-demo-y-versiones`; contrato en
+  `docs/landing.md` del API). Grupo "Sitio web" del menú del equipo:
+  - `/demos` (`DemoRequestsPage`, `demo-request/`): pestañas por estado (nuevas, contactadas,
+    agendadas, realizadas, descartadas, todas), búsqueda, correo y teléfono como enlaces, y
+    "Atender" (`demos.manage`): estado y seguimiento. El contador `newDemos` del menú y
+    `AdminPending` salen de `useNewDemoCount`. La campana muestra `solicitud_demo`.
+  - `/versiones` (`ReleasesPage`, `app-release/`): la vigente de cada plataforma arriba, historial,
+    subir (plataforma, versión, novedades, instalador) con barra de avance, editar (la versión solo
+    en borrador), publicar, retirar, borrar un borrador y "Descargar para probar" (`{ url }`).
+    El instalador se sube con `uploadInstaller` (`data/api/upload.ts`): pide la URL a
+    `app-release/upload/` y hace el `PUT` con `XMLHttpRequest` para tener el avance; el tipo lo fija
+    la plataforma (`INSTALLERS` en `models/landing.ts`), no el navegador.
+  - Permisos nuevos en `models/access.ts`: `demos.view|manage` y `releases.view|manage` (módulo
+    "Sitio web"); el Super admin de la demo los tiene.
+  - Datos: `models/landing.ts`, `schemas/landing-api.schema.ts` (+ prueba),
+    `repositories/landing.repository.ts`, `hooks/use-landing.ts`. Demo (`SCHEMA_VERSION` 18):
+    `mock/services/landing.ts` y `mock/handlers/landing.ts` (+ `landing.test.ts`); la demo no guarda
+    instaladores (anota la clave en `db.installers`, simula el avance y "Descargar para probar"
+    responde `503`).
+  - Navegador: `%LOCALAPPDATA%\Temp\kplan-dev\e2e\e2e-f9-demo.mjs` (8 comprobaciones en demo) y
+    `e2e-f9-real.mjs` (7, contra el API local con la landing: la landing pide la demo, llega el aviso,
+    se agenda; sin bucket, subir un instalador lo explica). Ese script pide `E2E_PORTAL`,
+    `E2E_LANDING`, `E2E_EMAIL` y `E2E_PASSWORD`.
 - Comprobaciones: `npm run typecheck && npm run lint && npm test && npm run build:demo`.
 
 ## Qué falta (depende de otras fases)

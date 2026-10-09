@@ -8,6 +8,7 @@ export const NOTIFICATION_KIND_LABELS: Record<string, string> = {
   resena: 'Reseña',
   pago: 'Pago',
   cuenta: 'Tu cuenta',
+  solicitud_demo: 'Solicitud de demo',
 }
 
 /** Un aviso de la bandeja de la cuenta (`notification/`). */

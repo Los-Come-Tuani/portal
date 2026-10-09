@@ -83,6 +83,16 @@ describe('menú del equipo según su rol', () => {
     expect(labels(navigationFor(teamMember('billing.view')))).toEqual(['Finanzas > Cobros', 'Finanzas > Retiros de guías', 'Finanzas > Tarifas'])
   })
 
+  it('el sitio web abre las solicitudes de demo y las versiones de la app, cada una con su permiso', () => {
+    expect(labels(navigationFor(teamMember('demos.manage')))).toEqual(['Solicitudes de demo'])
+    expect(labels(navigationFor(teamMember('releases.view')))).toEqual(['Versiones de la app'])
+    expect(labels(navigationFor(teamMember('demos.view', 'releases.manage')))).toEqual([
+      'Sitio web > Solicitudes de demo',
+      'Sitio web > Versiones de la app',
+    ])
+    expect(landingPath(teamMember('releases.manage'))).toBe('/versiones')
+  })
+
   it('la agenda solo aparece con su permiso y es la entrada de quien la tiene', () => {
     expect(labels(navigationFor(teamMember('guides.view')))).not.toContain('Agenda')
     const session = teamMember('agenda.view', 'guides.view')
