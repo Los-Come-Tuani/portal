@@ -258,9 +258,11 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
   - Pantallas: `InlineError` (`States.tsx`) para paneles que antes se leían vacíos al fallar (agenda,
     pendientes del equipo, campana, organización, roles, diálogos de lugares); la agenda ya no se queda
     cargando si fallan los lugares. Todo `EmptyState` lleva `action`: quitar filtros o cambiar de
-    pestaña, crear con el permiso de la cabecera, o a dónde seguir. Con el API real, la agenda, "Por qué
-    no llegaron", "Donde más los dejan" y los pendientes muestran el error con reintento mientras
-    `/api/visit-events` y `/api/place-requests` sigan siendo de la demo.
+    pestaña, crear con el permiso de la cabecera, o a dónde seguir. Con el API real,
+    `visitsRepository.listEvents` y `placeRequestsRepository.list` devuelven `[]` sin preguntar
+    (`env.useMocks`): la agenda, "Por qué no llegaron", "Donde más los dejan", el menú y los
+    pendientes no muestran un 404 que nadie puede resolver. Cuando el API publique esas rutas, quitar
+    esa condición.
   - Pruebas: 270 unitarias (24 nuevas). Navegador: `%LOCALAPPDATA%\Temp\kplan-dev\e2e\e2e-errores.mjs`
     (15 comprobaciones; `vite` en `:5182` con todo `/_api` interceptado y `vite --mode demo` en `:5183`).
 - Comprobaciones: `npm run typecheck && npm run lint && npm test && npm run build:demo`.
@@ -278,6 +280,8 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
      dibuja la agenda; el API no las tiene (la insignia es `has_badge` del lugar).
    - La agenda de llegadas (`/api/visit-events`): el API la dejó para después (docs/servicios.md,
      "Lo que queda para después").
+   Las llegadas y los pedidos de lugar, con el API real, se leen como listas vacías en sus
+   repositorios (ver "errores y estados vacíos amigables"); al publicarse, quitar esa condición.
    Queda por retirar lo que dejó F3: la propiedad de los lugares por `claimedStopIds` en
    `ownership.ts` y `generators/admissions.ts`.
 2. **Anotado para el API** (no se tocó):

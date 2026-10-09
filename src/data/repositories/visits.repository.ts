@@ -1,3 +1,4 @@
+import { env } from '@/config/env'
 import { endpoints } from '../api/endpoints'
 import { http } from '../api/http-client'
 import type { VisitEvent } from '../models'
@@ -9,7 +10,10 @@ export interface VisitFilters {
 }
 
 export const visitsRepository = {
-  listEvents: (filters: VisitFilters) => http.get<VisitEvent[]>(endpoints.visitEvents, { query: { ...filters } }),
+  // El API todavía no publica las llegadas (docs/servicios.md, "Lo que queda para después"): con el
+  // API real no hay ninguna, en vez de un 404 que la persona no puede resolver.
+  listEvents: async (filters: VisitFilters): Promise<VisitEvent[]> =>
+    env.useMocks ? http.get<VisitEvent[]>(endpoints.visitEvents, { query: { ...filters } }) : [],
 }
 
 export const demoRepository = {
