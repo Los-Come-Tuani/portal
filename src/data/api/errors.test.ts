@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ApiError, errorMessageWithWait, formFieldName, normalizeFieldErrors, parseRetryAfter, renameFieldErrors, waitText } from './errors'
+import { ApiError, ERROR_MESSAGES, errorMessageWithWait, formFieldName, normalizeFieldErrors, parseRetryAfter, renameFieldErrors, waitText } from './errors'
 
 describe('formFieldName', () => {
   it('quita de dónde viaja el dato y pasa a camelCase', () => {
@@ -85,6 +85,11 @@ describe('errorMessageWithWait', () => {
   it('suma cuánto esperar cuando la API lo pide', () => {
     const error = new ApiError(429, 'Se bloqueó el acceso.', {}, 900)
     expect(errorMessageWithWait(error)).toBe('Se bloqueó el acceso. Puedes reintentar en 15 minutos.')
+  })
+
+  it('cierra la oración del mensaje antes de sumar la espera', () => {
+    const error = new ApiError(429, ERROR_MESSAGES.tooManyRequests, {}, 40)
+    expect(errorMessageWithWait(error)).toBe('Demasiados intentos, espera un momento e intenta de nuevo. Puedes reintentar en 40 segundos.')
   })
 
   it('deja el mensaje igual si no es un 429 o no trae espera', () => {

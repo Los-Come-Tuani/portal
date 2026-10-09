@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { endpoints } from './endpoints'
-import { ApiError } from './errors'
-import { createFetchTransport, createHttpClient, toApiError } from './http-client'
+import { ApiError, ERROR_MESSAGES } from './errors'
+import { createFetchTransport, createHttpClient, REQUEST_TIMEOUT_MS, toApiError } from './http-client'
 import { sessionMarker } from './session-marker'
 
 const BASE = 'http://api.test'
@@ -334,8 +334,118 @@ describe('toApiError', () => {
   })
 
   it('usa un mensaje por defecto cuando la respuesta no trae texto', () => {
-    expect(toApiError({ status: 404, data: null }).message).toBe('No encontramos lo que buscas')
-    expect(toApiError({ status: 429, data: {} }).message).toBe('Demasiados intentos, espera un momento e intenta de nuevo')
-    expect(toApiError({ status: 500, data: {} }).message).toBe('Algo salió mal, intenta de nuevo')
+    expect(toApiError({ status: 404, data: null }).message).toBe(ERROR_MESSAGES.notFound)
+    expect(toApiError({ status: 429, data: {} }).message).toBe(ERROR_MESSAGES.tooManyRequests)
+    expect(toApiError({ status: 409, data: {} }).message).toBe(ERROR_MESSAGES.conflict)
+    expect(toApiError({ status: 418, data: { detail: '   ' } }).message).toBe(ERROR_MESSAGES.generic)
+  })
+
+  it('nunca muestra el texto de un error del servidor', () => {
+    expect(toApiError({ status: 500, data: {} }).message).toBe(ERROR_MESSAGES.server)
+    expect(toApiError({ status: 500, data: { detail: "KeyError: 'city'" } }).message).toBe(ERROR_MESSAGES.server)
+    expect(toApiError({ status: 503, data: { detail: 'El servicio no está disponible por ahora.' } }).message).toBe(ERROR_MESSAGES.server)
+    expect(toApiError({ status: 502, data: null }).message).toBe(ERROR_MESSAGES.server)
+  })
+
+  it('cambia los textos por defecto del API por el del estado y conserva los errores por campo', () => {
+    const invalid = toApiError({
+      status: 400,
+      data: { detail: 'La solicitud contiene datos inválidos.', field_errors: { 'body.email': 'Ingrese un correo válido.' } },
+    })
+    expect(invalid).toMatchObject({ status: 400, message: ERROR_MESSAGES.invalid, fieldErrors: { email: 'Ingrese un correo válido.' } })
+    expect(toApiError({ status: 404, data: { detail: 'El recurso solicitado no se encontró.' } }).message).toBe(ERROR_MESSAGES.notFound)
+    expect(toApiError({ status: 403, data: { detail: ' No tiene permiso para realizar esta acción. ' } }).message).toBe(ERROR_MESSAGES.forbidden)
+    expect(toApiError({ status: 409, data: { detail: 'Hay un conflicto con el estado actual del recurso.' } }).message).toBe(ERROR_MESSAGES.conflict)
+    expect(toApiError({ status: 413, data: { detail: 'La solicitud excede los límites permitidos.' } }).message).toBe(ERROR_MESSAGES.tooLarge)
+    expect(toApiError({ status: 415, data: { detail: 'No se pudo interpretar la solicitud.' } }).message).toBe(ERROR_MESSAGES.generic)
+    expect(toApiError({ status: 406, data: { detail: 'Ha enviado un `Accept` header inválido.' } }).message).toBe(ERROR_MESSAGES.generic)
+    expect(toApiError({ status: 401, data: { detail: 'No se proporcionaron credenciales de autenticación válidas.' } }).message).toBe(
+      ERROR_MESSAGES.sessionExpired,
+    )
+  })
+
+  it('deja pasar un texto específico del API en un 4xx', () => {
+    expect(toApiError({ status: 409, data: { detail: 'La campaña ya está agotada.' } }).message).toBe('La campaña ya está agotada.')
+    expect(toApiError({ status: 404, data: { detail: 'Ese código no es de tu comercio.' } }).message).toBe('Ese código no es de tu comercio.')
+  })
+
+  it('en el inicio de sesión el 401 conserva el texto del API aunque sea el de por defecto', async () => {
+    const detail = 'No se proporcionaron credenciales de autenticación válidas.'
+    const { fetchFn } = fakeFetch((call) => (call.path === CSRF ? empty(204, { 'x-csrftoken': 't1' }) : json(401, { detail })))
+    const { request } = clientWith(fetchFn)
+
+    await expect(request('POST', endpoints.auth.login, { body: {} })).rejects.toMatchObject({ status: 401, message: detail })
+    await expect(request('GET', '/api/a')).rejects.toMatchObject({ status: 401, message: ERROR_MESSAGES.sessionExpired })
+  })
+})
+
+describe('tiempo de espera', () => {
+  /** Un `fetch` que no responde nunca: sólo termina si lo cancelan. */
+  function hangingFetch() {
+    return vi.fn(
+      (_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          if (init?.signal?.aborted) reject(init.signal.reason)
+          init?.signal?.addEventListener('abort', () => reject(init.signal?.reason))
+        }),
+    ) as unknown as typeof fetch
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('si el API no responde a tiempo, es un error sin estado que se puede mostrar', async () => {
+    const { request } = clientWith(hangingFetch())
+
+    const failure = request('GET', '/api/a').catch((caught: unknown) => caught)
+    await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS)
+
+    const error = await failure
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ status: 0, message: ERROR_MESSAGES.timeout })
+  })
+
+  it('no corta antes de tiempo', async () => {
+    const { request } = clientWith(hangingFetch())
+    const settled = vi.fn()
+
+    void request('GET', '/api/a').then(settled, settled)
+    await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS - 1)
+
+    expect(settled).not.toHaveBeenCalled()
+  })
+
+  it('si quien llama cancela, sigue saliendo su AbortError', async () => {
+    const { request } = clientWith(hangingFetch())
+    const controller = new AbortController()
+
+    const failure = request('GET', '/api/a', { signal: controller.signal }).catch((caught: unknown) => caught)
+    controller.abort()
+
+    const error = await failure
+    expect(error).not.toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ name: 'AbortError' })
+  })
+
+  it('una señal ya cancelada no llega a esperar', async () => {
+    const { request } = clientWith(hangingFetch())
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(request('GET', '/api/a', { signal: controller.signal })).rejects.toMatchObject({ name: 'AbortError' })
+  })
+
+  it('al responder, no deja el reloj corriendo', async () => {
+    const { fetchFn } = fakeFetch(() => json(200, { ok: true }))
+    const { request } = clientWith(fetchFn)
+
+    await request('GET', '/api/a')
+
+    expect(vi.getTimerCount()).toBe(0)
   })
 })
