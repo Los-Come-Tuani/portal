@@ -33,6 +33,11 @@ el usuario lo pida. Commits convencionales en español, sin emojis.
     `VITE_GOOGLE_CLIENT_ID` y `POST /auth/web/google/`. Solo enlaza una cuenta existente,
     activa y verificada de una organización o del equipo; no registra cuentas desde el portal.
     Conserva el segundo factor. Pruebas del cargador y del cliente HTTP.
+  - 2026-10-08: el botón propio usa el cliente de tokens (`initTokenClient` con
+    `prompt: 'select_account'`) y manda `access_token`; el API lo valida con `tokeninfo`
+    (docs/google.md del API). El botón de identidad (`renderButton`) se quitó: tras elegir una
+    cuenta quedaba como "Continuar como …" y no dejaba elegir otra después de un rechazo, ni
+    con `disableAutoSelect` ni con `revoke`.
 - **Hecho: lado del portal de F2** (el API ya entrega los permisos funcionales y los roles):
   - `models/access.ts`: los 17 IDs del API, con los de solo ver (`*.view`), etiquetas del
     catálogo y `IMPLIED_BY` / `isImplied` / `expandPermissions` (quien revisa, decide o

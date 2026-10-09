@@ -7,8 +7,6 @@ import { authRepository } from '@/data/repositories/auth.repository'
 import { organizationsRepository } from '@/data/repositories/organizations.repository'
 import { NOT_PORTAL_MESSAGE } from '@/data/schemas/session.schema'
 import { AuthContext, type AuthStatus, type LoginOutcome } from './auth-context'
-import { forgetGoogleAccount } from './google-identity'
-
 /** Cuánto se espera a que la API confirme el cierre de sesión antes de salir de todos modos. */
 const LOGOUT_PATIENCE_MS = 2500
 
@@ -80,8 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const loginWithGoogle = useCallback(
-    async (idToken: string): Promise<LoginOutcome> => {
-      const result = await authRepository.loginWithGoogle(idToken)
+    async (accessToken: string): Promise<LoginOutcome> => {
+      const result = await authRepository.loginWithGoogle(accessToken)
       if (result.status === 'two-factor') return 'two-factor'
       await openSession(result.user)
       return 'authenticated'
@@ -106,7 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const endSession = useCallback(() => {
     sessionMarker.clear()
-    forgetGoogleAccount()
     clear()
   }, [clear])
 

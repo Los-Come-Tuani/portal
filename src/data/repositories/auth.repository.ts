@@ -19,9 +19,12 @@ export const authRepository = {
     return loginResult(await http.post<unknown>(endpoints.auth.login, { body: input }))
   },
 
-  /** Google solo enlaza una cuenta ya activada de negocio, alcaldía o equipo. */
-  async loginWithGoogle(idToken: string): Promise<LoginResult> {
-    return loginResult(await http.post<unknown>(endpoints.auth.google, { body: { id_token: idToken } }))
+  /**
+   * Con el token de acceso del selector de cuentas de Google, que el API valida con Google. Google
+   * solo enlaza una cuenta ya activada de negocio, alcaldía o equipo.
+   */
+  async loginWithGoogle(accessToken: string): Promise<LoginResult> {
+    return loginResult(await http.post<unknown>(endpoints.auth.google, { body: { access_token: accessToken } }))
   },
 
   /** Termina el inicio de sesión con el código de la app de autenticación o uno de recuperación. */

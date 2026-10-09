@@ -13,7 +13,6 @@ import { twoFactorLoginSchema } from '@/data/schemas/auth.schema'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { AuthLayout } from './AuthLayout'
 import { DEMO_ACCOUNTS } from './demo-accounts'
-import { forgetRejectedGoogleAccount } from './google-identity'
 import { GoogleSignInButton } from './GoogleSignInButton'
 import { useAuth } from './use-auth'
 
@@ -39,8 +38,6 @@ function CredentialsStep({ onTwoFactor }: { onTwoFactor: () => void }) {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [googleSubmitting, setGoogleSubmitting] = useState(false)
-  // cambia tras un intento rechazado: el botón de Google se vuelve a dibujar desde cero
-  const [googleAttempt, setGoogleAttempt] = useState(0)
   const {
     register,
     handleSubmit,
@@ -65,15 +62,13 @@ function CredentialsStep({ onTwoFactor }: { onTwoFactor: () => void }) {
   }
 
   const continueWithGoogle = useCallback(
-    async (credential: string) => {
+    async (accessToken: string) => {
       setError(null)
       setGoogleSubmitting(true)
       try {
-        if ((await loginWithGoogle(credential)) === 'two-factor') onTwoFactor()
+        if ((await loginWithGoogle(accessToken)) === 'two-factor') onTwoFactor()
       } catch (caught) {
         setError(errorMessageWithWait(caught))
-        await forgetRejectedGoogleAccount(credential)
-        setGoogleAttempt((attempt) => attempt + 1)
       } finally {
         setGoogleSubmitting(false)
       }
@@ -126,11 +121,7 @@ function CredentialsStep({ onTwoFactor }: { onTwoFactor: () => void }) {
             <span className="text-caption font-medium text-muted">o continúa con</span>
             <span className="h-px flex-1 bg-divider" />
           </div>
-          <GoogleSignInButton
-            key={googleAttempt}
-            disabled={isSubmitting || googleSubmitting}
-            onCredential={continueWithGoogle}
-          />
+          <GoogleSignInButton disabled={isSubmitting || googleSubmitting} onAccessToken={continueWithGoogle} onError={setError} />
           <p className="mt-2 text-caption text-muted">Solo enlaza una cuenta del portal que ya esté activada.</p>
         </div>
       )}
