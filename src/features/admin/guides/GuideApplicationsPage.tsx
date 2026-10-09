@@ -1,7 +1,7 @@
 import { BadgeCheck, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { Avatar, Button, EmptyState, ErrorState, PageHeader, SegmentedControl, SkeletonRows, Table, Tabs, Tag, Td, Th, Tr } from '@/components/ui'
+import { Avatar, Button, ButtonLink, EmptyState, ErrorState, PageHeader, SegmentedControl, SkeletonRows, Table, Tabs, Tag, Td, Th, Tr } from '@/components/ui'
 import { useProviderQueue } from '@/data/hooks/use-providers'
 import {
   PROCEDURE_LABELS,
@@ -66,7 +66,7 @@ function Progress({ request }: { request: ProviderRequestSummary }) {
 export function GuideApplicationsPage() {
   useDocumentTitle('Guías y traductores')
   const navigate = useNavigate()
-  const { user } = useSession()
+  const { user, can } = useSession()
   useNow() // la espera de lo abierto se vuelve a calcular cada minuto
   const [params, setParams] = useSearchParams()
 
@@ -144,7 +144,25 @@ export function GuideApplicationsPage() {
       ) : queue.isError ? (
         <ErrorState error={queue.error} onRetry={() => void queue.refetch()} />
       ) : rows.length === 0 ? (
-        <EmptyState icon={<BadgeCheck size={20} />} title="No hay solicitudes aquí">
+        <EmptyState
+          icon={<BadgeCheck size={20} />}
+          title={tab === 'open' && !service && !procedure ? 'No hay solicitudes abiertas' : 'No hay solicitudes aquí'}
+          action={
+            service || procedure ? (
+              <Button variant="secondary" onClick={() => update({ service: 'all', procedure: 'all' })}>
+                Quitar los filtros
+              </Button>
+            ) : tab !== 'all' ? (
+              <Button variant="secondary" onClick={() => update({ tab: 'all' })}>
+                Ver todas las solicitudes
+              </Button>
+            ) : can('users.view') ? (
+              <ButtonLink to={paths.users}>Ir a Todos los usuarios</ButtonLink>
+            ) : (
+              <ButtonLink to={paths.home}>Ir al inicio</ButtonLink>
+            )
+          }
+        >
           {tab === 'open'
             ? 'Cuando un guía o traductor se postule o renueve un documento desde la app, aparece en esta bandeja.'
             : 'Cambia el estado o los filtros para ver otras.'}

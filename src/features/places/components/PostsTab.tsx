@@ -50,7 +50,16 @@ export function PostsTab({ stopId }: { stopId: string }) {
       ) : posts.isError ? (
         <ErrorState error={posts.error} onRetry={() => void posts.refetch()} />
       ) : posts.data.length === 0 ? (
-        <EmptyState icon={<Megaphone size={20} />} title="Todavía no publicas novedades" className="rounded-kp border border-dashed border-outline">
+        <EmptyState
+          icon={<Megaphone size={20} />}
+          title="Todavía no publicas novedades"
+          action={
+            <Button icon={<Plus size={16} />} onClick={() => setEditing('new')}>
+              Publicar la primera
+            </Button>
+          }
+          className="rounded-kp border border-dashed border-outline"
+        >
           Cuéntales a los turistas qué hay de nuevo: aparece en la ficha de tu lugar.
         </EmptyState>
       ) : (

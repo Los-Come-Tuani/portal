@@ -1,7 +1,7 @@
 ﻿import { Medal, QrCode } from 'lucide-react'
 import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { EmptyState, ErrorState, PageHeader, Panel, SkeletonRows, Switch, Tag, useToast } from '@/components/ui'
+import { ButtonLink, EmptyState, ErrorState, PageHeader, Panel, SkeletonRows, Switch, Tag, useToast } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { usePlaces, useSetPlaceBadge } from '@/data/hooks/use-places'
 import type { Stop } from '@/data/models'
@@ -63,7 +63,12 @@ export function BadgesPage() {
         ) : places.isError ? (
           <ErrorState error={places.error} onRetry={() => void places.refetch()} className="py-8" />
         ) : shown.length === 0 ? (
-          <EmptyState icon={<Medal size={20} />} title={isAdmin ? 'Ningún lugar da insignia todavía' : 'Todavía no tienes lugares'} className="py-10">
+          <EmptyState
+            icon={<Medal size={20} />}
+            title={isAdmin ? 'Ningún lugar da insignia todavía' : 'Todavía no tienes lugares'}
+            action={<ButtonLink to={paths.places}>{isAdmin ? 'Ir a Lugares' : 'Ir a tus lugares'}</ButtonLink>}
+            className="py-10"
+          >
             {isAdmin ? 'Activa la insignia desde la página de un lugar.' : 'Cuando tengas un lugar, aquí ves si da insignia y su código QR.'}
           </EmptyState>
         ) : (

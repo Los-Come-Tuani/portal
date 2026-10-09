@@ -1,6 +1,7 @@
 import { CreditCard } from 'lucide-react'
 import { useState } from 'react'
-import { Button, EmptyState, ErrorState, Pager, SegmentedControl, SkeletonRows, Table, Tag, Td, Th, Tr, useToast, type TagTone } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { Button, ButtonLink, EmptyState, ErrorState, Pager, SegmentedControl, SkeletonRows, Table, Tag, Td, Th, Tr, useToast, type TagTone } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useConfirmPayment, usePayments, useRefundPayment } from '@/data/hooks/use-billing'
 import { PAYMENT_STATUS_LABELS, type BookingPayment, type PaymentStatus } from '@/data/models'
@@ -70,7 +71,25 @@ export function PaymentsPanel() {
       ) : payments.isError ? (
         <ErrorState error={payments.error} onRetry={() => void payments.refetch()} />
       ) : payments.data.results.length === 0 ? (
-        <EmptyState icon={<CreditCard size={20} />} title="No hay pagos con este filtro">
+        <EmptyState
+          icon={<CreditCard size={20} />}
+          title={filter === 'all' ? 'Todavía no hay pagos de reservas' : 'No hay pagos con este filtro'}
+          action={
+            filter !== 'all' ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilter('all')
+                  setPage(1)
+                }}
+              >
+                Ver todos
+              </Button>
+            ) : (
+              <ButtonLink to={paths.withdrawals}>Ver retiros de guías</ButtonLink>
+            )
+          }
+        >
           {filter === 'pending' && 'Cuando un turista reserve una salida con costo, su pago aparece aquí hasta que lo confirmes.'}
         </EmptyState>
       ) : (

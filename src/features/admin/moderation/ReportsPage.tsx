@@ -1,6 +1,7 @@
 import { Flag } from 'lucide-react'
 import { useState } from 'react'
-import { Button, ConfirmDialog, EmptyState, ErrorState, Field, PageHeader, Pager, Select, SkeletonRows, Tabs, Tag, Textarea, useToast, type TagTone } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { Button, ButtonLink, ConfirmDialog, EmptyState, ErrorState, Field, PageHeader, Pager, Select, SkeletonRows, Tabs, Tag, Textarea, useToast, type TagTone } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useReports, useResolveReport } from '@/data/hooks/use-moderation'
 import { REPORT_STATUS_LABELS, REPORT_TARGET_LABELS, type Report, type ReportStatus, type ReportTargetKind } from '@/data/models'
@@ -80,7 +81,37 @@ export function ReportsPage() {
       ) : reports.isError ? (
         <ErrorState error={reports.error} onRetry={() => void reports.refetch()} />
       ) : reports.data.results.length === 0 ? (
-        <EmptyState icon={<Flag size={20} />} title={section === 'pending' ? 'No hay reportes por revisar' : 'No hay reportes aquí'}>
+        <EmptyState
+          icon={<Flag size={20} />}
+          title={section === 'pending' ? 'No hay reportes por revisar' : 'No hay reportes aquí'}
+          action={
+            kind ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setKind('')
+                  setPage(1)
+                }}
+              >
+                Ver todo lo reportado
+              </Button>
+            ) : section !== 'all' ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSection('all')
+                  setPage(1)
+                }}
+              >
+                Ver todos los reportes
+              </Button>
+            ) : can('content.moderate') ? (
+              <ButtonLink to={paths.reviewDisputes}>Ver reseñas impugnadas</ButtonLink>
+            ) : (
+              <ButtonLink to={paths.sanctions}>Ver sanciones</ButtonLink>
+            )
+          }
+        >
           {section === 'pending' && 'Cuando alguien reporte algo, aparece aquí por orden de llegada.'}
         </EmptyState>
       ) : (

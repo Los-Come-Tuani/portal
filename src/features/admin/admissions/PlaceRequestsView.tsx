@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { paths } from '@/app/router/paths'
 import {
   Button,
+  ButtonLink,
   Dialog,
   EmptyState,
   ErrorState,
@@ -84,7 +85,23 @@ export function PlaceRequestsView() {
       ) : requests.isError ? (
         <ErrorState error={requests.error} onRetry={() => void requests.refetch()} />
       ) : shown.length === 0 ? (
-        <EmptyState icon={<MapPin size={20} />} title={tab === 'pending' ? 'No hay pedidos por decidir' : 'Todavía no se ha decidido ninguno'}>
+        <EmptyState
+          icon={<MapPin size={20} />}
+          title={tab === 'pending' ? 'No hay pedidos por decidir' : 'Todavía no se ha decidido ninguno'}
+          action={
+            tab === 'pending' && all.length > pending.length ? (
+              <Button variant="secondary" onClick={() => setTab('decided')}>
+                Ver los decididos
+              </Button>
+            ) : tab === 'decided' && pending.length > 0 ? (
+              <Button variant="secondary" onClick={() => setTab('pending')}>
+                Ver los por decidir
+              </Button>
+            ) : (
+              <ButtonLink to={paths.organizations}>Ver organizaciones</ButtonLink>
+            )
+          }
+        >
           Las organizaciones aprobadas piden otro lugar desde "Mis lugares" en su portal.
         </EmptyState>
       ) : (

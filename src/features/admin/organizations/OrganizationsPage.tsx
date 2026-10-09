@@ -2,7 +2,7 @@ import { Building2, Inbox, Search } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { ButtonLink, EmptyState, ErrorState, Input, PageHeader, SkeletonRows, Table, Tabs, Tag, Td, Th, Tr } from '@/components/ui'
+import { Button, ButtonLink, EmptyState, ErrorState, Input, PageHeader, SkeletonRows, Table, Tabs, Tag, Td, Th, Tr } from '@/components/ui'
 import { useOrganizations } from '@/data/hooks/use-organizations'
 import {
   ORGANIZATION_STATUS_LABELS,
@@ -70,7 +70,29 @@ export function OrganizationsPage() {
       ) : organizations.isError ? (
         <ErrorState error={organizations.error} onRetry={() => void organizations.refetch()} />
       ) : shown.length === 0 ? (
-        <EmptyState icon={<Building2 size={20} />} title="No hay organizaciones con este filtro" />
+        <EmptyState
+          icon={<Building2 size={20} />}
+          title={all.length === 0 ? 'Todavía no hay organizaciones' : 'No hay organizaciones con este filtro'}
+          action={
+            all.length > 0 ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilter('todas')
+                  setSearch('')
+                }}
+              >
+                Quitar los filtros
+              </Button>
+            ) : (
+              <ButtonLink to={paths.admissions} icon={<Inbox size={16} />}>
+                Ver solicitudes
+              </ButtonLink>
+            )
+          }
+        >
+          {all.length === 0 && 'Cada organización entra con una solicitud: al aprobarla, aparece aquí.'}
+        </EmptyState>
       ) : (
         <Table id="organizaciones" caption="Organizaciones">
           <thead>

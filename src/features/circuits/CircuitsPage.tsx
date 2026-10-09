@@ -2,7 +2,7 @@ import { Medal, Plus, Route, Search } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { paths } from '@/app/router/paths'
-import { ButtonLink, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonRows, Table, Tabs, Tag, Td, Th, Tr } from '@/components/ui'
+import { Button, ButtonLink, EmptyState, ErrorState, Input, PageHeader, Select, SkeletonRows, Table, Tabs, Tag, Td, Th, Tr } from '@/components/ui'
 import { useCircuitList } from '@/data/hooks/use-circuits'
 import { coverUrl, isUnpublished, seasonState, type Circuit, type CircuitKind } from '@/data/models'
 import { useDocumentTitle } from '@/hooks/use-document-title'
@@ -147,12 +147,28 @@ export function CircuitsPage() {
           icon={<Route size={20} />}
           title={presence === 'retirados' ? 'No hay circuitos retirados' : EMPTY_TEXT[filter]}
           action={
-            filter === 'kplan' &&
-            canCreate &&
-            !municipality && (
+            filter === 'kplan' && canCreate && !municipality && !cityId && !search.trim() && presence !== 'retirados' ? (
               <ButtonLink to={paths.newCircuit} icon={<Plus size={16} />}>
                 Crear un especial
               </ButtonLink>
+            ) : filter !== 'todos' || cityId || search.trim() || presence !== 'en-uso' ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setFilter('todos')
+                  setCityId('')
+                  setSearch('')
+                  setPresence('en-uso')
+                }}
+              >
+                Quitar los filtros
+              </Button>
+            ) : canCreate ? (
+              <ButtonLink to={paths.newCircuit} variant="primary" icon={<Plus size={16} />}>
+                Nuevo circuito
+              </ButtonLink>
+            ) : (
+              <ButtonLink to={paths.home}>Ir al inicio</ButtonLink>
             )
           }
         >

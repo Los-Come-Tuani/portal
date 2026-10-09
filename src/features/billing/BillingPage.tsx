@@ -1,6 +1,7 @@
 ﻿import { ChevronDown, Receipt } from 'lucide-react'
 import { useState } from 'react'
-import { EmptyState, ErrorState, PageHeader, Pager, SkeletonRows, Tag } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { ButtonLink, EmptyState, ErrorState, PageHeader, Pager, SkeletonRows, Tag } from '@/components/ui'
 import { useStatements, useTariffs } from '@/data/hooks/use-billing'
 import { MONTHLY_STATEMENT_STATUS_LABELS } from '@/data/models'
 import { TARIFF_CODES } from '@/data/schemas/finance-api.schema'
@@ -44,7 +45,11 @@ export function BillingPage() {
           ))}
 
           {statements.data.results.length === 0 ? (
-            <EmptyState icon={<Receipt size={20} />} title="Todavía no tienes estados de cuenta">
+            <EmptyState
+              icon={<Receipt size={20} />}
+              title="Todavía no tienes estados de cuenta"
+              action={<ButtonLink to={paths.coupons}>Ver mis cupones</ButtonLink>}
+            >
               Se emiten el primer día de cada mes, con la insignia de tu lugar y los cupones que validaste el mes anterior.
             </EmptyState>
           ) : (

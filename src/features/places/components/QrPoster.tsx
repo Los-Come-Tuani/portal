@@ -1,8 +1,9 @@
 import { Download, Medal, Printer } from 'lucide-react'
 import { useRef } from 'react'
+import { paths } from '@/app/router/paths'
 import { Logo } from '@/components/brand/Logo'
 import { QrCode } from '@/components/brand/QrCode'
-import { Button, EmptyState, ErrorState, Skeleton } from '@/components/ui'
+import { Button, ButtonLink, EmptyState, ErrorState, Skeleton } from '@/components/ui'
 import { ApiError } from '@/data/api/errors'
 import { usePlaceQr } from '@/data/hooks/use-places'
 import type { Stop } from '@/data/models'
@@ -28,17 +29,32 @@ interface QrPosterProps {
   stop: Stop
   /** El equipo con `places.manage` activa la insignia desde la cabecera del lugar. */
   managesPlaces: boolean
+  /** Lo mismo que encender "Da insignia" en la cabecera. */
+  onActivate?: () => void
+  activating?: boolean
 }
 
 /** El QR de la insignia sale del API (`place/{id}/qr/`): sólo lo tiene un lugar que da insignia. */
-export function QrPoster({ stop, managesPlaces }: QrPosterProps) {
+export function QrPoster({ stop, managesPlaces, onActivate, activating }: QrPosterProps) {
   const qrRef = useRef<SVGSVGElement>(null)
   const qr = usePlaceQr(stop.id, stop.hasBadge)
   const missing = !stop.hasBadge || (qr.error instanceof ApiError && qr.error.status === 404)
 
   if (missing) {
     return (
-      <EmptyState icon={<Medal size={20} />} title="Este lugar todavía no da insignia">
+      <EmptyState
+        icon={<Medal size={20} />}
+        title="Este lugar todavía no da insignia"
+        action={
+          managesPlaces && onActivate && !stop.hasBadge ? (
+            <Button icon={<Medal size={16} />} loading={activating} onClick={onActivate}>
+              Activar la insignia
+            </Button>
+          ) : (
+            <ButtonLink to={paths.place(stop.id)}>Volver a la ficha</ButtonLink>
+          )
+        }
+      >
         {managesPlaces
           ? 'Enciende "Da insignia" arriba y aquí aparece su código QR para imprimirlo en el local.'
           : "La insignia de un lugar la activa el equipo de K'Plan. Cuando esté activa, aquí aparece su código QR para imprimirlo."}

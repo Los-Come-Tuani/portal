@@ -1,6 +1,7 @@
 import { CheckCheck, Mail, MessageSquareText, Phone, Search } from 'lucide-react'
 import { useDeferredValue, useState } from 'react'
-import { Button, Dialog, EmptyState, ErrorState, Field, Input, PageHeader, Pager, Select, SkeletonRows, Tabs, Tag, Textarea, useToast, type TagTone } from '@/components/ui'
+import { paths } from '@/app/router/paths'
+import { Button, ButtonLink, Dialog, EmptyState, ErrorState, Field, Input, PageHeader, Pager, Select, SkeletonRows, Tabs, Tag, Textarea, useToast, type TagTone } from '@/components/ui'
 import { errorMessage } from '@/data/api/errors'
 import { useDemoRequests, useUpdateDemoRequest } from '@/data/hooks/use-landing'
 import { DEMO_KIND_LABELS, DEMO_STATUS_LABELS, DEMO_STATUSES, type DemoRequest, type DemoStatus } from '@/data/models'
@@ -90,6 +91,33 @@ export function DemoRequestsPage() {
         <EmptyState
           icon={<MessageSquareText size={20} />}
           title={deferredSearch ? 'Ninguna solicitud coincide' : section === 'pending' ? 'No hay solicitudes pendientes' : 'No hay solicitudes aquí'}
+          action={
+            deferredSearch ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSearch('')
+                  setPage(1)
+                }}
+              >
+                Borrar la búsqueda
+              </Button>
+            ) : section !== 'all' ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSection('all')
+                  setPage(1)
+                }}
+              >
+                Ver todas
+              </Button>
+            ) : can('releases.view') ? (
+              <ButtonLink to={paths.releases}>Ver las versiones de la app</ButtonLink>
+            ) : (
+              <ButtonLink to={paths.home}>Ir al inicio</ButtonLink>
+            )
+          }
         >
           {!deferredSearch && section === 'pending' && 'Si alguien pide una demo cuando no hay versión publicada, aparece aquí y te llega un aviso.'}
         </EmptyState>
