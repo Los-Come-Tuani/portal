@@ -22,6 +22,9 @@ export function GoogleSignInButton({ disabled = false, onCredential }: GoogleSig
         host.current.replaceChildren()
         identity.initialize({
           client_id: env.googleClientId,
+          // cada clic muestra las cuentas: tras un rechazo hay que poder elegir otra
+          auto_select: false,
+          button_auto_select: false,
           callback: ({ credential }) => {
             if (credential) onCredential(credential)
             else setLoadError(true)

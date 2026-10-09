@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { loadGoogleIdentity, type GoogleIdentity } from './google-identity'
+import { forgetGoogleAccount, loadGoogleIdentity, type GoogleIdentity } from './google-identity'
 
 function identity(): GoogleIdentity {
-  return { initialize: vi.fn(), renderButton: vi.fn() }
+  return { disableAutoSelect: vi.fn(), initialize: vi.fn(), renderButton: vi.fn() }
 }
 
 afterEach(() => {
@@ -49,5 +49,20 @@ describe('Google Identity Services', () => {
 
     await expect(first).resolves.toBe(loaded)
     await expect(second).resolves.toBe(loaded)
+  })
+
+  it('olvida la cuenta elegida para que el siguiente clic ofrezca las cuentas', () => {
+    const loaded = identity()
+    vi.stubGlobal('window', { google: { accounts: { id: loaded } } })
+
+    forgetGoogleAccount()
+
+    expect(loaded.disableAutoSelect).toHaveBeenCalledTimes(1)
+  })
+
+  it('no falla si Google todavía no cargó', () => {
+    vi.stubGlobal('window', {})
+
+    expect(() => forgetGoogleAccount()).not.toThrow()
   })
 })

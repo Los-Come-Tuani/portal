@@ -3,7 +3,12 @@ export interface GoogleCredentialResponse {
 }
 
 export interface GoogleIdentity {
-  initialize(options: { client_id: string; callback: (response: GoogleCredentialResponse) => void }): void
+  initialize(options: {
+    auto_select: boolean
+    button_auto_select: boolean
+    callback: (response: GoogleCredentialResponse) => void
+    client_id: string
+  }): void
   renderButton(
     parent: HTMLElement,
     options: {
@@ -17,6 +22,7 @@ export interface GoogleIdentity {
       width: number
     },
   ): void
+  disableAutoSelect(): void
 }
 
 declare global {
@@ -30,6 +36,14 @@ const SCRIPT_SOURCE = 'https://accounts.google.com/gsi/client'
 
 function loadedIdentity(): GoogleIdentity | undefined {
   return window.google?.accounts?.id
+}
+
+/**
+ * Google deja de recordar la cuenta con la que se entró: tras un intento rechazado o al
+ * salir, el siguiente clic vuelve a ofrecer las cuentas en vez de usar la misma.
+ */
+export function forgetGoogleAccount(): void {
+  loadedIdentity()?.disableAutoSelect()
 }
 
 /** Carga Google Identity Services una sola vez y devuelve su API de tokens de identidad. */
