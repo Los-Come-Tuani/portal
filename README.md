@@ -156,6 +156,14 @@ Todos los colores viven en un solo bloque de `src/styles/theme.css`, espejo de `
 - `npm run test`: corre las pruebas (formatos, horas, planificador de itinerarios, agenda, cliente HTTP con CSRF y renovación de sesión, y el usuario del API). Las de integración con el API se saltan sin `KPLAN_API_URL`.
 - `npm run preview`: sirve localmente el build de producción.
 
+## Publicación y API en Azure
+
+`main` es producción: Railway publica el build de `main` en https://portal.kplan.dev. Ese build lee `.env.production` y habla con `https://azure-api.kplan.dev`, el API desplegado en Azure App Service.
+
+El API de Azure corre siempre el código de la rama `production` del [repositorio del API](https://github.com/Los-Come-Tuani/api): cada `push` a esa rama lo construye y lo despliega con GitHub Actions, y la imagen queda etiquetada con el SHA del commit. Cómo se despliega y cómo comprobar qué commit corre en Azure está en la sección [Despliegue en Azure](https://github.com/Los-Come-Tuani/api#despliegue-en-azure) de su README.
+
+Para que el portal publicado funcione, el App Service del API necesita `https://portal.kplan.dev` en `CORS_ALLOWED_ORIGINS` (y en `CSRF_TRUSTED_ORIGINS` si la define): la sesión viaja en cookies entre los dos dominios. Para comprobar a qué API habla lo publicado, abre https://portal.kplan.dev con las herramientas de desarrollo del navegador: las peticiones van a `https://azure-api.kplan.dev`.
+
 ## Documentación
 
 La documentación ampliada (arquitectura, dominio, contrato de datos y sistema de diseño) vive en `docs/`, generada con [Zensical](https://zensical.org/). Para verla en local:
