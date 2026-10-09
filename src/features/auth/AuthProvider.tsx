@@ -7,6 +7,7 @@ import { authRepository } from '@/data/repositories/auth.repository'
 import { organizationsRepository } from '@/data/repositories/organizations.repository'
 import { NOT_PORTAL_MESSAGE } from '@/data/schemas/session.schema'
 import { AuthContext, type AuthStatus, type LoginOutcome } from './auth-context'
+import { statusAfterProfileFailure } from './session-status'
 /** Cuánto se espera a que la API confirme el cierre de sesión antes de salir de todos modos. */
 const LOGOUT_PATIENCE_MS = 2500
 
@@ -16,6 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   // Las cookies de sesión son HttpOnly: solo se recuerda que hubo un inicio de sesión.
   const [status, setStatus] = useState<AuthStatus>(() => (sessionMarker.isSet() ? 'loading' : 'anonymous'))
+  const [sessionError, setSessionError] = useState<unknown>(null)
   const [user, setUser] = useState<SessionUser | null>(null)
   const [organization, setOrganization] = useState<Organization | null>(null)
 
@@ -55,10 +57,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .catch((error: unknown) => {
         if (cancelled) return
-        // Solo un rechazo de la API borra el recuerdo de la sesión: sin conexión o con un
-        // error del servidor, al recargar se vuelve a intentar.
-        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) sessionMarker.clear()
-        setStatus('anonymous')
+        const next = statusAfterProfileFailure(error)
+        // Sólo un rechazo de la API borra el recuerdo de la sesión.
+        if (next === 'anonymous') sessionMarker.clear()
+        setSessionError(error)
+        setStatus(next)
       })
     return () => {
       cancelled = true
@@ -66,6 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [status])
 
   useEffect(() => sessionMarker.onExpired(clear), [clear])
+
+  const retrySession = useCallback(() => {
+    setStatus((current) => (current === 'unavailable' ? 'loading' : current))
+  }, [])
 
   const login = useCallback(
     async (input: LoginInput): Promise<LoginOutcome> => {
@@ -116,8 +123,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [endSession])
 
   const value = useMemo(
-    () => ({ status, user, organization, login, loginWithGoogle, verifyTwoFactor, acceptSession, refreshUser, logout, endSession }),
-    [status, user, organization, login, loginWithGoogle, verifyTwoFactor, acceptSession, refreshUser, logout, endSession],
+    () => ({
+      status,
+      sessionError: status === 'unavailable' ? sessionError : null,
+      retrySession,
+      user,
+      organization,
+      login,
+      loginWithGoogle,
+      verifyTwoFactor,
+      acceptSession,
+      refreshUser,
+      logout,
+      endSession,
+    }),
+    [status, sessionError, retrySession, user, organization, login, loginWithGoogle, verifyTwoFactor, acceptSession, refreshUser, logout, endSession],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
